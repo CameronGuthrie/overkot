@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function createMinimap({ dungeon = false, tracking = false, getLocation, locate = false, width = 400, height = 300 } = {}) {
+function createMinimap({ dungeon = false, tracking = false, getLocation, getMapTiles, locate = false, width = 400, height = 300 } = {}) {
   const images = [];
   const frames = [];
   const handlers = {};
@@ -22,7 +22,8 @@ function createMinimap({ dungeon = false, tracking = false, getLocation, locate 
   const elements = {
     '#minimap-viewport': viewport,
     '#minimap-canvas': { width: 400, height: 300, getContext: () => ctx },
-    '#minimap-loading': { classList: {
+    '#minimap-tile-status': {}, '#minimap-connect': { hidden: true, addEventListener(type, handler) { this[type] = handler; } },
+    '#minimap-loading': { querySelector: selector => elements[selector === 'button' ? '#minimap-connect' : '#minimap-tile-status'], classList: {
       remove: key => classes.set(key, false),
       toggle: (key, value) => classes.set(key, value),
     } },
@@ -66,7 +67,9 @@ function createMinimap({ dungeon = false, tracking = false, getLocation, locate 
     ResizeObserver: class { constructor(callback) { handlers.resize = callback; } observe() {} },
     window: { addEventListener(name, callback) { windowEvents[name] = callback; }, ...(dungeon ? { DungeonMapWidget: { mount: (_element, options) => { dungeonOptions = options; return dungeonWidget; } } } : {}), api: {
       getMapData: async name => name === 'boss_encounters' || name === 'named_locations' ? [] : {},
+      ...(getMapTiles ? { getMapTiles } : {}),
       onMapTilesUpdated: callback => { handlers.update = callback; },
+      openSettings: tab => launches.push(tab),
       onConfigChanged: callback => { handlers.config = callback; },
       onPlayerLocation: callback => { handlers.location = callback; return () => { delete handlers.location; }; },
       locatePlayer: async () => { locationRequests.captures++; return { status: 'watching' }; },
@@ -118,7 +121,7 @@ test('minimap projects current weapon drops, removes pickups and honors visibili
   assert.equal(map.drawing.some(row => row[0] === 'fillText' && row[1] === 'Stultin'), false, 'Dungeon transitions clear overworld drops');
 });
 
-test('failed minimap tile settles without a packaged fallback or polling', () => {
+test('failed minimap tiles show how to retry and do not start polling', () => {
   const map = createMinimap();
   map.run('Minimap.render()');
   const tile = map.images[0];
@@ -128,7 +131,74 @@ test('failed minimap tile settles without a packaged fallback or polling', () =>
   tile.onerror();
   map.run('Minimap.render()');
   assert.equal(map.images.length, 4);
+  assert.equal(map.classes.get('loaded'), false);
+  assert.match(map.elements['#minimap-tile-status'].textContent, /Settings → Game files/);
+  assert.equal(map.elements['#minimap-connect'].hidden, true);
+});
+
+test('minimap keeps cached imagery while signed out and recovers missing tiles on connection', async () => {
+  let resolveInitial;
+  const map = createMinimap({ getMapTiles: () => new Promise(resolve => { resolveInitial = resolve; }) });
+  const info = { version: 'same-feed', source: 'remote' };
+  map.handlers.update({ ...info, requiresSignIn: true });
+  map.run('Minimap.render()');
+  const [cached, ...missing] = map.images;
+  for (const tile of missing) { tile.complete = true; tile.onerror(); }
+  map.run('Minimap.render()');
+  const connect = map.elements['#minimap-connect'];
+  assert.equal(connect.hidden, false);
+  assert.match(connect.textContent, /Sign in with avakot\.dev/);
+  assert.equal(map.classes.get('tile-notice'), false, 'Center the button while the viewport has no imagery');
+  let stopped = false;
+  connect.pointerdown({ stopPropagation() { stopped = true; } });
+  assert.equal(stopped, true, 'Pressing the button must not start a map drag');
+  connect.click();
+  assert.deepEqual(map.launches, ['connections']);
+  cached.complete = true; cached.naturalWidth = 512; cached.onload();
+  resolveInitial(info);
+  await new Promise(resolve => setImmediate(resolve));
+  map.run('Minimap.render()');
+  assert.equal(map.classes.get('tile-notice'), true, 'Move the action to the compact notice when cached imagery is visible');
+  assert.match(map.elements['#minimap-tile-status'].textContent, /Settings → Connections/);
+  assert.ok(map.drawing.some(([op, image]) => op === 'drawImage' && image === cached));
+  map.handlers.update(info);
+  map.run('Minimap.render()');
+  assert.equal(connect.hidden, true, 'The button leaves keyboard navigation as soon as the user connects');
+  assert.ok(cached.src);
+  assert.equal(map.images.length, 7, 'Only the three missing tiles are requested again');
+  for (const tile of map.images.slice(4)) { tile.complete = true; tile.naturalWidth = 512; tile.onload(); }
+  map.run('Minimap.render()');
   assert.equal(map.classes.get('loaded'), true);
+  assert.equal(map.elements['#minimap-tile-status'].textContent, '');
+  map.handlers.update({ ...info, requiresSignIn: true });
+  map.run('Minimap.render()');
+  assert.equal(map.classes.get('loaded'), true, 'All visible tiles remain usable offline');
+  assert.equal(connect.hidden, true);
+  assert.equal(map.images.length, 7);
+});
+
+test('a map data update retries missing legend icons in place once access is available', () => {
+  const map = createMinimap();
+  const base = 'overkot-map-tiles://data/map-icons/';
+  const tree = { src: base + 'Tree.png', naturalWidth: 32, complete: true };
+  const vendor = { src: base + 'Vendor.png', naturalWidth: 0, complete: true };
+  const dungeon = { src: base + 'EntranceDown.png', naturalWidth: 0, complete: false };
+  map.elements['#minimap-legend-panel'] = {
+    querySelectorAll(selector) { assert.equal(selector, 'img'); return [tree, vendor, dungeon]; },
+  };
+  const info = { version: 'same-feed', source: 'remote' };
+  map.handlers.update({ ...info, requiresSignIn: true });
+  assert.equal(vendor.src, base + 'Vendor.png');
+  map.handlers.update(info);
+  assert.notEqual(vendor.src, base + 'Vendor.png');
+  assert.notEqual(dungeon.src, base + 'EntranceDown.png');
+  assert.equal(tree.src, base + 'Tree.png');
+  const attempted = vendor.src;
+  map.handlers.update(info);
+  assert.equal(vendor.src, attempted);
+  vendor.naturalWidth = 32;
+  map.handlers.update({ ...info, reload: true });
+  assert.equal(vendor.src, attempted, 'Keep the recovered image on a later warmup');
 });
 
 test('map refresh retires old image handlers and zooming in releases off-screen tile images', () => {

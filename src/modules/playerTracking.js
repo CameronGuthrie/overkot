@@ -6,6 +6,7 @@ const { DungeonDiscoveryStore } = require('./dungeonDiscoveryStore');
 const { selectRoot } = require('./dungeonRootAlignment');
 const { fitDungeonFrames } = require('./dungeonFrameAlignment');
 const { createWorldDropsStore } = require('./worldDrops');
+const { validPosition: withinOverworld } = require('../renderer/map-pois');
 
 const MAX_AGE = 2000;
 const MAX_DROP_DISTANCE = 80;
@@ -21,10 +22,14 @@ function zoneOf(state) {
 /** Connect read-only memory poses to the current log entry and map coordinates. */
 class PlayerTracking extends EventEmitter {
   constructor({ directory, reader = new PlayerMemoryReader(), getState, getAccountId, getVersion,
+    canShowAnonymousOverworld = () => false, isPlayerAreaCurrent = () => true,
     getLayoutSnapshot, getScene, getNames = () => ({}), now = Date.now }) {
-    super(); Object.assign(this, { reader, getState, getAccountId, getVersion, getLayoutSnapshot, getScene, now });
+    super(); Object.assign(this, { reader, getState, getVersion, canShowAnonymousOverworld, isPlayerAreaCurrent,
+      getLayoutSnapshot, getScene, now });
+    this.getAccountId = () => getAccountId(reader.processStartMs);
     this.pid = null; this.enabled = true; this.state = null; this.signature = null; this.epoch = 0;
     this.account = null; this.session = null; this.processIdentity = null; this.context = null; this.pending = null; this.retryAt = 0;
+    this.poseWait = 'waiting-for-area';
     this.rootRefreshEntry = null;
     this.frameLayout = null; this.frameCloud = null; this.frameFit = null; this.minimumFrameTime = 0;
     this.pose = null; this.capture = null; this.captureRequest = null; this.captureScope = null; this.lastStatus = null; this.timer = null;
@@ -52,17 +57,20 @@ class PlayerTracking extends EventEmitter {
   }
   _fresh(pose) {
     const age = this.now() - pose?.sampledAt;
-    return pose?.source === 'memory' && Number.isFinite(age) && age >= 0 && age <= MAX_AGE
+    return !!this.session && pose?.source === 'memory' && Number.isFinite(age) && age >= 0 && age <= MAX_AGE
       && pose.trackingSession === this.session && pose.position && ['x', 'y', 'z'].every(key => finite(pose.position[key]));
   }
-  _status() {
+  _currentStatus() {
     const readerState = this.reader.getState();
     let status = this.enabled ? readerState.status : 'disabled';
-    if (status === 'tracking') status = !this.account ? 'waiting-for-login' : !zoneOf(this.state) ? 'waiting-for-area'
-      : !this._fresh(this.pose) ? 'stale' : 'tracking';
+    if (status === 'tracking') status = this.poseWait || (this._fresh(this.pose) ? 'tracking' : 'stale');
     const next = { status };
     if (this.enabled && readerState.scanProgress !== undefined) next.scanProgress = readerState.scanProgress;
-    if (this.lastStatus?.status !== status || this.lastStatus?.scanProgress !== next.scanProgress) {
+    return next;
+  }
+  _status() {
+    const next = this._currentStatus();
+    if (this.lastStatus?.status !== next.status || this.lastStatus?.scanProgress !== next.scanProgress) {
       this.lastStatus = next;
       this.emit('status', next);
     }
@@ -79,26 +87,33 @@ class PlayerTracking extends EventEmitter {
   getOwner() {
     // Consult the live account provider even between the periodic refreshes.
     const account = this.getAccountId();
-    return account && account === this.account && this.session ? { account, process: this.session } : null;
+    return account && account === this.account && this.session && this.isPlayerAreaCurrent(this.reader.processStartMs)
+      ? { account, process: this.session } : null;
   }
   refresh(state = this.getState()) {
     const captured = state && typeof state === 'object' ? { ...state } : { active: false, status: 'unknown' };
     const account = this.getAccountId() || null, version = String(this.getVersion() ?? '');
-    const signature = JSON.stringify([stateKey(captured), account, this.session, version]);
+    const zone = zoneOf(captured), startMs = this.reader.processStartMs;
+    let poseWait = null;
+    if (!zone || !this.isPlayerAreaCurrent(startMs)) poseWait = 'waiting-for-area';
+    else if (!account && !(captured.active === false && captured.status === 'outside' && zone === '/SF/Levels/MidrathRedux'
+      && this.canShowAnonymousOverworld(startMs))) poseWait = 'waiting-for-login';
+    const signature = JSON.stringify([stateKey(captured), account, this.session, version, poseWait]);
     if (signature !== this.signature) {
       const captureScope = JSON.stringify([stateKey(captured), account, this.pid, this.processIdentity]);
       const preserveCapture = captureScope === this.captureScope;
       this.captureScope = captureScope;
       this.signature = signature; this.epoch++; this.context = null; this.pending = null; this.retryAt = 0;
       this.frameLayout = null; this.frameCloud = null; this.frameFit = null; this.minimumFrameTime = this.now();
-      this.state = captured; this.account = account; this._clear({ preserveCapture });
+      this.state = captured; this.account = account; this.poseWait = poseWait; this._clear({ preserveCapture });
     }
     this._status();
-    if (!this.enabled || !this.pid || !account || !this.session || !captured.active || captured.status !== 'ready'
+    if (!this.enabled || !this.pid || !account || this.poseWait || !this.session || !captured.active || captured.status !== 'ready'
       || !captured.instanceId || !captured.layoutCode || this.context || this.pending || this.now() < this.retryAt) return this.pending;
     const epoch = this.epoch;
     const task = Promise.resolve().then(() => this.getLayoutSnapshot(captured)).then(async layout => {
-      if (epoch !== this.epoch || this.getAccountId() !== account || stateKey(this.getState()) !== stateKey(captured)) return;
+      if (epoch !== this.epoch || this.getAccountId() !== account || !this.isPlayerAreaCurrent(this.reader.processStartMs)
+        || stateKey(this.getState()) !== stateKey(captured)) return;
       if (layout?.status !== 'ready' || stateKey(layout.state) !== stateKey(captured)
         || String(layout.version) !== String(this.getVersion() ?? '') || !['world', 'layout-local'].includes(layout.coordinateSpace)) {
         this.retryAt = this.now() + 5000; return;
@@ -121,14 +136,14 @@ class PlayerTracking extends EventEmitter {
   }
   _receive(pose) {
     this.refresh();
-    if (!this.enabled || !this.pid || !this.account || !zoneOf(this.state) || !this._fresh(pose)
+    if (!this.enabled || !this.pid || this.poseWait || !this._fresh(pose)
       || this.reader.getState().status !== 'tracking') return;
     // A cloud is private placement evidence, tied to both the current entry and
     // its capture time. Never let a legacy loading-slot root override it.
-    const hasFrames = Object.hasOwn(pose, 'dungeonFrames');
+    const hasFrames = this.account && Object.hasOwn(pose, 'dungeonFrames');
     this.frameCloud = hasFrames ? { frames: pose.dungeonFrames, timestamp: pose.dungeonFramesTimestamp } : null;
     const dungeonRoot = hasFrames ? this._frameRoot(pose.sampledAt)
-      : selectRoot(pose.dungeonRoots || (pose.dungeonRoot ? [pose.dungeonRoot] : []), this.state);
+      : this.account && selectRoot(pose.dungeonRoots || (pose.dungeonRoot ? [pose.dungeonRoot] : []), this.state);
     if (!dungeonRoot && this.state.active && this.state.status === 'ready') {
       const entry = JSON.stringify([this.session, this.state.instanceId]);
       if (entry !== this.rootRefreshEntry && this.reader.refreshRoots?.()) this.rootRefreshEntry = entry;
@@ -142,7 +157,7 @@ class PlayerTracking extends EventEmitter {
   }
   _receiveDrops(snapshot) {
     this.refresh();
-    if (!this.enabled || !this.pid || !this.account || !zoneOf(this.state) || !this._fresh(this.pose)
+    if (!this.enabled || !this.pid || !this.account || this.poseWait || !this._fresh(this.pose)
       || this.reader.getState().status !== 'tracking' || snapshot?.trackingSession !== this.session
       || !Number.isSafeInteger(snapshot.sampledAt) || snapshot.sampledAt < this.minimumDropTime) return;
     if (this.worldDrops.receive(snapshot)) this._publish(this.pose);
@@ -214,6 +229,17 @@ class PlayerTracking extends EventEmitter {
     this.emit('location', this._fresh(this.pose) ? { ...this._location(this.pose), captureCompleted: true } : this.capture || data);
   }
   getStatus() { this.refresh(); return this._status(); }
+  getDiagnostics() {
+    const zone = zoneOf(this.state);
+    let mapPlacement = 'no-live-sample';
+    if (this._fresh(this.pose)) {
+      if (this.state.active) mapPlacement = 'dungeon';
+      else if (zone === '/SF/Levels/MidrathRedux') mapPlacement = withinOverworld(this.pose.position) ? 'overworld' : 'outside-overworld-bounds';
+      else mapPlacement = 'other-area';
+    }
+    return { mapStatus: this._currentStatus().status, mapPlacement, loginRecognized: !!this.account, areaRecognized: !!zone && this.poseWait !== 'waiting-for-area',
+      ...this.reader.getDiagnostics() };
+  }
   async flush() {
     await Promise.allSettled([...this.observations]);
     await this.discovery.flush();

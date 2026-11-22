@@ -29,7 +29,9 @@ test('tracking settings explain live, stale, unsupported and disabled states wit
   for (const [value, pattern] of [['tracking', /Tracking player position and facing/], ['searching', /Finding the player/],
     ['stale', /fresh player position/], ['unsupported-build', /Soulframe build/], ['unsupported-platform', /Windows/],
     ['helper-missing', /reader is unavailable/], ['helper-unavailable', /reader is unavailable/], ['unavailable', /tracking is unavailable/],
-    ['waiting-for-login', /Log in to Soulframe/], ['waiting-for-area', /current map/], ['scan-incomplete', /while it retries/],
+    ['waiting-for-login', /Player found.*identify the current Soulframe account/],
+    ['waiting-for-area', /Player found.*current area in EE\.log.*Settings → Game files/],
+    ['waiting-context', /^Waiting for your current map/], ['scan-incomplete', /while it retries/],
     ['process-gone', /Start Soulframe/], ['profile-mismatch', /could not verify/], ['stopped', /Waiting for Soulframe/]]) {
     view.run(`playerTrackingState = { status: ${JSON.stringify(value)}, message: 'private memory details' }; renderPlayerTracking()`);
     assert.match(status.textContent, pattern);
@@ -50,12 +52,36 @@ test('settings show the current search percentage across pauses and clear it whe
   assert.doesNotMatch(label.textContent, /47%/);
 });
 
+test('Settings copies the support snapshot only when requested and reports clipboard failures', async () => {
+  let calls = 0, available = true;
+  const view = settings({ copyPlayerTrackingReport: async () => { calls++; if (available) return true; throw Error('clipboard'); } });
+  view.run('bindEvents(); renderPlayerTracking()');
+  assert.equal(calls, 0);
+  const copy = view.node('#copy-player-tracking-report'), feedback = view.node('#player-tracking-report-result');
+  await copy.click();
+  assert.equal(feedback.textContent, 'Copied!');
+  available = false;
+  await copy.click();
+  assert.equal(calls, 2);
+  assert.match(feedback.textContent, /try again/);
+});
+
 test('Linux tracking permission failures explain how to enable the packaged native reader', () => {
   const view = settings();
   view.run("platformSupport = {platform:'linux'}; playerTrackingState = {status:'permission-denied'}; renderPlayerTracking()");
   assert.match(view.node('#player-tracking-status').textContent, /DEB\/Pacman package/);
   view.run("playerTrackingState = {status:'unsupported-platform'}; renderPlayerTracking()");
   assert.match(view.node('#player-tracking-status').textContent, /Windows and Linux with Wine\/Proton/);
+});
+
+test('Windows tracking permission failures explain how to launch both apps and use the selected translation', () => {
+  const view = settings();
+  view.run("platformSupport = {platform:'win32'}; playerTrackingState = {status:'permission-denied'}; renderPlayerTracking()");
+  assert.match(view.node('#player-tracking-status').textContent, /Restart Soulframe and Overkot under the same Windows account.*“Run as administrator” turned off for both/);
+  const german = require('../langs/de.json');
+  view.context.translatedMessages = german;
+  view.run('t = translatedMessages; renderPlayerTracking()');
+  assert.equal(view.node('#player-tracking-status').textContent, german.settingsPositionWindowsDenied);
 });
 
 test('tutorial toggle follows confirmed config and saves only its global preference through the dedicated endpoint', async () => {

@@ -6,6 +6,7 @@ const CENTER_FIRST_TILES = Array.from({ length: 196 }, (_, index) => index).sort
   const distance = index => Math.hypot(Math.floor(index / 14) - 6.5, index % 14 - 6.5);
   return distance(a) - distance(b) || a - b;
 });
+const isTileName = name => /^(?:0|[1-9]\d{0,2})\.webp$/.test(name) && parseInt(name, 10) < 196;
 
 // Preserve old ZIP caches as a fallback; new releases use individual hashed tiles.
 class MapTileManager {
@@ -34,16 +35,37 @@ class MapTileManager {
 
   getInfo() { return this.dataManager.getInfo(); }
 
-  async getTilePath(tileName) {
-    if (!/^(?:0|[1-9]\d{0,2})\.webp$/.test(tileName) || parseInt(tileName, 10) >= 196) return null;
-    const key = `map-tiles/${tileName}`;
-    const filename = await this.dataManager.ensureAsset(key);
-    if (filename && filename !== this.dataManager.bundledPath(key)) return filename;
-    if (this.legacyDir && !this.dataManager.manifest) {
-      const legacy = path.join(this.legacyDir, tileName);
-      if (fs.existsSync(legacy)) return legacy;
+  hasCachedTerrain() {
+    const manager = this.dataManager;
+    // A partial map is usable. The map itself offers sign-in for any missing
+    // tiles in the actual viewport. Stop at the first verified local tile.
+    if (CENTER_FIRST_TILES.some(index => {
+      const key = `map-tiles/${index}.webp`;
+      return (manager.state.files[key] || manager.allowBundled) && manager.cachedPath(key);
+    })) return true;
+    if (!manager.manifest && this.legacyDir) {
+      try {
+        return fs.readdirSync(this.legacyDir, { withFileTypes: true }).some(entry => entry.isFile() && isTileName(entry.name));
+      } catch { /* The previous ZIP cache may have been removed. */ }
     }
-    return filename || null;
+    return false;
+  }
+
+  async getTilePath(tileName) {
+    if (!isTileName(tileName)) return null;
+    const key = `map-tiles/${tileName}`;
+    if (!this.dataManager.manifest) {
+      const cached = this.dataManager.cachedPath(key);
+      if (cached && cached !== this.dataManager.bundledPath(key)) return cached;
+      if (this.legacyDir) {
+        const legacy = path.join(this.legacyDir, tileName);
+        if (fs.existsSync(legacy)) return legacy;
+      }
+      // A renderer may request its first visible tiles before get-map-tiles
+      // finishes. Join the shared manifest check on a cold cache.
+      if (!cached) await this.dataManager.checkForUpdates();
+    }
+    return this.dataManager.ensureAsset(key);
   }
 
   checkForUpdates(options) { return this.dataManager.checkForUpdates(options); }

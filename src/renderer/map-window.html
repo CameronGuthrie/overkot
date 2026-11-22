@@ -245,7 +245,10 @@
 
   <div id="map-container">
     <canvas id="map-canvas"></canvas>
-    <div class="map-loading" id="map-loading">Loading map tiles…</div>
+    <div class="map-loading" id="map-loading">
+      <span id="map-tile-status" role="status">Loading map tiles…</span>
+      <button class="map-connect-btn no-drag" id="map-connect" type="button" aria-describedby="map-tile-status" hidden></button>
+    </div>
     <div class="map-controls">
       <button class="map-ctrl-btn no-drag" id="zoom-in-btn" title="Zoom in">+</button>
       <button class="map-ctrl-btn no-drag" id="zoom-out-btn" title="Zoom out">−</button>

@@ -38,8 +38,10 @@
     if (url) {
       const img = document.createElement('img'); img.className = 'item-thumbnail-image';
       img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.draggable = false; img.referrerPolicy = 'no-referrer';
-      img.addEventListener('load', () => { wrapper.classList.add('is-loaded'); }, { once: true });
-      img.addEventListener('error', () => { img.hidden = true; wrapper.classList.remove('is-loaded'); wrapper.classList.add('is-missing'); }, { once: true });
+      img.addEventListener('load', () => {
+        img.hidden = false; wrapper.classList.remove('is-missing'); wrapper.classList.add('is-loaded');
+      });
+      img.addEventListener('error', () => { img.hidden = true; wrapper.classList.remove('is-loaded'); wrapper.classList.add('is-missing'); });
       wrapper.appendChild(img); img.src = url;
     } else wrapper.classList.add('is-missing');
     return wrapper;

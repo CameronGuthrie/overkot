@@ -19,6 +19,8 @@ const MAX_LINE_BYTES = 32768;
 const MAX_CARRY_BYTES = 131072;
 const MAX_DUNGEON_ROOTS = 32;
 const MAX_DUNGEON_FRAMES = 64;
+const UNIX_EPOCH_TICKS = 621355968000000000n;
+const PASS_BYTE_COUNTS = ['bytesScanned', 'plannedScanBytes', 'skippedDeviceBytes'];
 
 function validatedRoots(value, legacy) {
   const roots = Array.isArray(value) && value.length <= MAX_DUNGEON_ROOTS ? value.map(validateRoot).filter(Boolean) : null;
@@ -47,11 +49,21 @@ function parseMessage(line, now = Date.now()) {
   if (typeof line !== 'string' || Buffer.byteLength(line) > MAX_LINE_BYTES) return null;
   let value; try { value = JSON.parse(line); } catch { return null; }
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value.type === 'phase' && ['checking-game-image', 'enumerating-regions'].includes(value.phase)) {
+    return { type: 'phase', phase: value.phase };
+  }
   if (value.type === 'status' && STATUSES.has(value.status)) {
     const start = typeof value.processStartUtcTicks === 'string' && /^[1-9]\d{0,18}$/.test(value.processStartUtcTicks)
       && BigInt(value.processStartUtcTicks) <= 3155378975999999999n ? value.processStartUtcTicks : null;
     const hash = typeof value.moduleHash === 'string' && /^[a-f0-9]{64}$/.test(value.moduleHash) ? value.moduleHash : null;
     const result = { type: 'status', status: value.status, processStartUtcTicks: start, moduleHash: hash };
+    // These counters apply to one discovery pass, including any resumed slices.
+    if (['searching', 'scan-incomplete', 'tracking', 'not-found', 'ambiguous'].includes(value.status)) {
+      for (const key of PASS_BYTE_COUNTS) {
+        if (Number.isSafeInteger(value[key]) && value[key] >= 0) result[key] = value[key];
+      }
+      if (value.scanCompleted === true && ['tracking', 'not-found', 'ambiguous'].includes(value.status)) result.scanCompleted = true;
+    }
     if ((value.status === 'searching' || value.status === 'scan-incomplete')
       && Number.isInteger(value.scanProgress) && value.scanProgress >= 0 && value.scanProgress < 100) {
       result.scanProgress = value.scanProgress;
@@ -95,6 +107,8 @@ class PlayerMemoryReader extends EventEmitter {
   constructor({ executable, spawnImpl = spawn, exists = fs.existsSync, platform = process.platform, now = Date.now } = {}) {
     super(); Object.assign(this, { executable: executable ?? helperPath({ exists, platform }), spawnImpl, exists, platform, now });
     this.child = null; this.epoch = 0; this.pid = null; this.session = null; this.identity = null;
+    this.processStartMs = null;
+    this.run = null;
     this.lastSampleAt = null; this.lastDropSampleAt = null; this.lastStatus = null;
   }
   _status(status, session = this.session, scanProgress) {
@@ -117,12 +131,17 @@ class PlayerMemoryReader extends EventEmitter {
       this.pid = null; try { child?.kill?.(); } catch { /* Best-effort cleanup. */ }
       this._status('unavailable'); return;
     }
+    this.run = { startedAt: this.now(), endedAt: null, phase: 'starting-reader', pass: {},
+      completedPasses: 0, firstPoseMs: null };
     this.child = child; this._status('searching');
     let carry = '';
+    let exited = false;
     const current = () => epoch === this.epoch && this.child === child;
     const finish = status => {
       if (!current()) return;
       this.epoch++; this.child = null; this.pid = null; this.session = null; this.identity = null;
+      this.processStartMs = null;
+      this.run.endedAt ??= this.now();
       this.lastSampleAt = null; this.lastDropSampleAt = null;
       this._status(status, null);
     };
@@ -143,11 +162,23 @@ class PlayerMemoryReader extends EventEmitter {
         if (Buffer.byteLength(frame) > MAX_LINE_BYTES) { protocolFailure(); return; }
         const line = frame.trim();
         const message = parseMessage(line, this.now());
-        if (!message) continue;
-        if (message.type === 'status') {
+        if (!message || (exited && !(message.type === 'status' && TERMINAL_STATUSES.has(message.status)))) continue;
+        if (message.type === 'phase') {
+          this.run.phase = message.phase;
+          if (message.phase === 'enumerating-regions') this.run.pass = {};
+          this._status('searching', null);
+        } else if (message.type === 'status') {
+          this.run.phase = message.status;
+          for (const key of PASS_BYTE_COUNTS) {
+            if (message[key] !== undefined) this.run.pass[key] = message[key];
+          }
+          if (message.scanCompleted) this.run.completedPasses++;
           const identity = message.processStartUtcTicks && message.moduleHash
             ? createHash('sha256').update(`${pid}:${message.processStartUtcTicks}:${message.moduleHash}`).digest('hex') : null;
-          if (identity !== this.identity) { this.lastSampleAt = null; this.lastDropSampleAt = null; }
+          if (identity !== this.identity) {
+            this.lastSampleAt = null; this.lastDropSampleAt = null;
+            this.processStartMs = identity ? Number(BigInt(message.processStartUtcTicks) - UNIX_EPOCH_TICKS) / 10000 : null;
+          }
           this.identity = identity;
           this.session = message.status === 'tracking' ? identity : null;
           this._status(message.status === 'tracking' && !identity ? 'unavailable' : message.status,
@@ -161,6 +192,7 @@ class PlayerMemoryReader extends EventEmitter {
         } else if (this.session && this.lastStatus?.status === 'tracking'
           && (this.lastSampleAt === null || message.sampledAt > this.lastSampleAt)) {
           this.lastSampleAt = message.sampledAt;
+          this.run.firstPoseMs ??= Math.max(0, this.now() - this.run.startedAt);
           this.emit('pose', { ...message, trackingSession: this.session });
         }
       }
@@ -173,6 +205,14 @@ class PlayerMemoryReader extends EventEmitter {
       try { child.kill?.(); } catch { /* A failed spawn has no running process. */ }
     });
     child.once('exit', () => {
+      if (!current()) return;
+      // The process is gone, but its final status can still be buffered in stdout.
+      exited = true;
+      this.run.endedAt = this.now();
+      this.session = null;
+      this.processStartMs = null;
+    });
+    child.once('close', () => {
       if (!current()) return;
       finish(TERMINAL_STATUSES.has(this.lastStatus?.status) ? this.lastStatus.status : 'process-gone');
     });
@@ -197,11 +237,20 @@ class PlayerMemoryReader extends EventEmitter {
   }
   stop() {
     this.epoch++; const child = this.child; this.child = null; this.pid = null; this.session = null;
-    this.identity = null; this.lastSampleAt = null; this.lastDropSampleAt = null;
+    this.run = null;
+    this.identity = null; this.processStartMs = null; this.lastSampleAt = null; this.lastDropSampleAt = null;
     try { child?.kill(); } catch { /* Already exited. */ }
     this._status('stopped', null);
   }
   getState() { return this.lastStatus || { status: 'stopped', trackingSession: null }; }
+  getDiagnostics() {
+    const state = this.getState(), run = this.run;
+    return { readerRunning: !!this.child && run?.endedAt === null, readerStage: state.status === 'searching' && run ? run.phase : state.status,
+      readerElapsedSeconds: run ? Math.max(0, Math.floor(((run.endedAt ?? this.now()) - run.startedAt) / 1000)) : null,
+      firstReaderPoseMs: run?.firstPoseMs ?? null, scanProgressPercent: state.scanProgress ?? null,
+      latestPassBytesRead: run?.pass.bytesScanned ?? null, plannedScanBytes: run?.pass.plannedScanBytes ?? null,
+      skippedDeviceBytes: run?.pass.skippedDeviceBytes ?? null, completedPasses: run?.completedPasses ?? 0 };
+  }
 }
 
 module.exports = { PlayerMemoryReader, parseMessage, helperPath, HELPER, LINUX_HELPER, MAX_LINE_BYTES, MAX_CARRY_BYTES, MAX_DUNGEON_ROOTS, MAX_DUNGEON_FRAMES };

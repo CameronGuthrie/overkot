@@ -14,6 +14,34 @@
   const playerOutlineColor = config => isColor(config?.playerMarkerOutlineColor) ? config.playerMarkerOutlineColor : DEFAULT_PLAYER_OUTLINE_COLOR;
   const outlineColor = config => isColor(config?.dungeonMapOutlineColor) ? config.dungeonMapOutlineColor : DEFAULT_OUTLINE_COLOR;
 
+  function bindTileStatus(element, openConnections) {
+    const status = element.querySelector('[role="status"]');
+    const connect = element.querySelector('button');
+    // Let native buttons handle focus, Enter and Space without capturing a map drag.
+    connect.addEventListener('pointerdown', event => event.stopPropagation());
+    connect.addEventListener('click', openConnections);
+    return (labels, { visible, painted, failed, requiresSignIn }) => {
+      const ready = visible === painted;
+      const needsConnection = failed && requiresSignIn;
+      let message = '';
+      if (needsConnection) {
+        message = labels.mapTilesSignIn || 'Connect your avakot.dev account in Settings → Connections to download map tiles.';
+        const label = labels.settingsAvakotSignIn || 'Sign in with avakot.dev';
+        if (connect.textContent !== label) connect.textContent = label;
+        if (connect.title !== message) connect.title = message;
+      } else if (failed) {
+        message = labels.mapTilesUnavailable || 'Map tiles unavailable. In Settings → Game files, select Check for new data to retry.';
+      } else if (!ready) {
+        message = labels.mapTilesLoading || 'Loading map tiles…';
+      }
+      if (status.textContent !== message) status.textContent = message;
+      if (connect.hidden === needsConnection) connect.hidden = !needsConnection;
+      element.classList.toggle('loaded', ready);
+      element.classList.toggle('tile-connect', needsConnection);
+      element.classList.toggle('tile-notice', !ready && (painted > 0 || failed && !needsConnection));
+    };
+  }
+
   /** Draw the same outlined, inset-base direction marker in every map viewport. */
   function drawPlayerMarker(context, { x, y, heading, color, outlineColor, scale = 1 } = {}) {
     if (![x, y, scale].every(Number.isFinite) || scale <= 0) return false;
@@ -40,5 +68,5 @@
   }
 
   return { DEFAULT_PLAYER_COLOR, DEFAULT_PLAYER_OUTLINE_COLOR, DEFAULT_OUTLINE_COLOR, DEFAULT_OVERWORLD_ZOOM, isColor,
-    playerColor, playerOutlineColor, outlineColor, drawPlayerMarker };
+    playerColor, playerOutlineColor, outlineColor, drawPlayerMarker, bindTileStatus };
 });

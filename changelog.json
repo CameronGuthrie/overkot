@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "v0.0.23",
+      "changes": [
+        "Improved player-location detection on Windows when running Soulframe and Overkot without administrator privileges.",
+        "Fixed a misleading “Log in to Soulframe” message that could appear while you were already in Midrath.",
+        "Added Copy tracking report under Settings → Overlay → Player location to help diagnose slow searches. Settings also explains what to do when Windows denies access.",
+        "Both maps and affected cards in the Widgets menu now link to Settings → Connections when sign-in is needed. Missing tiles, item images, and icons load automatically after sign-in."
+      ]
+    },
+    {
       "version": "v0.0.22",
       "changes": [
         "Fixed an issue that prevented some icons from loading."

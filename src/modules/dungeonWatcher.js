@@ -26,7 +26,8 @@ const UNDERCITY_GENERATORS = new Set(['UnderCityAllTiles', 'UnderCityAlleys', 'U
 const LAYOUT = /(\/SF\/Levels\/Procs\/[^\s]+?)\/([A-Za-z0-9+\-]+)\.lp\b/;
 const GENERATED_LAYOUT = /(?:^|\b(?:Sys|Game)\s+\[Info\]:\s*)(\/SF\/Levels\/Procs\/[^\s]+?)\/([A-Za-z0-9+\-]+)\.lp\s*$/;
 const TRANSITION = /STATS (ENTER|EXIT)_LEVEL\s+(\/SF\/Levels\/\S+)/;
-const LOGOUT = /MainMenu\.lua: Main menu - LogOut\(\)|QUIT :Logged out of game|Game session has ended/;
+const LOGOUT = /MainMenu\.lua: Main menu - LogOut\(\)|QUIT :Logged out of game/;
+const LOGIN_EVENT = /^(?:\s*\d+(?:\.\d+)?\s+)?(?:\w+\s+\[Info\]:\s*)?(?:Logging in as\s+|(Logged in)(?=\s|$)(?:\s+[^\r\n]{1,128}?\s+\(([a-f0-9]{24})\))?)/i;
 const levelPathOf = path => {
   const clean = String(path || '').replace(/[.,]$/, '');
   // Connected sessions and some ENTER events identify the generated .lp
@@ -59,6 +60,24 @@ class DungeonWatcher {
     this._resetLog();
   }
   getState() { return this._replayTarget !== null ? { status: 'unknown', active: false } : { ...this._state }; }
+  isPlayerAreaCurrent(processStartMs) {
+    return this._replayTarget === null && Number.isFinite(processStartMs) && processStartMs > 0
+      && this._lastLogActivityMs >= processStartMs;
+  }
+  canUseAreaWithoutAccount(processStartMs) {
+    // A known log identity must be resolved by getPlayerAccountId, including
+    // its check for an inventory account belonging to a different session.
+    return this.isPlayerAreaCurrent(processStartMs) && !this._awaitingLogin && !this._accountId;
+  }
+  getPlayerAccountId(inventoryAccountId, processStartMs) {
+    if (this._replayTarget !== null) return null;
+    // Keep identity in the main process. Logs without a login record can
+    // still use the live inventory account, unless a logout was observed.
+    if (this._accountId === undefined) return inventoryAccountId || null;
+    if (inventoryAccountId && inventoryAccountId.toLowerCase() !== this._accountId) return null;
+    if (!inventoryAccountId && !this.isPlayerAreaCurrent(processStartMs)) return null;
+    return this._accountId;
+  }
   start() {
     if (this._interval) return;
     this._interval = setInterval(() => this._poll(), 500);
@@ -72,6 +91,9 @@ class DungeonWatcher {
     this._resetLog(); this._setState({ status: 'unknown', active: false });
   }
   _resetLog() {
+    this._accountId = undefined;
+    this._awaitingLogin = false;
+    this._lastLogActivityMs = 0;
     this._pos = 0; this._tail = ''; this._head = Buffer.alloc(0); this._fileIdentity = null;
     this._decoder = new StringDecoder('utf8'); this._replayTarget = null; this._batching = false; this._dirty = false;
     this._fingerprints = new Map(); this._entryIntent = null; this._location = null;
@@ -125,7 +147,19 @@ class DungeonWatcher {
   }
   _processLine(line) {
     if (!line) return;
-    if (LOGOUT.test(line)) { this._fingerprints.clear(); this._leave(); return; }
+    const login = LOGIN_EVENT.exec(line);
+    if (login || LOGOUT.test(line)) {
+      const completedLogin = !!login?.[1];
+      const accountId = login?.[2]?.toLowerCase() || null;
+      const switchedAccount = this._accountId && this._accountId !== accountId;
+      this._accountId = accountId;
+      this._awaitingLogin = !completedLogin;
+      if (!completedLogin || switchedAccount) {
+        this._fingerprints.clear(); this._leave();
+      }
+      return;
+    }
+    if (line.includes('Game session has ended')) { this._fingerprints.clear(); this._leave(); return; }
     // Destruction and prefetch messages repeat .lp paths. They are not new
     // generation events and must never bring a completed dungeon back.
     const destroyed = LAYOUT.exec(line);
@@ -186,6 +220,8 @@ class DungeonWatcher {
   }
   _openActiveLog() {
     const previous = this._candidateStats;
+    const previousPollMs = this._candidatePollMs;
+    this._candidatePollMs = Date.now();
     const files = new Map();
     for (const filename of this.candidates()) {
       try {
@@ -207,7 +243,7 @@ class DungeonWatcher {
       || files.get(b).mtimeMs - files.get(a).mtimeMs
       || Number(b === this._filePath) - Number(a === this._filePath));
     for (const filename of ranked) {
-      try { return { filename, fd: fs.openSync(filename, 'r') }; }
+      try { return { filename, fd: fs.openSync(filename, 'r'), previousStat: previous.get(filename), previousPollMs }; }
       catch { files.delete(filename); } // Metadata can be visible for a locked file.
     }
     return null;
@@ -228,10 +264,17 @@ class DungeonWatcher {
       const head = Buffer.alloc(Math.min(128, stat.size));
       const headBytes = fs.readSync(fd, head, 0, head.length, 0);
       const common = Math.min(headBytes, this._head.length);
-      if (stat.size < this._pos || !head.subarray(0, common).equals(this._head.subarray(0, common))
-          || (this._fileIdentity !== null && this._fileIdentity !== identity)) {
+      const replaced = stat.size < this._pos || !head.subarray(0, common).equals(this._head.subarray(0, common))
+          || (this._fileIdentity !== null && this._fileIdentity !== identity);
+      if (replaced) {
         this._resetLog(); this._replayTarget = stat.size; this._setState({ status: 'unknown', active: false });
       }
+      const before = opened.previousStat;
+      // A write observed between two polls happened after the earlier poll.
+      // Opening or replacing an old log is not evidence of a new game write.
+      const grew = !replaced && before && stat.size > before.size && before.dev === stat.dev
+        && before.ino === stat.ino && before.birthtimeMs === stat.birthtimeMs;
+      this._lastLogActivityMs = Math.max(this._lastLogActivityMs, stat.mtimeMs, grew ? opened.previousPollMs : 0);
       if (this._fileIdentity === null || this._replayTarget !== null) this._replayTarget = stat.size;
       this._fileIdentity = identity; this._head = head.subarray(0, headBytes);
       // The first header line is immutable while EE.log grows. Include file

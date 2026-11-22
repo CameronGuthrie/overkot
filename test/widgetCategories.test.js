@@ -9,9 +9,10 @@ const renderer = fs.readFileSync(path.join(__dirname, '../src/renderer/widgets-w
 const english = require('../langs/en.json');
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
-function fixture({ beta = false, config = {}, translations = {}, save = async () => true } = {}) {
+function fixture({ beta = false, config = {}, translations = {}, getState = async () => ({ config }), save = async () => true } = {}) {
   const nodes = new Map(), events = new Map(), writes = [];
-  let onConfig;
+  const settingsOpened = [];
+  let onConfig, onConnections;
   const document = { title: '', documentElement: {}, activeElement: null };
   class Element {
     constructor(tagName = 'div') {
@@ -41,8 +42,10 @@ function fixture({ beta = false, config = {}, translations = {}, save = async ()
   document.createElement = tagName => new Element(tagName);
   document.addEventListener = (event, callback) => events.set(event, callback);
   const window = { i18n: { titleTrackerEnabled: beta }, WidgetIcons: { create: () => new Element('svg') }, api: {
-    getState: async () => ({ config }), windowClose() {},
+    getState, windowClose() {},
+    openSettings: tab => settingsOpened.push(tab),
     onConfigChanged: callback => { onConfig = callback; },
+    onWidgetConnectionsChanged: callback => { onConnections = callback; },
     saveConfig: async patch => { writes.push(JSON.parse(JSON.stringify(patch))); return save(patch); },
   } };
   const context = vm.createContext({ window, document, TRANSLATIONS: { en: english, ...translations } });
@@ -51,11 +54,13 @@ function fixture({ beta = false, config = {}, translations = {}, save = async ()
   const groups = () => document.querySelector('#widgets-body').children;
   const cards = group => group.children[1].children;
   const allCards = () => groups().flatMap(cards);
-  return { context, document, writes, nodes, groups, cards, allCards,
+  return { context, document, writes, nodes, groups, cards, allCards, settingsOpened,
     definitions: () => Array.from(vm.runInContext('WIDGET_DEFS', context)),
     config: next => onConfig(next),
+    connections: ids => onConnections(ids),
     search(query) { const input = nodes.get('#widgets-search'); input.value = query; input.trigger('input'); },
     checkbox(id) { return allCards().find(card => card.dataset.widget === id).children.find(child => child.tagName === 'input'); },
+    connect(id) { return allCards().find(card => card.dataset.widget === id).children.find(child => child.tagName === 'button'); },
   };
 }
 
@@ -142,4 +147,47 @@ test('changing language reorders the same cards and retains checkbox focus and s
   assert.equal(f.checkbox('boss'), checkbox);
   assert.equal(f.document.activeElement, checkbox);
   assert.equal(checkbox.checked, true);
+});
+
+test('connect actions open Connections separately from widget visibility and follow the latest eligibility', async () => {
+  const f = fixture({ getState: async () => ({ config: { widgetVisibility: { minimap: true } },
+    widgetConnections: { minimap: 'account', market: 'market', 'collection-log': 'artwork', cosmetics: 'artwork' } }) });
+  await tick();
+  const visibleActions = () => f.allCards().filter(card => !f.connect(card.dataset.widget).hidden).map(card => card.dataset.widget).sort();
+  assert.deepEqual(visibleActions(), ['collection-log', 'cosmetics', 'market', 'minimap']);
+  const connect = f.connect('minimap');
+  assert.equal(connect.textContent, english.settingsAvakotSignIn);
+  assert.equal(f.connect('market').textContent, english.marketUiOpenConnections);
+  assert.equal(f.connect('collection-log').textContent, 'Sign in to load images');
+  f.connect('cosmetics').trigger('click');
+  assert.equal(f.checkbox('cosmetics').checked, false);
+  const card = connect.parent;
+  const label = card.children.find(child => child.tagName === 'label');
+  const checkbox = f.checkbox('minimap');
+  assert.equal(label.htmlFor, checkbox.id);
+  assert.equal(connect.attributes['aria-describedby'], label.id);
+  assert.equal(label.contains(connect), false);
+  connect.trigger('click');
+  assert.deepEqual(f.settingsOpened, ['connections', 'connections']);
+  assert.deepEqual(f.writes, []);
+  assert.equal(checkbox.checked, true);
+  connect.focus();
+  f.connections({ market: 'market' });
+  assert.deepEqual(visibleActions(), ['market']);
+  assert.equal(f.document.activeElement, checkbox, 'Hiding the focused action leaves focus on its widget');
+  f.connections({});
+  assert.deepEqual(visibleActions(), []);
+});
+
+test('a late initial widget snapshot cannot restore a stale sign-in button', async () => {
+  const state = Promise.withResolvers();
+  const f = fixture({ getState: () => state.promise });
+  f.connections({});
+  state.resolve({ config: {}, widgetConnections: { minimap: 'account' } });
+  await tick();
+  assert.equal(f.connect('minimap').hidden, true);
+  f.connections({ 'temper-tracker': 'artwork' });
+  assert.equal(f.connect('temper-tracker').hidden, false);
+  assert.equal(f.connect('temper-tracker').textContent, 'Sign in to load images');
+  assert.equal(f.connect('minimap').hidden, true);
 });

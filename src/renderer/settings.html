@@ -71,6 +71,8 @@
           <h2 data-i18n="settingsPlayerLocation">Player location</h2>
           <label class="settings-check"><input type="checkbox" id="chk-live-player-tracking" aria-describedby="player-tracking-status player-tracking-hint"><span data-i18n="settingsTrackPlayerPosition">Track player position and facing</span></label>
           <p id="player-tracking-status" class="settings-hint" role="status" aria-live="polite" data-i18n="settingsWaitingForTracking">Waiting for player tracking…</p>
+          <button type="button" class="settings-button" id="copy-player-tracking-report" data-i18n="settingsCopyTrackingReport">Copy tracking report</button>
+          <span id="player-tracking-report-result" class="settings-hint" role="status"></span>
           <!-- Legacy screenshot positioning: Use Find position with F6 on the minimap when live tracking is unavailable. -->
           <p id="player-tracking-hint" class="settings-hint" data-i18n="settingsCenterOnPlayerHint">Use Center on player on either map to return to your live position.</p>
         </div>
@@ -207,7 +209,7 @@
         <header class="settings-panel-header"><h1 data-i18n="settingsConnections">Connections</h1><p data-i18n="settingsConnectionsHint">Connect your account to share your Soulframe identity and game status.</p></header>
         <div class="settings-section" id="avakot-account-settings">
           <div class="section-heading"><h2 data-i18n="settingsAvakotAccount">avakot.dev account</h2><span id="avakot-account-badge" class="settings-badge"></span></div>
-          <p class="settings-hint" data-i18n="settingsAvakotSharedAccountHint">Connect your avakot.dev account through your browser to use Market and share your resolved Soulframe name and game status. You can create an account there.</p>
+          <p class="settings-hint" data-i18n="settingsAvakotSharedAccountHint">Connect your avakot.dev account through your browser to download map tiles and game data, use Market, and share your Soulframe name and game status. You can create an account there.</p>
           <p id="avakot-account-status" class="settings-hint" role="status" aria-live="polite"></p>
           <dl id="avakot-account-details" class="settings-account-details" hidden>
             <div><dt data-i18n="settingsAvakotAccountName">Account</dt><dd id="avakot-account-name"></dd></div>

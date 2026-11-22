@@ -110,6 +110,11 @@ contextBridge.exposeInMainWorld('api', {
   },
 
   getInventoryWidget: id => ipcRenderer.invoke('inventory-widget:get', id),
+  onGameArtworkAvailable: callback => {
+    const listener = () => callback();
+    ipcRenderer.on('game-artwork-available', listener);
+    return () => ipcRenderer.removeListener('game-artwork-available', listener);
+  },
   inventoryWidgetAction: (id, action) => ipcRenderer.invoke('inventory-widget:action', id, action),
   onInventoryWidgetChanged: (id, callback) => {
     const listener = (_event, widgetId, snapshot) => { if (widgetId === id) callback(snapshot); };
@@ -198,7 +203,7 @@ contextBridge.exposeInMainWorld('api', {
   windowDragEnd: (cancelled) => ipcRenderer.send('window-drag-end', !!cancelled),
 
   // Popout windows
-  openSettings: () => ipcRenderer.send('open-settings'),
+  openSettings: section => ipcRenderer.send('open-settings', section === 'connections' ? section : undefined),
   onSettingsSection: callback => {
     const listener = (_event, section) => callback(section);
     ipcRenderer.on('settings:section', listener);
@@ -206,6 +211,11 @@ contextBridge.exposeInMainWorld('api', {
   },
   openChangelog: () => ipcRenderer.send('open-changelog'),
   openWidgets: () => ipcRenderer.send('open-widgets'),
+  onWidgetConnectionsChanged: callback => {
+    const listener = (_event, ids) => callback(ids);
+    ipcRenderer.on('widget-connections-changed', listener);
+    return () => ipcRenderer.removeListener('widget-connections-changed', listener);
+  },
   openGroupFinder: () => ipcRenderer.send('open-group-finder'),
   openTutorial: (id = 'app') => ipcRenderer.invoke('tutorial:open', id),
   completeTutorial: id => ipcRenderer.invoke('tutorial:complete', id),
@@ -313,7 +323,9 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.on('map-language-updated', (_e, locale) => callback(locale));
   },
   onMapTilesUpdated: (callback) => {
-    ipcRenderer.on('map-tiles-updated', (_e, info) => callback(info));
+    const listener = (_event, info) => callback(info);
+    ipcRenderer.on('map-tiles-updated', listener);
+    return () => ipcRenderer.removeListener('map-tiles-updated', listener);
   },
 
   // Live character location with an explicit F6 capture fallback.
@@ -326,6 +338,7 @@ contextBridge.exposeInMainWorld('api', {
     return () => ipcRenderer.removeListener('player-location', listener);
   },
   getPlayerTracking: () => ipcRenderer.invoke('get-player-tracking'),
+  copyPlayerTrackingReport: () => ipcRenderer.invoke('copy-player-tracking-report'),
   onPlayerTrackingChanged: (callback) => {
     const listener = (_e, data) => callback(data);
     ipcRenderer.on('player-tracking-changed', listener);

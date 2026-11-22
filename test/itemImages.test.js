@@ -57,6 +57,10 @@ test('missing and failed images retain their fallback and thumbnail geometry', (
   assert.equal(image.hidden, true); assert.equal(failed.children[0].tagName, 'svg');
   assert.equal(failed.classList.contains('is-loaded'), false); assert.equal(failed.classList.contains('is-missing'), true);
   assert.match(failed.className, /item-thumbnail/);
+  image.emit('load');
+  assert.equal(image.hidden, false);
+  assert.equal(failed.classList.contains('is-missing'), false);
+  assert.equal(failed.classList.contains('is-loaded'), true);
 });
 
 test('discovery and palette slots use explicit category artwork when their item has no image', () => {

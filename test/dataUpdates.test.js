@@ -614,6 +614,17 @@ test('initialization removes orphan objects while preserving active objects and 
   assert.equal(await fs.readFile(path.join(nestedDirectory, 'nested.txt'), 'utf8'), 'keep nested');
 });
 
+test('first visible map tiles load from a cold cache without waiting for startup warmup or renderer IPC', async t => {
+  const f = await fixture(t);
+  const map = new MapTileManager({ dataManager: f.manager });
+  assert.equal(await map.getTilePath('196.webp'), null);
+  assert.equal(f.requests.length, 0);
+  const tiles = await Promise.all(['90.webp', '91.webp', '90.webp'].map(name => map.getTilePath(name)));
+  assert.deepEqual(await Promise.all(tiles.map(filename => fs.readFile(filename, 'utf8'))), ['tile 90', 'tile 91', 'tile 90']);
+  assert.equal(f.requests.filter(r => r.url === '/manifest.json').length, 1);
+  assert.equal(f.assets().length, 2);
+});
+
 test('map warmup fills the shared disk cache before connection, deduplicates visible requests and reuses unchanged images', async t => {
   const f = await fixture(t);
   const errors = [];
