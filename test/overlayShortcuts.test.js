@@ -44,7 +44,9 @@ function fixture() {
   const win = { isDestroyed: () => false, webContents: { send() {} } };
   let save, capture;
   const ctx = vm.createContext({
-    OverlayShortcuts, TITLE_TRACKER_ENABLED: false, platformSupport: { platform: 'win32' }, playerTracking: { pid: 4321 },
+    // This runtime fixture represents Windows even when the host runs Linux.
+    OverlayShortcuts: { ...OverlayShortcuts, shortcutPatch: (current, patch) => shortcutPatch(current, patch, 'win32') },
+    TITLE_TRACKER_ENABLED: false, platformSupport: { platform: 'win32' }, playerTracking: { pid: 4321 },
     settingsWindow: { ...win, isFocused: () => true, getNativeWindowHandle: () => Buffer.from([33, 0, 0, 0, 0, 0, 0, 0]) },
     BrowserWindow: { fromWebContents: () => ctx.settingsWindow, getAllWindows: () => [win] },
     mainWindow: win, calendarSettingsWindow: null, dungeonOverlayWindow: null, marketWindow: null, dailyBriefWindow: null,
