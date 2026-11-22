@@ -247,6 +247,7 @@ function applyConfigToDOM() {
   populateInteractionHotkey();
   $('#hotkey-row').hidden = false;
   $('#dock-edge-select').value = ['top', 'bottom', 'left', 'right'].includes(config.dockEdge) ? config.dockEdge : 'bottom';
+  $('#window-close-focus-select').value = config.windowCloseFocus ?? 'game';
   renderOverlayDisplays();
   renderOverlayHotkey();
   $('#settings-content').inert = !initialized;
@@ -486,6 +487,7 @@ function captureOverlayHotkey(event) {
 }
 
 function renderPlatformSupport() {
+  $('#window-close-focus-row').hidden = platformSupport.platform !== 'win32';
   const note = $('#platform-support-note');
   note.hidden = !platformSupport.experimental;
   note.textContent = platformSupport.gameConnection === false
@@ -927,6 +929,7 @@ function bindEvents() {
   }
   $('#hotkey-select').addEventListener('change', () => changeInteractionHotkey($('#hotkey-select').value));
   $('#dock-edge-select').addEventListener('change', () => queueConfig({ dockEdge: $('#dock-edge-select').value }));
+  $('#window-close-focus-select').addEventListener('change', () => queueConfig({ windowCloseFocus: $('#window-close-focus-select').value }));
   $('#dock-display-select').addEventListener('change', () => changeOverlayDisplay($('#dock-display-select').value));
   $('#overlay-hotkey-capture').addEventListener('click', startOverlayHotkeyCapture);
   $('#overlay-hotkey-reset').addEventListener('click', () => changeOverlayHotkey('Shift+F2'));

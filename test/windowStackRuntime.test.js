@@ -36,7 +36,7 @@ function fixture() {
     groupFinderWindow: null, marketWindow: null, dailyBriefWindow: null, wikiWindow: null, calendarSettingsWindow: null, updateWindow: null,
     alertWindows: new Set([alert]), layoutGridWindows: new Map(), setImmediate: callback => pending.push(callback),
     overlayHiddenByUser: false, gameHiddenActive: false, mainHiddenForFocus: false, dockAutoHidden: false,
-    marketShutdownStarted: false, appStatus: 'connected', gameFocusedActive: true,
+    marketShutdownStarted: false, appStatus: 'connected', gameFocusedActive: true, gameFocusRequest: null,
     config: { get: (key, fallback) => settings[key] ?? fallback }, BrowserWindow: { getAllWindows: () => windows },
     isCollapsed: false, overlayInteractive: false, isAnyOverlayWindowFocused: () => false,
     setLayoutEditing() {}, clearTimeout() {}, shiftStartTimer: null,

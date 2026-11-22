@@ -49,6 +49,13 @@ test('nearby weapon markers default on and preserve an explicit opt-out across r
   assert.equal(migration(disabled).showWorldDrops, false);
 });
 
+test('window close focus defaults to the game and retains valid saved choices on reload', () => {
+  assert.equal(configClass().defaults().windowCloseFocus, 'game');
+  assert.equal(migration({}).windowCloseFocus, 'game');
+  for (const value of ['desktop', 'overlay', 'game']) assert.equal(migration({ windowCloseFocus: value }).windowCloseFocus, value);
+  for (const invalid of ['previous', null, false, {}]) assert.equal(migration({ windowCloseFocus: invalid }).windowCloseFocus, 'game');
+});
+
 test('progressive dungeon reveal defaults on and preserves only an explicit opt-out across reloads', () => {
   const ConfigStore = configClass();
   for (const platform of ['win32', 'linux', 'darwin']) assert.equal(ConfigStore.defaults(platform).dungeonMapProgressiveReveal, true);

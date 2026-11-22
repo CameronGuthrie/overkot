@@ -60,7 +60,7 @@ const shortcutCallbacks = new Map();
 let cursor = { x: 500, y: 300 }, layoutMonitor, releaseGameProcess;
 let displayWorkAreaOverride = null;
 let simulatedGamePresent = false, simulatedGameForeground = true;
-let gameFocusTarget, gameFocusRequests = 0;
+let gameFocusTarget, desktopFocusTarget, gameFocusRequests = 0, desktopFocusRequests = 0;
 let dungeonState = { active: false, status: 'outside' }, dungeonChanged;
 const dungeonTable = require('../test/fixtures/underCityCliffCave.json');
 const dungeonFixture = {
@@ -99,13 +99,22 @@ Module._load = function(request, parent, isMain) {
   if (request.endsWith('/modules/layoutKeyMonitor')) return {
     startLayoutKeyMonitor: callbacks => { layoutMonitor = callbacks; return { stop() {} }; },
   };
+  if (request.endsWith('/modules/desktopFocus')) return {
+    async focusDesktop({ signal } = {}) {
+      if (signal?.aborted || !desktopFocusTarget) return false;
+      desktopFocusRequests++;
+      desktopFocusTarget.show(); desktopFocusTarget.focus();
+      return true;
+    },
+  };
   if (request.endsWith('/modules/processDetector')) return { ProcessDetector: class {
     waitForProcess() { return new Promise(resolve => { releaseGameProcess = () => { simulatedGamePresent = true; resolve(4321); }; }); }
     findProcess() { return Promise.resolve(simulatedGamePresent ? 4321 : 0); }
     isProcessRunning() { return simulatedGamePresent; }
     startForegroundMonitor() { this._fgProc = {}; } stopForegroundMonitor() { this._fgProc = null; }
     isProcessForeground() { return Promise.resolve(simulatedGameForeground); }
-    async focusGameWindow() {
+    async focusGameWindow({ signal } = {}) {
+      if (signal?.aborted || !simulatedGamePresent && !dungeonState.active) return false;
       gameFocusRequests++;
       gameFocusTarget.show(); gameFocusTarget.focus();
       return true;
@@ -195,6 +204,50 @@ async function ready(file, widget) {
 const evaluate = (win, code) => win.webContents.executeJavaScript(code);
 async function save(main, patch) { await evaluate(main, `window.api.saveConfig(${JSON.stringify(patch)})`); await pause(100); }
 async function getState(main) { return evaluate(main, 'window.api.getState()'); }
+async function checkCloseDestinations(main) {
+  await save(main, { showOnlyWhenGameFocused: false });
+  // The native activation targets are real, separate windows. The stand-ins
+  // keep this check independent of Soulframe and the user's shell session.
+  gameFocusTarget = new BrowserWindow({ show: false, skipTaskbar: true, width: 100, height: 80 });
+  desktopFocusTarget = new BrowserWindow({ show: false, skipTaskbar: true, width: 100, height: 80 });
+  try {
+    await Promise.all([gameFocusTarget.loadURL('about:blank'), desktopFocusTarget.loadURL('about:blank')]);
+    let previous = 'game';
+    for (const target of ['overlay', 'desktop', 'game']) {
+      if (!(await getState(main)).overlayInteractive) shortcutCallbacks.get('Shift+F1')();
+      layoutMonitor.onForeground(process.pid);
+      main.focus();
+      await until(() => main.isFocused() && ignoredMouseEvents.get(main) === false, 'interactive sidebar before opening Settings');
+      await evaluate(main, "document.getElementById('settings-btn').click()");
+      const settings = await ready('settings.html');
+      await until(async () => settings.isFocused() && await evaluate(settings, 'initialized'), 'focused Settings');
+      await evaluate(settings, "document.getElementById('tab-overlay').click()");
+      assert.equal(await evaluate(settings, "document.getElementById('window-close-focus-select').value"), previous);
+      const gamesBeforeClose = gameFocusRequests, desktopsBeforeClose = desktopFocusRequests;
+      await evaluate(settings, `(() => {
+        const select = document.getElementById('window-close-focus-select');
+        select.value = ${JSON.stringify(target)};
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        if (select.value !== 'desktop') document.getElementById('close-btn').click();
+      })()`);
+      if (target === 'desktop') {
+        // Native close (e.g. Alt+F4) bypasses the renderer's close button.
+        await until(async () => (await getState(main)).config.windowCloseFocus === target, 'saved Desktop selection');
+        settings.close();
+      }
+      const expectedWindow = target === 'overlay' ? main : target === 'game' ? gameFocusTarget : desktopFocusTarget;
+      await until(() => settings.isDestroyed() && expectedWindow.isFocused(), 'Settings closes onto ' + target);
+      assert.equal((await getState(main)).overlayInteractive, target === 'overlay');
+      assert.equal(gameFocusRequests - gamesBeforeClose, Number(target === 'game'));
+      assert.equal(desktopFocusRequests - desktopsBeforeClose, Number(target === 'desktop'));
+      assert.equal(new ConfigStore().get('windowCloseFocus'), target, 'preference survives a fresh config load');
+      previous = target;
+    }
+    checks.push('Settings closes onto the selected game, overlay or desktop window after an immediate X click or native window close');
+  } finally {
+    gameFocusTarget.destroy(); desktopFocusTarget.destroy();
+  }
+}
 async function capture(win, name) {
   await pause(120);
   const filename = path.join(out, name + '.png');
@@ -615,14 +668,17 @@ app.whenReady().then(async () => {
   const closeRestoreMap = await ready('dungeon-overlay.html');
   await until(() => closeRestoreMap.isFocused() && ignoredMouseEvents.get(closeRestoreMap) === false, 'expansion activates dungeon interaction');
   await evaluate(closeRestoreMap, "document.querySelector('[data-action=close]').click()");
-  await until(() => !find('dungeon-overlay.html') && minimap.isVisible() && panels.every(win => ignoredMouseEvents.get(win) === true), 'closing implicitly activated dungeon restores widget click-through');
+  await until(() => !find('dungeon-overlay.html') && minimap.isVisible() && main.isFocused()
+    && ignoredMouseEvents.get(main) === false, 'closing the focused dungeon returns to Overkot when Soulframe is absent');
+  shortcutCallbacks.get('Shift+F1')();
+  await until(() => ignoredMouseEvents.get(main) === true, 'release overlay interaction before automatic dungeon exit');
   await evaluate(minimap, "document.querySelector('.dungeon-map [data-action=expand]').click()");
   await ready('dungeon-overlay.html');
   dungeonState = { active: false, status: 'outside' }; dungeonChanged(dungeonState);
   await until(() => !find('dungeon-overlay.html') && minimap.isVisible(), 'leaving dungeon closes large map and restores minimap');
   await save(main, { widgetVisibility: { boss: true, wiki: true, clock: true } });
   checks.push('dungeon expansion opens a full-screen transparent map, retains Mini-Map preference and restores it on close or dungeon exit');
-  checks.push('closing a dungeon map that enabled interaction restores panel click-through');
+  checks.push('closing the active dungeon uses the selected game destination with an interactive overlay fallback');
   outside.destroy();
   await save(main, { dockAutoHide: false, showOnlyWhenGameFocused: true });
   await until(() => typeof releaseGameProcess === 'function', 'controlled game detector');
@@ -642,6 +698,7 @@ app.whenReady().then(async () => {
   await until(() => main.isVisible() && [boss, wiki, clock].every(win => win.isVisible()), 'user restore after focus-only hide');
   for (const win of [main, boss, wiki, clock]) win.setFocusable(true);
   checks.push('visibility chord recovers an overlay previously hidden by game focus without stale flags');
+  await checkCloseDestinations(main);
   assert.deepEqual(errors, []); assert.deepEqual(failedLoads, []);
   const summary = { ok: true, checks, geometry, errors, failedLoads, requests: requests.length, screenshots };
   fs.writeFileSync(path.join(out, 'summary.json'), JSON.stringify(summary, null, 2));

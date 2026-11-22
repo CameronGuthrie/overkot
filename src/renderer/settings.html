@@ -79,6 +79,14 @@
           <label class="settings-check"><input type="checkbox" id="chk-launch-to-tray"><span id="lbl-launch-to-tray" data-i18n="launchToTray">Launch to tray</span></label>
           <label class="settings-check"><input type="checkbox" id="chk-hide-when-game-closed"><span id="lbl-hide-when-game-closed" data-i18n="hideWhenGameClosed">Hide widgets when the game is closed</span></label>
           <label class="settings-check"><input type="checkbox" id="chk-show-only-when-game-focused"><span id="lbl-show-only-when-game-focused" data-i18n="showOnlyWhenGameFocused">Show overlay only when Soulframe is focused</span></label>
+          <div id="window-close-focus-row" class="option-row" hidden>
+            <label for="window-close-focus-select" data-i18n="settingsWindowCloseFocus">Focus after closing a window</label>
+            <select id="window-close-focus-select" class="custom-select">
+              <option value="game">Soulframe</option>
+              <option value="overlay" data-i18n="settingsWindowCloseFocusOverlay">Overkot overlay</option>
+              <option value="desktop" data-i18n="settingsWindowCloseFocusDesktop">Desktop</option>
+            </select>
+          </div>
           <div class="option-row hotkey-capture-row"><label id="lbl-overlay-hotkey" for="overlay-hotkey-capture" data-i18n="settingsOverlayHotkey">Show / hide overlay</label><button id="overlay-hotkey-capture" class="settings-button hotkey-capture" type="button" aria-describedby="overlay-hotkey-hint" aria-pressed="false">Shift + F2</button><button id="overlay-hotkey-reset" class="settings-button" type="button" data-i18n="settingsHotkeyReset">Reset</button></div>
           <p id="overlay-hotkey-hint" class="settings-hint" role="status" aria-live="polite">Click the shortcut, then press a modifier and a key. Escape cancels.</p>
         </div>

@@ -30,7 +30,7 @@ function visibilityFixture() {
   const windows = [rail, panel, closedPanel, settingsWindow, closedPopout];
   let registrationResult = true;
   const context = vm.createContext({ tutorialWindow: null, updateWindow: null,
-    overlayHiddenByUser: false, gameHiddenActive: false, mainHiddenForFocus: false,
+    overlayHiddenByUser: false, gameHiddenActive: false, mainHiddenForFocus: false, gameFocusRequest: null,
     appStatus: 'connected', gameFocusedActive: true, platformSupport: { gameConnection: true, gameFocusTracking: true },
     isAnyOverlayWindowFocused: () => windows.some(win => win.focused), isCollapsed: false, mainWindow: rail,
     widgetWindows: new Map([['map', panel], ['calendar', closedPanel]]), dockWindow: null, alertWindows: new Set(),

@@ -44,6 +44,25 @@ test('Overlay monitor changes save their native numeric ID through the normal co
   assert.equal(f.saves.length, 1);
 });
 
+test('the Windows close-focus control saves the destination before Settings closes', async () => {
+  let finishSave;
+  const f = fixture({ save: () => new Promise(resolve => { finishSave = resolve; }) });
+  const row = f.node('#window-close-focus-row');
+  for (const platform of ['linux', 'darwin', 'win32']) {
+    f.run(`platformSupport = {platform: '${platform}'}; renderPlatformSupport()`);
+    assert.equal(row.hidden, platform !== 'win32');
+  }
+  f.run('let closed = false; window.api.windowClose = () => { closed = true; }');
+  const select = f.node('#window-close-focus-select');
+  select.value = 'desktop'; select.change();
+  f.node('#close-btn').click();
+  assert.deepEqual(f.saves, [{ windowCloseFocus: 'desktop' }]);
+  assert.equal(f.run('closed'), false);
+  finishSave(true); await turn();
+  assert.equal(f.run('confirmedConfig.windowCloseFocus'), 'desktop');
+  assert.equal(f.run('closed'), true);
+});
+
 test('a failed monitor save restores the confirmed selection', async () => {
   const f = fixture({ save: async () => false }); f.receive(payload());
   f.node('#dock-display-select').value = '22'; f.node('#dock-display-select').change(); await turn();

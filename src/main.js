@@ -48,7 +48,8 @@ const { collectInventoryNames } = require('./renderer/inventory-format');
 const { ApiClient } = require('./modules/apiClient');
 const { Updater, CURRENT_VERSION } = require('./modules/updater');
 const { mergeChangelog } = require('./modules/releaseNotes');
-const { ConfigStore } = require('./modules/config');
+const { ConfigStore, isWindowCloseFocus } = require('./modules/config');
+const { focusDesktop } = require('./modules/desktopFocus');
 const { offerStartupLayout, restoreStartupSavedLayout } = require('./modules/startupLayout');
 const { CalendarService } = require('./modules/calendar');
 const { CalendarFeed } = require('./modules/calendarFeed');
@@ -710,6 +711,7 @@ app.on('before-quit', event => {
   event.preventDefault();
   if (marketShutdownStarted) return;
   marketShutdownStarted = true;
+  gameFocusRequest?.abort();
   moonsteelAlertWindow.close();
   syncAlertVisibility();
   // Release the overlay's in-game status before exiting, but slow/offline
@@ -801,6 +803,21 @@ function isAnyOverlayWindowFocused() {
 /** Attach a blur handler that exits interactive mode when focus leaves all overlay windows. */
 function attachOverlayBlurHandler(win) {
   configureOverlayPopout(win, mainWindow, platformSupport);
+  if (platformSupport.platform === 'win32' && win !== mainWindow) {
+    let foregroundClose;
+    win.on('close', event => {
+      foregroundClose = !win._skipCloseFocus && win.isFocused() && win.isVisible()
+        && !overlayHiddenByUser && !marketShutdownStarted ? event : null;
+      win._skipCloseFocus = false;
+    });
+    win.once('closed', () => {
+      // Let all synchronous window/discovery cleanup finish before applying the
+      // user's destination. A cancelled close or a programmatic destroy never routes.
+      if (foregroundClose && !foregroundClose.defaultPrevented) {
+        setImmediate(() => { void restoreWindowCloseFocus(); });
+      }
+    });
+  }
   win.on('minimize', () => {
     if (win === dailyBriefWindow) { pushDockState(); return; }
     setOverlayHidden(true);
@@ -912,6 +929,46 @@ function toggleOverlayInteraction(forceOff = false) {
     applyOverlayMousePolicy();
     focusOverlay();
     log('HOTKEY', 'Overlay -> interactive');
+  }
+}
+
+function closeWithoutChangingFocus(win) {
+  if (win && !win.isDestroyed()) {
+    win._skipCloseFocus = true;
+    win.close();
+  }
+}
+
+async function restoreWindowCloseFocus() {
+  if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized() || overlayHiddenByUser || marketShutdownStarted) return;
+  gameFocusRequest?.abort();
+  gameFocusRequest = null;
+  const target = config.get('windowCloseFocus', 'game');
+  function returnToOverlay() {
+    overlayInteractive = true;
+    applyOverlayMousePolicy();
+    focusOverlay();
+  }
+  if (target === 'overlay' || (target === 'game' && (!detector || appStatus === 'waiting'))) {
+    returnToOverlay();
+    return;
+  }
+
+  toggleOverlayInteraction(true);
+  const request = new AbortController();
+  gameFocusRequest = request;
+  try {
+    if (target === 'desktop') await focusDesktop({ signal: request.signal });
+    else if (!await detector.focusGameWindow({ signal: request.signal }) && !request.signal.aborted
+        && appStatus === 'waiting' && !overlayHiddenByUser && !marketShutdownStarted
+        && mainWindow && !mainWindow.isDestroyed() && isAnyOverlayWindowFocused()) {
+      // The game exited during handoff. Only restore our UI if we still own focus.
+      returnToOverlay();
+    }
+  } catch (error) {
+    if (!request.signal.aborted) log('FOCUS', `Could not focus ${target}: ${error.message}`);
+  } finally {
+    if (gameFocusRequest === request) gameFocusRequest = null;
   }
 }
 
@@ -1369,9 +1426,11 @@ function createTutorialWindow(id = 'app', replay = false) {
   win.once('closed', () => {
     if (tutorialWindow === win) tutorialWindow = null;
     if (!overlayInteractive || !mainWindow || mainWindow.isDestroyed() || overlayHiddenByUser) return;
-    overlayFocusRequestedAt = Date.now();
-    mainWindow.focus();
-    setTimeout(showPendingWidgetTutorial, 0);
+    if (platformSupport.platform !== 'win32') {
+      overlayFocusRequestedAt = Date.now();
+      mainWindow.focus();
+    }
+    setImmediate(showPendingWidgetTutorial);
   });
   return true;
 }
@@ -1420,7 +1479,7 @@ ipcMain.handle('tutorial:set-enabled', (event, enabled) => {
   broadcastDockConfig();
   // The renderer closes a tour only after the save has succeeded. Settings
   // can also switch tours off while a tour is open.
-  if (!enabled && host === settingsWindow && tutorialWindow && !tutorialWindow.isDestroyed()) tutorialWindow.close();
+  if (!enabled && host === settingsWindow) closeWithoutChangingFocus(tutorialWindow);
   return true;
 });
 
@@ -2123,6 +2182,7 @@ function setOverlayHidden(hidden) {
   if (overlayHiddenByUser === hidden) return;
   overlayHiddenByUser = hidden;
   if (hidden) {
+    gameFocusRequest?.abort();
     clearTimeout(shiftStartTimer);
     setLayoutEditing(false);
     if (overlayInteractive) toggleOverlayInteraction(true);
@@ -2385,7 +2445,7 @@ const layoutRuntime = createLayoutRuntime({ config, screen, getDockDisplay: dock
   onApplied: () => {
     closeDungeonOverlay();
     market.setEnabled(config.get('widgetVisibility', {}).market === true);
-    if (config.get('widgetVisibility', {}).daily !== true) dailyBriefPopout.close();
+    if (config.get('widgetVisibility', {}).daily !== true) closeWithoutChangingFocus(dailyBriefWindow);
     setDockAutoHidden(false);
     applyDockGeometry();
     syncWidgetWindows();
@@ -2449,7 +2509,7 @@ let mapWindow = null;
 let dungeonOverlayWindow = null;
 
 function closeDungeonOverlay() {
-  if (dungeonOverlayWindow && !dungeonOverlayWindow.isDestroyed()) dungeonOverlayWindow.close();
+  closeWithoutChangingFocus(dungeonOverlayWindow);
 }
 
 async function exitDungeonOverlayInteraction() {
@@ -2717,6 +2777,7 @@ ipcMain.handle('save-config', (_e, newConfig) => {
     || Object.hasOwn(newConfig, 'appearance') || Object.hasOwn(newConfig, 'appearancePresets') || Object.hasOwn(newConfig, 'savedLayouts') || Object.hasOwn(newConfig, 'startupLayoutId')
     || Object.hasOwn(newConfig, 'widgetSizes') || Object.hasOwn(newConfig, 'widgetResizeMode')) return false;
   newConfig = { ...newConfig };
+  if (Object.hasOwn(newConfig, 'windowCloseFocus') && !isWindowCloseFocus(newConfig.windowCloseFocus)) return false;
   // Older renderers and profiles cannot re-enable unattended app updates.
   delete newConfig.automaticUpdates;
   if (Object.hasOwn(newConfig, 'dockDisplayId')) {
@@ -2787,7 +2848,7 @@ ipcMain.handle('save-config', (_e, newConfig) => {
       if (enabled !== true || previousVisibility[id] !== true) open[id] = false;
     }
     config.set('widgetOpen', open);
-    if (newConfig.widgetVisibility.daily === false) dailyBriefPopout.close();
+    if (newConfig.widgetVisibility.daily === false) closeWithoutChangingFocus(dailyBriefWindow);
   }
 
   if (Object.hasOwn(newConfig, 'dockDisplayId')) {
@@ -2908,7 +2969,7 @@ ipcMain.on('window-close', (event) => {
   if (!win) return;
   // If a sub-window sends window-close, only destroy that sub-window.
   // Only the main window close should trigger the app exit cascade.
-  if (win === mainWindow) {
+  if (win === mainWindow || platformSupport.platform === 'win32') {
     win.close();
   } else {
     // Let resizable settings windows save their final size before closing.
@@ -2944,7 +3005,7 @@ ipcMain.on('open-dungeon-overlay', (event) => {
   if (win === mainWindow || win?._widgetId === 'minimap') createDungeonOverlay();
 });
 ipcMain.on('close-dungeon-overlay', (event) => {
-  if (BrowserWindow.fromWebContents(event.sender) === dungeonOverlayWindow) closeDungeonOverlay();
+  if (dungeonOverlayWindow && BrowserWindow.fromWebContents(event.sender) === dungeonOverlayWindow) dungeonOverlayWindow.close();
 });
 ipcMain.on('exit-dungeon-overlay-interaction', (event) => {
   if (dungeonOverlayWindow && !dungeonOverlayWindow.isDestroyed() && overlayInteractive

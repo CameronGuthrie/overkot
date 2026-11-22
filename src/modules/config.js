@@ -15,6 +15,8 @@ const WidgetSizing = require('./widgetSizing');
 const MoonsteelAlertSettings = require('./moonsteelAlertSettings');
 const { normalizeDisplayId } = require('./overlayDisplays');
 
+const isWindowCloseFocus = value => ['game', 'overlay', 'desktop'].includes(value);
+
 class ConfigStore {
   constructor() {
     this._dir = APP_DIR;
@@ -66,6 +68,7 @@ class ConfigStore {
       eeLogPath: '',
       screenshotDir: '',
       showOnlyWhenGameFocused: false,
+      windowCloseFocus: 'game',
       dockEdge: 'bottom',
       dockAutoHide: false,
       dockWidgetOrder: [],
@@ -102,6 +105,7 @@ class ConfigStore {
     data = migrateWidgetConfiguration(data);
     data.automaticUpdates = false;
     data.dockDisplayId = normalizeDisplayId(data.dockDisplayId);
+    if (!isWindowCloseFocus(data.windowCloseFocus)) data.windowCloseFocus = 'game';
     data.tutorialsEnabled = data.tutorialsEnabled !== false;
     data.dungeonMapProgressiveReveal = data.dungeonMapProgressiveReveal !== false;
     data.tutorialCompleted = normalizeTutorialCompleted(data.tutorialCompleted);
@@ -236,4 +240,4 @@ class ConfigStore {
   }
 }
 
-module.exports = { ConfigStore };
+module.exports = { ConfigStore, isWindowCloseFocus };

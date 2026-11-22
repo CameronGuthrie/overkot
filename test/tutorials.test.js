@@ -207,6 +207,7 @@ test('tutorial preference IPC accepts only Settings/tour boolean edits and keeps
   });
   const main = fs.readFileSync(path.join(__dirname, '../src/main.js'), 'utf8');
   const start = main.indexOf("ipcMain.handle('tutorial:complete'");
+  vm.runInContext(main.slice(main.indexOf('function closeWithoutChangingFocus('), main.indexOf('async function restoreWindowCloseFocus(')), context);
   vm.runInContext(main.slice(start, main.indexOf('// ─── Settings window', start)), context);
   const change = handlers.get('tutorial:set-enabled');
   assert.equal(change({ sender: {} }, false), false);
@@ -219,6 +220,7 @@ test('tutorial preference IPC accepts only Settings/tour boolean edits and keeps
   canSave = true;
   assert.equal(change({ sender: settingsWindow }, false), true);
   assert.equal(profile.tutorialsEnabled, false); assert.equal(pending.size, 0);
+  assert.equal(tutorialWindow._skipCloseFocus, true);
   assert.deepEqual(profile.tutorialCompleted, { app: true }); assert.deepEqual(calls, [['broadcast'], ['close']]);
   assert.equal(change({ sender: settingsWindow }, true), true);
   assert.equal(profile.tutorialsEnabled, true);
