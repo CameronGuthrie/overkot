@@ -6,9 +6,11 @@
 // remote renderer requests keep this check independent of the user's session.
 // --tutorials-only checks global tutorial controls without unrelated layout gestures.
 // --moonsteel-only checks alert preferences and the passive full-monitor preview.
+// --tracking-report-only checks the Settings clipboard action in isolated windows.
 if (process.platform !== 'win32') throw new Error('Settings native smoke requires Windows');
 if (!process.versions.electron) {
-  const result = require('./run-packaged-check').runPackagedCheck(__filename, process.argv.slice(2), 100000, { windowsHide: false });
+  const result = require('./run-packaged-check').runPackagedCheck(__filename, process.argv.slice(2), 100000,
+    { windowsHide: process.argv.includes('--tracking-report-only') });
   if (result.error) console.error(result.error.message);
   process.exit(result.status ?? 1);
 }
@@ -26,11 +28,13 @@ const root = path.resolve(__dirname, '..');
 const startedAt = Date.now();
 const phase = label => console.log(`[settings-check +${Date.now() - startedAt}ms] ${label}`);
 const nativeMouse = process.argv.includes('--native-mouse');
+const trackingReportOnly = process.argv.includes('--tracking-report-only');
 const startupOnly = process.argv.includes('--startup-only');
 const startupChoice = process.argv.find(value => value.startsWith('--startup-layout='))?.split('=')[1] || 'current';
 if (startupOnly && !['current', 'named'].includes(startupChoice)) throw new Error('Choose --startup-layout=current or named');
 const interactionHotkey = nativeMouse ? 'Control+Shift+F24' : 'Alt+F1';
-const appRoot = process.argv.includes('--source') ? root : path.join(root, 'dist', 'win-unpacked', 'resources', 'app.asar');
+const archivedApp = path.join(process.env.OVERKOT_PACKAGED_DIRECTORY || path.join(root, 'dist', 'win-unpacked'), 'resources', 'app.asar');
+const appRoot = process.argv.includes('--source') ? root : archivedApp;
 const out = path.join(root, 'output', `settings-smoke-${Date.now()}`);
 fs.mkdirSync(out, { recursive: true });
 // Appearance import/export exercises the real main-process file handling while
@@ -45,13 +49,13 @@ dialog.showSaveDialog = async () => {
   return filename ? { canceled: false, filePath: filename } : { canceled: true };
 };
 fs.mkdirSync(path.join(out, 'screenshots'));
-fs.writeFileSync(path.join(out, 'EE.log'), '');
+fs.writeFileSync(path.join(out, 'EE.log'), trackingReportOnly ? 'STATS ENTER_LEVEL /SF/Levels/Procs/MidrathProc\n' : '');
 process.env.LOCALAPPDATA = out;
 process.env.OVERKOT_DATA_MANIFEST_URL = 'http://127.0.0.1:1/manifest.json';
 process.env.OVERKOT_CALENDAR_MANIFEST_URL = 'http://127.0.0.1:1/calendar.json';
 app.setPath('userData', path.join(out, 'electron-profile'));
 // Do not resolve a private source-tree .env.local even with --source.
-app.getAppPath = () => path.join(root, 'dist', 'win-unpacked', 'resources', 'app.asar');
+app.getAppPath = () => archivedApp;
 const originalLoad = Module._load;
 Module._load = function(request, parent, isMain) {
   if (request.endsWith('/modules/marketConfig')) return { readMarketApiKey: () => '' };
@@ -75,7 +79,29 @@ cp.execFile[promisify.custom] = (file, args, options) => new Promise((resolve, r
   cp.execFile(file, args, options, (error, stdout, stderr) => error ? reject(error) : resolve({ stdout, stderr })));
 const originalSpawn = cp.spawn;
 let foregroundMonitor;
+let finishFixtureSearch;
+const isPositionReader = file => typeof file === 'string' && path.basename(file) === 'overkot-position-reader.exe';
+if (trackingReportOnly) {
+  const exists = fs.existsSync;
+  fs.existsSync = file => isPositionReader(file) || exists(file);
+}
 cp.spawn = (file, args, options) => {
+  if (trackingReportOnly && isPositionReader(file)) {
+    const child = new EventEmitter();
+    child.stdin = new PassThrough(); child.stdout = new PassThrough(); child.stderr = new PassThrough();
+    const send = packet => child.stdout.write(JSON.stringify(packet) + '\n');
+    const identity = { processStartUtcTicks: String(621355968000000000n + BigInt(startedAt - 1000) * 10000n),
+      moduleHash: 'a'.repeat(64) };
+    setImmediate(() => send({ type: 'status', status: 'searching', scanProgress: 87, ...identity }));
+    let timer;
+    finishFixtureSearch = () => {
+      send({ type: 'status', status: 'tracking', scanCompleted: true, ...identity });
+      const pose = () => send({ type: 'pose', source: 'memory', timestamp: Date.now(), position: { x: 10, y: 2, z: 30 }, heading: 45 });
+      pose(); timer = setInterval(pose, 100);
+    };
+    child.kill = () => { clearInterval(timer); child.emit('close', 0); };
+    return child;
+  }
   const encoded = args?.indexOf('-EncodedCommand');
   const script = encoded >= 0 ? Buffer.from(args[encoded + 1], 'base64').toString('utf16le') : args?.join(' ');
   if (file.toLowerCase() === 'powershell.exe' && /OverlayLayoutKeys|public static class FG/.test(script)) {
@@ -144,6 +170,7 @@ BrowserWindow.prototype.setIgnoreMouseEvents = function(ignore, ...options) {
 for (const method of ['show', 'showInactive', 'hide', 'focus', 'setFocusable']) {
   const nativeMethod = BrowserWindow.prototype[method];
   BrowserWindow.prototype[method] = function(...args) {
+    if (trackingReportOnly && ['show', 'showInactive', 'focus'].includes(method)) return;
     const result = nativeMethod.apply(this, args);
     lifecycle.push({ id: this.id, method, args, url: this.webContents.getURL(),
       visible: this.isVisible(), loading: this.webContents.isLoading(), time: Date.now() });
@@ -349,6 +376,36 @@ async function closeSettings(win) {
 }
 
 app.whenReady().then(async () => {
+  if (trackingReportOnly) {
+    let copied;
+    require('electron').clipboard.writeText = text => { copied = text; };
+    const main = await until(() => find('index.html'), 'launcher');
+    await until(() => !main.webContents.isLoading(), 'launcher loaded');
+    assert.equal(await evaluate(main, 'window.api.copyPlayerTrackingReport()'), false);
+    assert.equal(copied, undefined);
+    await evaluate(main, 'window.api.openSettings()');
+    const settings = await until(() => find('settings.html'), 'Settings');
+    await until(() => !settings.webContents.isLoading(), 'Settings loaded');
+    await until(() => evaluate(settings, "document.getElementById('player-tracking-status').textContent.includes('87%')"), 'active scan progress');
+    finishFixtureSearch();
+    const location = await until(async () => {
+      const location = await evaluate(main, 'window.api.getPlayerLocation()');
+      return location.isOverworld && location;
+    }, 'live overworld location before account recognition');
+    assert.deepEqual(location.position, { x: 10, y: 2, z: 30 });
+    await evaluate(settings, "document.getElementById('copy-player-tracking-report').click()");
+    await until(() => copied, 'report copied from Settings');
+    const report = JSON.parse(copied);
+    assert.equal(report.reportVersion, 1);
+    assert.equal(report.platform, 'win32');
+    assert.equal(report.loginRecognized, false);
+    assert.equal(report.mapStatus, 'tracking');
+    assert.equal(report.mapPlacement, 'overworld');
+    for (const key of ['readerStage', 'plannedScanBytes', 'skippedDeviceBytes', 'mapPlacement']) assert.ok(Object.hasOwn(report, key), key);
+    await until(() => evaluate(settings, "document.getElementById('player-tracking-report-result').textContent"), 'copy feedback');
+    console.log('Verified scan progress, live overworld location without an account, and Settings report copying.');
+    app.exit(0); return;
+  }
   if (startupOnly) {
     const main = await until(() => find('index.html'), 'startup launcher');
     await until(async () => !main.webContents.isLoading() && (await state(main)).config,

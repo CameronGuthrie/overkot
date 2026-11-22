@@ -15,6 +15,20 @@ test('position reader does not claim support on other platforms', () => {
   assert.throws(() => buildPositionReader({ platform: 'linux' }), /Windows only/);
 });
 
+test('Windows reader tracks with query/read rights, observes exit code 259, and respects denied reads',
+  { skip: process.platform !== 'win32' }, () => {
+    const directory = path.join(root, '.build', 'position-reader-access-tests');
+    fs.mkdirSync(directory, { recursive: true });
+    const executable = path.join(directory, 'access-check.exe');
+    const compiler = path.join(process.env.WINDIR || 'C:\\Windows', 'Microsoft.NET', 'Framework64', 'v4.0.30319', 'csc.exe');
+    execFileSync(compiler, ['/nologo', '/unsafe+', '/platform:x64', '/main:AccessChecks', `/out:${executable}`,
+      path.join(root, 'native', 'player-position-reader.cs'), path.join(root, 'native', 'world-drop-shiny.cs'),
+      path.join(__dirname, 'fixtures', 'windows-position-reader-access.cs')], { windowsHide: true, stdio: 'pipe' });
+    const result = spawnSync(executable, [], { encoding: 'utf8', windowsHide: true, timeout: 15000 });
+    assert.equal(result.error, undefined);
+    assert.equal(result.status, 0, result.stdout + result.stderr);
+  });
+
 test('native reader rejects malformed input and non-game processes before scanning', { skip: process.platform !== 'win32' }, () => {
   const executable = buildPositionReader({ outputDir: path.join(root, '.build', 'position-reader-tests') });
   for (const args of [[], ['--pid', '-1'], ['--pid', String(process.pid), '--unexpected']]) {
@@ -210,7 +224,8 @@ internal static class FrameWalkChecks {
    Marshal.Copy(new float[]{1,0,0,0,0,1,0,0,0,0,1,0,10,990,20,1},0,new IntPtr(entity+0xa0),16);
    Type type=typeof(PlayerPositionReader).GetNestedType("Reader",BindingFlags.NonPublic);
    using(Process process=Process.GetCurrentProcess()) {
-    reader=Activator.CreateInstance(type,BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic,null,new object[]{process,module},null);
+    reader=Activator.CreateInstance(type,new object[]{process});
+    type.GetField("ModuleBase").SetValue(reader,module);
     // The walker fixture supplies an explicit synthetic profile; production
     // readers must recover and validate theirs before inspecting any objects.
     Type profileType=typeof(PlayerPositionReader).GetNestedType("ImageProfile",BindingFlags.NonPublic);
@@ -223,7 +238,42 @@ internal static class FrameWalkChecks {
     profileType.GetField("Code").SetValue(profile,0x1000);profileType.GetField("CodeSize").SetValue(profile,0x1ff0000);
     profileType.GetField("Data").SetValue(profile,0x1ff1000);profileType.GetField("DataSize").SetValue(profile,0x720000);
     type.GetField("profile",BindingFlags.Instance|BindingFlags.NonPublic).SetValue(reader,profile);
-    Call(type,reader,"ReadDungeonFrames",avatar);if(Count(type,reader)!=1)return 1;
+    long player=Allocate(0x150),avatarHandle=Allocate(8),camera=Allocate(0x80),cameraHandle=Allocate(8);
+    long playerType=module+0x28e4000,objectVtable=module+0x20ea738;
+    profileType.GetField("PlayerType").SetValue(profile,playerType);
+    profileType.GetField("PlayerVtable").SetValue(profile,objectVtable);
+    profileType.GetField("Metadata").SetValue(profile,0x2800000);profileType.GetField("MetadataSize").SetValue(profile,0x400000);
+    ((HashSet<long>)type.GetField("playerTypes",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(reader)).Add(playerType);
+    Pointer(player,objectVtable);Pointer(player+8,playerType);
+    Pointer(player+0x148,avatarHandle);Pointer(avatarHandle,avatar);Pointer(avatar,objectVtable);
+    Pointer(player+0xd0,cameraHandle);Pointer(cameraHandle,camera);Pointer(camera,objectVtable);
+    float[] matrix={1,0,0,0,0,1,0,0,0,0,1,0,10,990,20,1};
+    Marshal.Copy(matrix,0,new IntPtr(avatar+0xa0),16);
+    object[] first={player,null,false};
+    if((bool)Call(type,reader,"TryPose",first))return 7; // An invalid camera still rejects discovery.
+    Type host=typeof(PlayerPositionReader),passType=host.GetNestedType("DiscoveryPass",BindingFlags.NonPublic);
+    Type regions=typeof(List<>).MakeGenericType(host.GetNestedType("Region",BindingFlags.NonPublic));
+    object loadingPass=Activator.CreateInstance(passType,new object[]{Activator.CreateInstance(regions),0L});
+    byte[] headerWord=BitConverter.GetBytes(objectVtable);
+    Call(type,reader,"Inspect",headerWord,headerWord.Length,player,loadingPass);
+    if((int)passType.GetProperty("Count").GetValue(loadingPass,null)!=0)return 12;
+    Marshal.Copy(matrix,0,new IntPtr(camera+0x30),16);
+    Predicate<long> ready=p=>(bool)Call(type,reader,"TryPose",p,null,false);
+    if((long)Call(passType,loadingPass,"SelectPlayer",ready)!=player)return 13;
+    if(!(bool)Call(type,reader,"TryPose",first)||Count(type,reader)!=0)return 8;
+    Type poseType=first[1].GetType();
+    if(((float[])poseType.GetField("Position").GetValue(first[1]))[0]!=10)return 9;
+    object[] next={player,null,true};
+    if(!(bool)Call(type,reader,"TryPose",next)||Count(type,reader)!=1)return 1;
+    // Reacquisition may occur while the previous avatar's frames are still cached.
+    if(!(bool)Call(type,reader,"TryPose",first)||poseType.GetField("DungeonFrames").GetValue(first[1])!=null)return 10;
+    // Either known header word can be the only one present in the chunk.
+    for(int index=0;index<2;index++) {
+     var pass=Activator.CreateInstance(passType,new object[]{Activator.CreateInstance(regions),0L});
+     byte[] chunk=BitConverter.GetBytes(index==0?objectVtable:playerType);
+     Call(type,reader,"Inspect",chunk,chunk.Length,player+8L*index,pass);
+     if(!(bool)passType.GetMethod("Contains").Invoke(pass,new object[]{player}))return 11;
+    }
     Pointer(entity+0x1e0,0);Call(type,reader,"RefreshDungeonFrames");Call(type,reader,"ReadDungeonFrames",avatar);
     if(Count(type,reader)!=0)return 2;
     Pointer(entity+0x1e0,context);Call(type,reader,"RefreshDungeonFrames");Call(type,reader,"ReadDungeonFrames",avatar);

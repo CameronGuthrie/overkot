@@ -1146,6 +1146,65 @@ body.bars-hidden .timer-bar {
   opacity: 0;
 }
 
+.minimap-loading.tile-notice,
+.map-loading.tile-notice {
+  inset: 6px 6px auto;
+  width: fit-content;
+  max-width: calc(100% - 12px);
+  box-sizing: border-box;
+  margin-inline: auto;
+  padding: 5px 8px;
+  border-radius: 4px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.tile-connect:not(.tile-notice) {
+  display: grid;
+  grid-template: 1fr auto 1fr / minmax(0, 1fr);
+  justify-items: center;
+  padding-inline: 8px;
+  text-align: center;
+}
+
+.tile-connect:not(.tile-notice) .map-connect-btn { grid-row: 2; }
+.tile-connect:not(.tile-notice) [role="status"] {
+  grid-row: 3;
+  align-self: start;
+  max-width: 36ch;
+  margin-top: 6px;
+}
+
+.tile-connect.tile-notice [role="status"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.map-connect-btn {
+  max-width: 100%;
+  padding: 6px 12px;
+  border: 1px solid var(--theme-accent, var(--accent-blue));
+  border-radius: var(--radius-control, 4px);
+  background: var(--theme-control, var(--bg-widget));
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.map-connect-btn:hover {
+  background: var(--bg-widget-hover);
+}
+
+.map-connect-btn:focus-visible {
+  outline: 2px solid var(--theme-accent, var(--accent-blue));
+  outline-offset: 2px;
+}
+
 .minimap-controls {
   display: flex;
   gap: 4px;

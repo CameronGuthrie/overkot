@@ -52,24 +52,28 @@ internal static partial class PlayerPositionReader
     sealed class DiscoveryPass
     {
         const int MaximumCandidates = 16;
+        const int MaximumPendingHeaders = 256;
         readonly List<Region> regions;
         readonly HashSet<long> candidates = new HashSet<long>();
-        readonly long total;
+        readonly HashSet<long> pendingHeaders = new HashSet<long>();
+        public readonly long PlannedScanBytes, SkippedDeviceBytes;
         int index;
         long offset, visited;
         public long BytesRead { get; private set; }
         public int Count { get { return candidates.Count; } }
-        public bool AmbiguousOverflow { get { return Count > MaximumCandidates; } }
+        public bool AmbiguousOverflow { get { return Count > MaximumCandidates || pendingHeaders.Count > MaximumPendingHeaders; } }
         public bool Complete { get { return index == regions.Count; } }
-        public int? Progress { get { return total == 0 ? (int?)null : (int)Math.Min(99, visited * 100 / total); } }
+        public int? Progress { get { return PlannedScanBytes == 0 ? (int?)null : (int)Math.Min(99, visited * 100 / PlannedScanBytes); } }
 
-        public DiscoveryPass(List<Region> regions)
+        public DiscoveryPass(List<Region> regions, long skippedDeviceBytes = 0)
         {
             this.regions = regions;
-            foreach (Region region in regions) total += region.Size;
+            SkippedDeviceBytes = skippedDeviceBytes;
+            foreach (Region region in regions) PlannedScanBytes += region.Size;
         }
-        public bool Contains(long player) { return candidates.Contains(player); }
+        public bool Contains(long player) { return candidates.Contains(player) || pendingHeaders.Contains(player); }
         public void Add(long player) { if (!AmbiguousOverflow) candidates.Add(player); }
+        public void Defer(long player) { if (!AmbiguousOverflow) pendingHeaders.Add(player); }
 
         public void RunSlice(long byteBudget, Func<bool> pause, Func<long, int, int> inspect)
         {
@@ -89,6 +93,14 @@ internal static partial class PlayerPositionReader
         {
             if (!Complete || AmbiguousOverflow) return 0;
             candidates.RemoveWhere(candidate => !stillValid(candidate));
+            // An avatar or camera can finish loading after its player's heap
+            // region was visited. Recheck the whole header and pose at pass end.
+            foreach (long player in pendingHeaders)
+            {
+                if (stillValid(player)) candidates.Add(player);
+                if (Count > MaximumCandidates) return 0;
+            }
+            pendingHeaders.Clear();
             if (Count == 1) foreach (long candidate in candidates) return candidate;
             return 0;
         }
@@ -348,8 +360,13 @@ internal static partial class PlayerPositionReader
     {
         public readonly IntPtr Handle;
         public readonly long ModuleBase;
-        readonly int moduleImageSize;
-        public readonly Process Process;
+        public readonly int ModuleImageSize;
+#if !LINUX
+        public readonly string ImagePath;
+        long nextProcessCheck;
+        bool exited;
+#endif
+        readonly Process process;
         public readonly string StartTicks;
         readonly byte[] smallBuffer = new byte[256];
         readonly byte[] scanBuffer = new byte[ChunkBytes];
@@ -379,19 +396,52 @@ internal static partial class PlayerPositionReader
         public bool Probe;
         public bool ReportDiscoveryProgress = true;
 
-        public Reader(Process process, long moduleBase)
+        public Reader(Process process)
         {
-            Process = process;
-            ModuleBase = moduleBase;
-            StartTicks = process.StartTime.ToUniversalTime().Ticks.ToString(Invariant);
+            this.process = process;
 #if LINUX
             Handle = linuxTarget.Memory;
-            moduleImageSize = linuxTarget.ImageSize;
+            ModuleBase = linuxTarget.ImageBase;
+            ModuleImageSize = linuxTarget.ImageSize;
+            StartTicks = process.StartTime.ToUniversalTime().Ticks.ToString(Invariant);
 #else
             Handle = OpenProcess(ReadAccess, false, process.Id);
-            moduleImageSize = process.MainModule.ModuleMemorySize;
+            if (Handle == IntPtr.Zero)
+            {
+                int error = Marshal.GetLastWin32Error();
+                if (error == 87) throw new InvalidOperationException("Process has exited.");
+                throw new System.ComponentModel.Win32Exception(error);
+            }
+            try
+            {
+                using (ProcessModule module = process.MainModule)
+                {
+                    if (module == null) throw new InvalidOperationException("Process has exited.");
+                    ModuleBase = module.BaseAddress.ToInt64();
+                    ModuleImageSize = module.ModuleMemorySize;
+                    ImagePath = module.FileName;
+                }
+                StartTicks = process.StartTime.ToUniversalTime().Ticks.ToString(Invariant);
+            }
+            catch { Dispose(); throw; }
 #endif
-            if (Handle == IntPtr.Zero) throw new UnauthorizedAccessException();
+        }
+
+        public bool HasExited()
+        {
+#if LINUX
+            return process.HasExited;
+#else
+            long now = frameClock.ElapsedMilliseconds;
+            if (exited || now < nextProcessCheck) return exited;
+            nextProcessCheck = now + 500;
+            // Framework Process.HasExited reopens the game with SYNCHRONIZE
+            // rights. Windows keeps this PID reserved while we hold Handle.
+            // Checking the running PID list needs no extra rights to the game.
+            try { using (Process.GetProcessById(process.Id)) { } }
+            catch (ArgumentException) { exited = true; }
+            return exited;
+#endif
         }
 
         public void Dispose() {
@@ -426,7 +476,8 @@ internal static partial class PlayerPositionReader
             if (address < 0x10000 || size < 1 || address > long.MaxValue - size) return false;
             MemoryRegion region;
             if (VirtualQueryEx(Handle, new IntPtr(address), out region, new UIntPtr((uint)Marshal.SizeOf<MemoryRegion>())) == UIntPtr.Zero) return false;
-            bool permitted = region.State == 0x1000 && (region.Protection & 0x101) == 0 && (region.Protection & 0xee) != 0;
+            bool permitted = region.State == 0x1000 && (region.Protection & 0x101) == 0 &&
+                (region.Protection & 0xee) != 0 && !UsesDeviceMemory(region);
             if (dynamic) permitted = permitted && (region.Type == 0x20000 || region.Type == 0x40000);
             return permitted && address + size <= region.Address.ToInt64() + (long)region.Size.ToUInt64();
         }
@@ -461,7 +512,7 @@ internal static partial class PlayerPositionReader
             profile = null; playerTypes.Clear();
             byte[] headers = new byte[4096];
             if (!Read(ModuleBase, headers, headers.Length)) return false;
-            ImageProfile candidate = ImageProfile.Headers(headers, ModuleBase, moduleImageSize);
+            ImageProfile candidate = ImageProfile.Headers(headers, ModuleBase, ModuleImageSize);
             if (candidate == null) return false;
             foreach (Region section in new Region[] {
                 new Region { Address = candidate.Code, Size = candidate.CodeSize },
@@ -507,11 +558,22 @@ internal static partial class PlayerPositionReader
             return values;
         }
 
-        public bool TryPose(long player, out Pose pose)
+        bool HasPlayerHeader(long player)
         {
-            pose = null;
             if (!DynamicReadable(player, 0x150) || !ObjectVtable(player) || !IsPlayerType(Pointer(player + 8))) return false;
             ValidPlayerHeaders++;
+            return true;
+        }
+
+        public bool TryPose(long player, out Pose pose, bool includeWorldData)
+        {
+            pose = null;
+            return HasPlayerHeader(player) && TryPoseFromHeader(player, out pose, includeWorldData);
+        }
+
+        bool TryPoseFromHeader(long player, out Pose pose, bool includeWorldData)
+        {
+            pose = null;
             long avatarHandle = Pointer(player + 0x148);
             if (!Readable(avatarHandle, 8, false)) return false;
             DynamicAvatarHandles++;
@@ -538,15 +600,15 @@ internal static partial class PlayerPositionReader
                 double norm = Dot(quaternion, 0, quaternion, 0, 4);
                 if (norm < 0.98 || norm > 1.02) quaternion = null;
             }
-            ReadDungeonFrames(avatar);
+            if (includeWorldData) ReadDungeonFrames(avatar);
             pose = new Pose { Position = position, Quaternion = quaternion, Forward = forward,
                 CameraForward = new float[] { view[2], view[6], view[10] }, AvatarVtableRva = Pointer(avatar) - ModuleBase,
                 Heading = heading,
                 LocalPosition = Probe ? Floats(avatar + 0x70, 3) : null,
                 // A streaming request's input placement is not the final generated
                 // layout frame. Only the loaded LevelInfo frames anchor the map.
-                DungeonRoots = new List<DungeonRoot>(), DungeonFrames = frames,
-                DungeonFramesTimestamp = framesTimestamp };
+                DungeonRoots = new List<DungeonRoot>(), DungeonFrames = includeWorldData ? frames : null,
+                DungeonFramesTimestamp = includeWorldData ? framesTimestamp : 0 };
             return true;
         }
 
@@ -791,10 +853,11 @@ internal static partial class PlayerPositionReader
             return Read(address, smallBuffer, 4) ? BitConverter.ToUInt32(smallBuffer, 0) : 0;
         }
 
-        List<Region> DiscoveryRegions()
+        DiscoveryPass PlanDiscovery()
         {
             TypeMatches = VtableMatches = ValidPlayerHeaders = DynamicAvatarHandles = DynamicAvatars = ValidCameraMatrices = 0;
             var regions = new List<Region>();
+            long skippedDeviceBytes = 0;
             long address = 0x10000;
             int size = Marshal.SizeOf<MemoryRegion>();
             while (address < 0x7fffffffffff)
@@ -805,14 +868,16 @@ internal static partial class PlayerPositionReader
                 ulong length = info.Size.ToUInt64();
                 if (length == 0 || length > long.MaxValue || start > long.MaxValue - (long)length) break;
                 address = start + (long)length;
-                if (IsHeap(info)) regions.Add(new Region { Address = start, Size = (long)length });
+                HeapRegionKind kind = ClassifyHeap(info);
+                if (kind == HeapRegionKind.Device) skippedDeviceBytes += (long)length;
+                if (kind == HeapRegionKind.Eligible) regions.Add(new Region { Address = start, Size = (long)length });
             }
             regions.Sort(delegate(Region left, Region right) {
                 int leftGroup = left.Size >= 0x10000 && left.Size <= 8L * 1024 * 1024 ? 0 : left.Size < 0x10000 ? 2 : 1;
                 int rightGroup = right.Size >= 0x10000 && right.Size <= 8L * 1024 * 1024 ? 0 : right.Size < 0x10000 ? 2 : 1;
                 return leftGroup == rightGroup ? left.Size.CompareTo(right.Size) : leftGroup.CompareTo(rightGroup);
             });
-            return regions;
+            return new DiscoveryPass(regions, skippedDeviceBytes);
         }
 
         int InspectChunk(long address, int length, DiscoveryPass pass)
@@ -829,7 +894,7 @@ internal static partial class PlayerPositionReader
                 ulong size = info.Size.ToUInt64();
                 if (start < 0 || start > address || size > (ulong)(long.MaxValue - start) || start + (long)size <= address) break;
                 int span = (int)(Math.Min(end, start + (long)size) - address);
-                if (IsHeap(info))
+                if (ClassifyHeap(info) == HeapRegionKind.Eligible)
                 {
                     UIntPtr got;
                     ReadProcessMemory(Handle, new IntPtr(address), scanBuffer, new UIntPtr((uint)span), out got);
@@ -845,16 +910,20 @@ internal static partial class PlayerPositionReader
 
         public DiscoveryPass Discover(out long player)
         {
-            if (discovery == null) discovery = new DiscoveryPass(DiscoveryRegions());
+            if (discovery == null)
+            {
+                if (!Probe) Console.WriteLine("{\"type\":\"phase\",\"phase\":\"enumerating-regions\"}");
+                discovery = PlanDiscovery();
+            }
             DiscoveryPass pass = discovery;
-            Status("searching", StartTicks, pass.Count, pass.BytesRead, false, pass.Progress);
+            Status("searching", StartTicks, pass.Count, pass.BytesRead, false, pass.Progress, pass);
             Stopwatch elapsed = Stopwatch.StartNew();
             long nextStatus = 1000;
             pass.RunSlice(MaximumScanBytes, delegate {
-                if (Process.HasExited || elapsed.Elapsed.TotalSeconds >= MaximumScanSeconds) return true;
+                if (HasExited() || elapsed.Elapsed.TotalSeconds >= MaximumScanSeconds) return true;
                 if (ReportDiscoveryProgress && elapsed.ElapsedMilliseconds >= nextStatus)
                 {
-                    Status("searching", StartTicks, pass.Count, pass.BytesRead, false, pass.Progress);
+                    Status("searching", StartTicks, pass.Count, pass.BytesRead, false, pass.Progress, pass);
                     nextStatus = elapsed.ElapsedMilliseconds + 1000;
                 }
                 return false;
@@ -862,7 +931,7 @@ internal static partial class PlayerPositionReader
             player = 0;
             if (pass.Complete)
             {
-                if (!Process.HasExited) player = pass.SelectPlayer(delegate(long address) { Pose pose; return TryPose(address, out pose); });
+                if (!HasExited()) player = pass.SelectPlayer(delegate(long address) { Pose pose; return TryPose(address, out pose, false); });
                 discovery = null;
             }
             return pass;
@@ -871,12 +940,16 @@ internal static partial class PlayerPositionReader
         unsafe void Inspect(byte[] bytes, int length, long start, DiscoveryPass candidates)
         {
             if (candidates.AmbiguousOverflow) return;
+            long imageBase = profile.Base;
+            ulong imageSize = (ulong)profile.Size;
             fixed (byte* data = bytes)
             {
                 int initial = (int)((8 - (start & 7)) & 7);
                 for (int offset = initial; offset + 8 <= length; offset += 8)
                 {
                     long value = *(long*)(data + offset);
+                    // Both the verified vtable and the registered player types live in this image.
+                    if (unchecked((ulong)(value - imageBase)) >= imageSize) continue;
                     long player;
                     if (value == profile.PlayerVtable) {
                         VtableMatches++; player = start + offset;
@@ -886,9 +959,10 @@ internal static partial class PlayerPositionReader
                     }
                     else if (profile.IsMetadata(value) && playerTypes.Contains(value)) { TypeMatches++; player = start + offset - 8; }
                     else continue;
-                    if (candidates.Contains(player)) continue;
+                    if (candidates.Contains(player) || !HasPlayerHeader(player)) continue;
                     Pose pose;
-                    if (TryPose(player, out pose)) candidates.Add(player);
+                    if (TryPoseFromHeader(player, out pose, false)) candidates.Add(player);
+                    else candidates.Defer(player);
                     if (candidates.AmbiguousOverflow) return;
                 }
             }
@@ -902,10 +976,24 @@ internal static partial class PlayerPositionReader
         }
     }
 
-    static bool IsHeap(MemoryRegion info)
+    static bool UsesDeviceMemory(MemoryRegion info)
     {
-        return info.State == 0x1000 && (info.Type == 0x20000 || info.Type == 0x40000) &&
-            (info.Protection & 0x101) == 0 && (info.Protection & 0xcc) != 0;
+#if LINUX
+        return false;
+#else
+        // Windows designates these allocations for devices. CPU reads of
+        // write-combined GPU upload memory can stall an otherwise short scan.
+        const uint PageNoCache = 0x200, PageWriteCombine = 0x400;
+        return ((info.AllocationProtection | info.Protection) & (PageNoCache | PageWriteCombine)) != 0;
+#endif
+    }
+
+    enum HeapRegionKind { Other, Eligible, Device }
+    static HeapRegionKind ClassifyHeap(MemoryRegion info)
+    {
+        if (info.State != 0x1000 || (info.Type != 0x20000 && info.Type != 0x40000) ||
+            (info.Protection & 0x101) != 0 || (info.Protection & 0xcc) == 0) return HeapRegionKind.Other;
+        return UsesDeviceMemory(info) ? HeapRegionKind.Device : HeapRegionKind.Eligible;
     }
 
     static double Dot(float[] left, int lo, float[] right, int ro, int length)
@@ -1024,12 +1112,17 @@ internal static partial class PlayerPositionReader
         return result + "}";
     }
 
-    static void Status(string status, string ticks, int candidates, long scanned, bool completed, int? progress = null)
+    static void Status(string status, string ticks, int candidates, long scanned, bool completed, int? progress = null, DiscoveryPass pass = null)
     {
+        string plan = "";
+#if !LINUX
+        if (pass != null) plan = ",\"plannedScanBytes\":" + pass.PlannedScanBytes.ToString(Invariant) +
+            ",\"skippedDeviceBytes\":" + pass.SkippedDeviceBytes.ToString(Invariant);
+#endif
         Console.WriteLine("{\"type\":\"status\",\"status\":\"" + status + "\",\"processStartUtcTicks\":\"" + ticks +
             "\",\"moduleHash\":" + (activeHash == null ? "null" : "\"" + activeHash + "\"") + ",\"candidateCount\":" + candidates.ToString(Invariant) +
             ",\"bytesScanned\":" + scanned.ToString(Invariant) + ",\"scanCompleted\":" + (completed ? "true" : "false") +
-            (progress.HasValue ? ",\"scanProgress\":" + progress.Value.ToString(Invariant) : "") + "}");
+            (progress.HasValue ? ",\"scanProgress\":" + progress.Value.ToString(Invariant) : "") + plan + "}");
         Console.Out.Flush();
     }
 
@@ -1136,32 +1229,34 @@ internal static partial class PlayerPositionReader
 #if LINUX
                 linuxTarget = target;
                 activeHash = target.Hash;
-                long moduleBase = target.ImageBase;
 #else
                 if (!string.Equals(process.ProcessName, "Soulframe.x64", StringComparison.OrdinalIgnoreCase))
                 { Status("wrong-process", "", 0, 0, false); return 2; }
-                ProcessModule module = process.MainModule;
-                if (!string.Equals(Path.GetFileName(module.FileName), "Soulframe.x64.exe", StringComparison.OrdinalIgnoreCase))
-                { Status("wrong-process", "", 0, 0, false); return 2; }
-                string hash;
-                using (var stream = File.OpenRead(module.FileName))
-                using (var algorithm = SHA256.Create())
-                    hash = BitConverter.ToString(algorithm.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
-                activeHash = hash;
-                if (module.ModuleMemorySize < 4096 || module.ModuleMemorySize > MaximumImageBytes)
-                { Status("unsupported-build", "", 0, 0, false); return 3; }
-                long moduleBase = module.BaseAddress.ToInt64();
 #endif
-                using (var reader = new Reader(process, moduleBase))
+                using (var reader = new Reader(process))
                 {
+                    if (!probe) Console.WriteLine("{\"type\":\"phase\",\"phase\":\"checking-game-image\"}");
+#if !LINUX
+                    if (!string.Equals(Path.GetFileName(reader.ImagePath), "Soulframe.x64.exe", StringComparison.OrdinalIgnoreCase))
+                    { Status("wrong-process", "", 0, 0, false); return 2; }
+                    if (reader.ModuleImageSize < 4096 || reader.ModuleImageSize > MaximumImageBytes)
+                    { Status("unsupported-build", "", 0, 0, false); return 3; }
+                    using (var stream = File.OpenRead(reader.ImagePath))
+                    using (var algorithm = SHA256.Create())
+                        activeHash = BitConverter.ToString(algorithm.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+#endif
                     reader.Probe = probe;
                     if (!reader.ValidateProfile()) { Status("profile-mismatch", reader.StartTicks, 0, 0, false); return 3; }
                     var rootRefresh = new RootRefreshGate();
                     var rootClock = Stopwatch.StartNew();
                     if (!probe) ListenForRootRefresh(rootRefresh);
                     long player = 0, lastDropsTimestamp = -1;
-                    while (!process.HasExited)
+                    int retryDelay = 1000;
+                    while (!reader.HasExited())
                     {
+                        // Room and item discovery can wait until the second live sample.
+                        // A one-shot probe still reports that data on its only sample.
+                        bool includeWorldData = probe || player != 0;
                         if (player == 0)
                         {
                             DiscoveryPass pass = reader.Discover(out player);
@@ -1169,15 +1264,19 @@ internal static partial class PlayerPositionReader
                                 ",\"vtableMatches\":" + reader.VtableMatches + ",\"validPlayerHeaders\":" + reader.ValidPlayerHeaders +
                                 ",\"dynamicAvatarHandles\":" + reader.DynamicAvatarHandles + ",\"dynamicAvatars\":" + reader.DynamicAvatars +
                                 ",\"validCameraMatrices\":" + reader.ValidCameraMatrices + "}");
-                            if (process.HasExited) break;
+                            if (reader.HasExited()) break;
                             if (player == 0)
                             {
-                                Status(!pass.Complete ? "scan-incomplete" : pass.Count == 0 ? "not-found" : "ambiguous",
+                                Status(!pass.Complete ? "scan-incomplete" : pass.Count > 0 || pass.AmbiguousOverflow ? "ambiguous" : "not-found",
                                     reader.StartTicks, pass.Count, pass.BytesRead, pass.Complete, pass.Complete ? null : pass.Progress);
                                 if (probe) return 4;
-                                Thread.Sleep(pass.Complete ? 30000 : 1000);
+                                // A complete miss is common at the login screen. Give a
+                                // newly spawned avatar a prompt retry, then limit repeat scans.
+                                Thread.Sleep(pass.Complete ? retryDelay : 1000);
+                                if (pass.Complete) retryDelay = Math.Min(retryDelay * 2, 10000);
                                 continue;
                             }
+                            retryDelay = 1000;
                             Status("tracking", reader.StartTicks, 1, pass.BytesRead, true);
                         }
                         if (!probe && rootRefresh.TryStart(rootClock.ElapsedMilliseconds))
@@ -1188,9 +1287,9 @@ internal static partial class PlayerPositionReader
                             rootRefresh.Complete();
                         }
                         Pose pose;
-                        if (reader.TryPose(player, out pose)) {
+                        if (reader.TryPose(player, out pose, includeWorldData)) {
                             OutputPose(pose);
-                            if (reader.DroppedItems.Timestamp != lastDropsTimestamp)
+                            if (includeWorldData && reader.DroppedItems.Timestamp != lastDropsTimestamp)
                             {
                                 OutputWorldDrops(reader.DroppedItems);
                                 lastDropsTimestamp = reader.DroppedItems.Timestamp;
@@ -1214,10 +1313,18 @@ internal static partial class PlayerPositionReader
         }
 #if LINUX
         catch (LinuxTargetException error) { Status(error.Status, "", 0, 0, false); return 4; }
+        catch (System.ComponentModel.Win32Exception) { Status("permission-denied", "", 0, 0, false); return 5; }
 #endif
         catch (ArgumentException) { Status("process-gone", "", 0, 0, false); return 4; }
         catch (UnauthorizedAccessException) { Status("permission-denied", "", 0, 0, false); return 5; }
-        catch (System.ComponentModel.Win32Exception) { Status("permission-denied", "", 0, 0, false); return 5; }
+#if !LINUX
+        catch (System.ComponentModel.Win32Exception error)
+        {
+            bool denied = error.NativeErrorCode == 5;
+            Status(denied ? "permission-denied" : "scan-failed", "", 0, 0, false);
+            return denied ? 5 : 4;
+        }
+#endif
         catch (IOException) { Status("unavailable", "", 0, 0, false); return 4; }
         catch (InvalidOperationException) { Status("process-gone", "", 0, 0, false); return 4; }
     }

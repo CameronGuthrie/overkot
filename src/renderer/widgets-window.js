@@ -59,6 +59,7 @@ function makeIcon(id) {
 document.addEventListener('DOMContentLoaded', () => {
   let config = {};
   let visibility = {};
+  let widgetConnections = {};
   let t = TRANSLATIONS.en;
   let initialized = false;
   let loading = false;
@@ -67,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let saveError = false;
   let closeAfterSave = false;
   let configRevision = 0;
+  let connectionsRevision = 0;
   const pending = new Map();
   const cards = new Map();
   const categories = new Map();
@@ -96,17 +98,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   for (const def of WIDGET_DEFS) {
-    const card = document.createElement('label');
+    const card = document.createElement('div');
     card.className = 'widget-card';
     card.dataset.widget = def.id;
     card.dataset.keywords = def.keywords || '';
 
-    const name = document.createElement('span');
+    const name = document.createElement('label');
     name.className = 'widget-card-name';
     name.id = `widget-name-${def.id}`;
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
+    checkbox.id = `widget-toggle-${def.id}`;
+    name.htmlFor = checkbox.id;
     checkbox.dataset.widget = def.id;
     checkbox.setAttribute('aria-labelledby', name.id);
 
@@ -115,8 +119,15 @@ document.addEventListener('DOMContentLoaded', () => {
     desc.id = `widget-desc-${def.id}`;
     checkbox.setAttribute('aria-describedby', desc.id);
 
-    card.append(makeIcon(def.id), name, checkbox, desc);
-    cards.set(def.id, { card, name, checkbox, desc });
+    const connect = document.createElement('button');
+    connect.type = 'button';
+    connect.className = 'widget-card-connect';
+    connect.hidden = true;
+    connect.setAttribute('aria-describedby', name.id);
+    connect.addEventListener('click', () => window.api.openSettings('connections'));
+
+    card.append(makeIcon(def.id), name, checkbox, desc, connect);
+    cards.set(def.id, { card, name, checkbox, desc, connect });
     checkbox.addEventListener('change', () => {
       pending.set(def.id, checkbox.checked);
       render();
@@ -162,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let selectedCount = 0;
     for (const def of WIDGET_DEFS) {
-      const { name, desc, checkbox } = cards.get(def.id);
+      const { name, desc, checkbox, connect } = cards.get(def.id);
       name.textContent = t[def.nameKey] || TRANSLATIONS.en[def.nameKey] || def.id;
       desc.textContent = t[def.descKey] || TRANSLATIONS.en[def.descKey] || '';
       if (def.id === 'build-exporter') desc.textContent = window.api.buildWebsiteHost
@@ -170,6 +181,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (def.id === 'wiki' && !window.api.wikiAvailable) desc.textContent = t.inventoryUnavailableLower;
       checkbox.checked = pending.has(def.id) ? pending.get(def.id) : visibility[def.id] === true;
       checkbox.disabled = !initialized;
+      const wasFocused = document.activeElement === connect;
+      const reason = widgetConnections[def.id];
+      if (reason === 'artwork') connect.textContent = t.widgetsSignInForImages || 'Sign in to load images';
+      else if (reason === 'market') connect.textContent = t.marketUiOpenConnections || 'Open Connections';
+      else connect.textContent = t.settingsAvakotSignIn || 'Sign in with avakot.dev';
+      connect.hidden = !reason;
+      if (connect.hidden && wasFocused && !checkbox.disabled) checkbox.focus({ preventScroll: true });
       if (checkbox.checked) selectedCount++;
     }
     let collator;
@@ -182,9 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
         collator.compare(cards.get(a).name.textContent, cards.get(b).name.textContent) || a.localeCompare(b));
       const order = sorted.join(',');
       if (group.order !== order) {
-        // Leave the focused checkbox mounted during ordinary selection saves.
-        // A language change can reorder the cards; preserve keyboard focus then.
-        const focused = sorted.map(id => cards.get(id).checkbox).find(checkbox => checkbox === document.activeElement);
+        // A language change can move the card containing the focused control.
+        const focused = group.grid.contains(document.activeElement) ? document.activeElement : null;
         group.grid.append(...sorted.map(id => cards.get(id).card));
         group.order = order;
         focused?.focus({ preventScroll: true });
@@ -215,8 +232,10 @@ document.addEventListener('DOMContentLoaded', () => {
     loadError = false;
     render();
     const requestRevision = configRevision;
+    const requestConnectionsRevision = connectionsRevision;
     try {
       const state = await window.api.getState();
+      if (requestConnectionsRevision === connectionsRevision) widgetConnections = state?.widgetConnections || {};
       if (requestRevision === configRevision) applyConfig(state?.config || {});
     } catch {
       if (!initialized) loadError = true;
@@ -272,6 +291,11 @@ document.addEventListener('DOMContentLoaded', () => {
   window.api.onConfigChanged?.(next => {
     configRevision++;
     applyConfig(next);
+  });
+  window.api.onWidgetConnectionsChanged?.(connections => {
+    connectionsRevision++;
+    widgetConnections = connections;
+    render();
   });
   loadState();
 });

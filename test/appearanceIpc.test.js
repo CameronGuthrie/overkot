@@ -197,7 +197,7 @@ test('all native frames receive shape, outline and motion fields from one appear
   const windows = [{ isDestroyed: () => false, webContents: { mainFrame: { framesInSubtree: [frame('window'), frame('embedded')] } } },
     { isDestroyed: () => true, webContents: { mainFrame: { framesInSubtree: [frame('destroyed')] } } }];
   const context = vm.createContext({ Appearance, getLocaleTag, appearanceSession: f.session, BrowserWindow: { getAllWindows: () => windows } });
-  vm.runInContext(main.slice(main.indexOf('function appearanceFrames('), main.indexOf('let calendarAccountId')), context);
+  vm.runInContext(main.slice(main.indexOf('function applicationFrames('), main.indexOf('let calendarAccountId')), context);
   vm.runInContext('broadcastAppearance()', context);
   assert.equal(messages.length, 4);
   for (const message of messages) {
@@ -223,7 +223,7 @@ test('appearance broadcasts skip destroyed contents and detached frame trees wit
     { isDestroyed: () => false, webContents: { isDestroyed: () => false, mainFrame: { framesInSubtree: [closedFrame, live] } } },
   ];
   const context = vm.createContext({ Appearance, getLocaleTag, appearanceSession: f.session, BrowserWindow: { getAllWindows: () => windows } });
-  vm.runInContext(main.slice(main.indexOf('function appearanceFrames('), main.indexOf('let calendarAccountId')), context);
+  vm.runInContext(main.slice(main.indexOf('function applicationFrames('), main.indexOf('let calendarAccountId')), context);
   assert.doesNotThrow(() => vm.runInContext('broadcastAppearance()', context));
   assert.deepEqual(received.map(value => value.channel), ['theme-changed', 'config-changed']);
   assert.equal(received[0].value.appearance.base, 'ember');

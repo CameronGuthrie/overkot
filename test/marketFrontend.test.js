@@ -15,10 +15,11 @@ function protocolFixture(t) {
   const uiRoot = path.join(root, 'ui'), rendererRoot = path.join(root, 'renderer'), assetsRoot = path.join(root, 'assets');
   for (const directory of [uiRoot, rendererRoot, assetsRoot]) fs.mkdirSync(directory);
   fs.mkdirSync(path.join(uiRoot, 'assets'));
-  fs.writeFileSync(path.join(uiRoot, 'index.html'), '<!doctype html><title>Market fixture</title>');
+  fs.writeFileSync(path.join(uiRoot, 'index.html'), '<!doctype html><head><title>Market fixture</title></head>');
   fs.writeFileSync(path.join(uiRoot, 'assets', 'app.js'), '/* frontend fixture */');
   fs.writeFileSync(path.join(rendererRoot, 'market.html'), '<html><head><meta http-equiv="Content-Security-Policy" content="base-uri \'none\'"><link rel="stylesheet" href="theme.css"><link rel="stylesheet" href="market.css"><script src="../modules/appearance.js"></script><script src="theme.js"></script><script src="motion.js"></script></head><body><img src="../../assets/overkot.png">Inventory fixture<script src="market.js"></script></body></html>');
   fs.writeFileSync(path.join(rendererRoot, 'market.js'), '/* inventory fixture */');
+  fs.writeFileSync(path.join(rendererRoot, 'game-artwork-recovery.js'), '/* artwork fixture */');
   fs.writeFileSync(path.join(rendererRoot, 'inventory-bridge.js'), '/* embedded theme bridge */');
   fs.writeFileSync(path.join(rendererRoot, 'preload.js'), 'PRIVATE PRELOAD');
   fs.writeFileSync(path.join(root, 'secret.txt'), 'PRIVATE FILE');
@@ -38,7 +39,9 @@ test('protocol serves built assets and history routes with a restrictive CSP', a
   for (const value of ['/', '/overkot-inventory', '/envoys/test-envoy', '/envoys/test.envoy/history', '/i/test.item', '/settings?section=profile']) {
     const response = await request(value);
     assert.equal(response.status, 200, value);
-    assert.match(await response.text(), /Market fixture/);
+    const html = await response.text();
+    assert.match(html, /Market fixture/);
+    assert.match(html, /src="\/inventory-assets\/game-artwork-recovery\.js"/);
     assert.equal(response.headers.get('content-type'), 'text/html');
     const csp = response.headers.get('content-security-policy');
     assert.match(csp, /(?:^|;\s*)script-src 'self'(?:;|$)/);
@@ -51,6 +54,7 @@ test('protocol serves built assets and history routes with a restrictive CSP', a
   assert.equal(asset.status, 200);
   assert.equal(asset.headers.get('content-type'), 'text/javascript');
   assert.equal(await asset.text(), '/* frontend fixture */');
+  assert.equal(await (await request('/inventory-assets/game-artwork-recovery.js')).text(), '/* artwork fixture */');
 });
 
 test('protocol keeps missing assets as 404s instead of returning the SPA', async t => {
@@ -101,6 +105,7 @@ test('the inventory document serves its scripts and resolves protected thumbnail
   const scripts = [...source.matchAll(/<script\b[^>]*\bsrc="([^"]+)"/g)]
     .map(match => new URL(match[1], MARKET_ORIGIN + '/inventory-assets/').href);
   assert.ok(scripts.some(url => url.endsWith('/ui-icons.js')));
+  assert.ok(scripts.includes(MARKET_ORIGIN + '/inventory-assets/game-artwork-recovery.js'));
   const helper = MARKET_ORIGIN + '/modules/gameDataImages.js';
   assert.ok(scripts.indexOf(helper) >= 0 && scripts.indexOf(helper) < scripts.indexOf(MARKET_ORIGIN + '/inventory-assets/market.js'));
   const context = { URL };

@@ -103,10 +103,21 @@ const MapPOIs = (() => {
     return markers;
   }
 
+  let legendRevision = 0;
+  function retryMissingLegendIcons(panel) {
+    if (!panel) return;
+    const revision = ++legendRevision;
+    for (const icon of panel.querySelectorAll('img')) {
+      // An earlier signed-out load may still be in flight. A distinct URL
+      // also prevents Chromium from joining that request on sign-in.
+      if (!icon.naturalWidth) icon.src = `${icon.src.split('?')[0]}?retry=${revision}`;
+    }
+  }
+
   const title = marker => [marker.label, marker.detail].filter(Boolean).join('\n');
   // Keep a dense whole-island overview legible, especially in the minimap.
   const iconSize = (marker, zoom) => marker.size * Math.min(1, Math.max(0.35, zoom / 0.12));
-  return { layers, rows, normalize, load, title, iconSize, validPosition, worldToMapPixel, getTilePos };
+  return { layers, rows, normalize, load, retryMissingLegendIcons, title, iconSize, validPosition, worldToMapPixel, getTilePos };
 })();
 
 if (typeof module !== 'undefined' && module.exports) module.exports = MapPOIs;

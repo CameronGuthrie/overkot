@@ -92,10 +92,12 @@ window.TemperTrackerWidget = {
       const plaque = node('span', 'temper-icon'); plaque.dataset.origin = row.origin;
       const source = window.GameDataImages.temperIconUrl(row.icon);
       if (source) {
-        const img = node('img', ''); img.src = source;
+        const img = node('img', '');
         img.alt = ''; img.width = 28; img.height = 28;
-        img.addEventListener('error', () => { img.remove(); plaque.textContent = '◇'; }, { once: true });
-        plaque.append(img);
+        const fallback = node('span', '', '◇'); fallback.hidden = true;
+        img.addEventListener('error', () => { img.hidden = true; fallback.hidden = false; });
+        img.addEventListener('load', () => { img.hidden = false; fallback.hidden = true; });
+        plaque.append(img, fallback); img.src = source;
       } else plaque.textContent = '◇';
       return plaque;
     }

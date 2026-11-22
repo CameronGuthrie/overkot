@@ -35,6 +35,26 @@ function setup(options = {}) {
 }
 function send(child, message) { child.stdout.write(`${JSON.stringify(message)}\n`); }
 
+test('verified process start time is retained privately for the current helper only', () => {
+  const { reader, children, statuses, poses } = setup();
+  reader.start(123);
+  send(children[0], status('tracking', { ...identity, processStartUtcTicks: '621355968100000000' }));
+  assert.equal(reader.processStartMs, 10000);
+  send(children[0], pose());
+  for (const payload of [reader.getState(), ...statuses, ...poses]) {
+    assert.equal(Object.hasOwn(payload, 'processStartMs'), false);
+    assert.equal(Object.hasOwn(payload, 'processStartUtcTicks'), false);
+  }
+  reader.start(124);
+  assert.equal(reader.processStartMs, null);
+  send(children[0], status());
+  assert.equal(reader.processStartMs, null);
+  send(children[1], status('tracking', { ...identity, processStartUtcTicks: '621355968100000000' }));
+  children[1].emit('exit', 0);
+  assert.equal(reader.processStartMs, null);
+  reader.stop();
+});
+
 test('helper resolution uses packaged resources and prefers the compiled development helper', () => {
   const root = path.resolve('test-root');
   for (const [platform, name] of [['win32', HELPER], ['linux', LINUX_HELPER]]) {
@@ -65,7 +85,7 @@ test('Linux launches its native reader and accepts verified poses, room frames a
 test('Linux permission denial preserves the actionable status and rejects later pose packets', () => {
   const f = setup({ platform: 'linux' }); f.reader.start(123);
   send(f.children[0], status('permission-denied', {})); send(f.children[0], pose());
-  f.children[0].emit('exit', 1);
+  f.children[0].emit('exit', 1); f.children[0].emit('close', 1);
   assert.equal(f.reader.getState().status, 'permission-denied'); assert.equal(f.poses.length, 0);
 });
 
@@ -93,6 +113,52 @@ test('search progress exposes only a bounded percentage and clears when tracking
   send(children[0], status('tracking', { ...identity, scanProgress: 99 }));
   assert.equal(reader.getState().scanProgress, undefined);
   reader.stop();
+});
+
+test('on-demand report distinguishes startup, complete passes and verified poses without session details', () => {
+  let clock = now;
+  const { reader, children, statuses } = setup({ now: () => clock });
+  reader.start(123);
+  const child = children[0];
+  assert.equal(reader.getDiagnostics().readerStage, 'starting-reader');
+  for (const phase of ['checking-game-image', 'enumerating-regions']) {
+    send(child, { type: 'phase', phase, file: 'private path' });
+    assert.equal(reader.getDiagnostics().readerStage, phase);
+  }
+  send(child, { type: 'phase', phase: 'private path' });
+  assert.equal(reader.getDiagnostics().readerStage, 'enumerating-regions');
+  send(child, status('searching', { ...identity, plannedScanBytes: 'private path', skippedDeviceBytes: -1 }));
+  assert.equal(reader.getDiagnostics().plannedScanBytes, null);
+  assert.equal(reader.getDiagnostics().skippedDeviceBytes, null);
+  send(child, status('searching', { ...identity, plannedScanBytes: 25000, skippedDeviceBytes: 0 }));
+  send(child, status('scan-incomplete', { ...identity, bytesScanned: 12345, scanProgress: 62, scanCompleted: true }));
+  assert.equal(reader.getDiagnostics().completedPasses, 0);
+  assert.equal(reader.getDiagnostics().scanProgressPercent, 62);
+  assert.equal(reader.getDiagnostics().plannedScanBytes, 25000);
+  assert.equal(reader.getDiagnostics().skippedDeviceBytes, 0);
+  send(child, status('not-found', { ...identity, bytesScanned: 24000, scanCompleted: true }));
+  assert.equal(reader.getDiagnostics().completedPasses, 1);
+  send(child, { type: 'phase', phase: 'enumerating-regions' });
+  assert.equal(reader.getDiagnostics().latestPassBytesRead, null);
+  assert.equal(reader.getDiagnostics().plannedScanBytes, null);
+  assert.equal(reader.getDiagnostics().skippedDeviceBytes, null);
+  send(child, status('searching', { ...identity, plannedScanBytes: 32000, skippedDeviceBytes: 98304 }));
+  send(child, status('tracking', { ...identity, bytesScanned: 28000, scanCompleted: true, privateAddress: 'secret' }));
+  clock += 1750;
+  send(child, pose({ timestamp: clock }));
+  const events = statuses.length;
+  assert.deepEqual(reader.getDiagnostics(), { readerRunning: true, readerStage: 'tracking', readerElapsedSeconds: 1, firstReaderPoseMs: 1750,
+    scanProgressPercent: null, latestPassBytesRead: 28000, plannedScanBytes: 32000, skippedDeviceBytes: 98304, completedPasses: 2 });
+  assert.equal(statuses.length, events);
+  send(child, status('permission-denied', {}));
+  child.emit('exit', 5); child.emit('close', 5);
+  clock += 4000;
+  assert.equal(reader.getDiagnostics().readerElapsedSeconds, 1);
+  assert.equal(reader.getDiagnostics().readerRunning, false);
+  assert.equal(reader.getDiagnostics().readerStage, 'permission-denied');
+  reader.start(456);
+  assert.equal(reader.getDiagnostics().firstReaderPoseMs, null);
+  assert.equal(reader.getDiagnostics().completedPasses, 0);
 });
 
 test('pose parser bounds coordinates, heading, timestamp, and source', () => {
@@ -376,7 +442,7 @@ test('restarting ignores every callback from a previous child', () => {
   const { reader, children, poses } = setup(); reader.start(123); const first = children[0];
   send(first, status()); send(first, pose()); const original = poses[0].trackingSession;
   reader.start(124); const second = children[1]; assert.equal(first.killed, 1);
-  send(first, status()); send(first, pose({ timestamp: now + 1 })); first.emit('error', Error('old')); first.emit('exit', 1);
+  send(first, status()); send(first, pose({ timestamp: now + 1 })); first.emit('error', Error('old')); first.emit('exit', 1); first.emit('close', 1);
   assert.equal(poses.length, 1); assert.equal(reader.getState().status, 'searching');
   send(second, status()); send(second, pose()); assert.equal(poses.length, 2);
   assert.notEqual(poses[1].trackingSession, original);
@@ -391,15 +457,32 @@ test('a status listener can restart the reader without processing remaining fram
   send(children[1], status()); send(children[1], pose()); assert.equal(poses.length, 1);
 });
 
-test('helper exit clears active session and preserves specific terminal reasons', () => {
+test('helper closure clears the active session and preserves specific terminal reasons', () => {
   for (const terminal of ['scan-incomplete', 'ambiguous', 'not-found', 'permission-denied', 'unsupported-build', 'profile-mismatch']) {
     const { reader, children } = setup(); reader.start(123); const child = children[0];
-    send(child, status()); send(child, pose()); send(child, status(terminal)); child.emit('exit', 4);
+    send(child, status()); send(child, pose()); send(child, status(terminal)); child.emit('exit', 4); child.emit('close', 4);
     assert.deepEqual(reader.getState(), { status: terminal, trackingSession: null });
     assert.equal(reader.child, null); assert.equal(reader.pid, null);
   }
-  const { reader, children } = setup(); reader.start(123); send(children[0], status()); children[0].emit('exit', 0);
+  const { reader, children } = setup(); reader.start(123); send(children[0], status()); children[0].emit('exit', 0); children[0].emit('close', 0);
   assert.deepEqual(reader.getState(), { status: 'process-gone', trackingSession: null });
+});
+
+test('a final permission denial buffered across exit reaches Settings without publishing process-gone', () => {
+  const { reader, children, statuses, poses, drops } = setup(); reader.start(123);
+  const child = children[0];
+  send(child, status()); send(child, pose());
+  const denial = JSON.stringify(status('permission-denied', {}));
+  child.stdout.write(denial.slice(0, 12));
+  child.emit('exit', 1);
+  assert.equal(reader.refreshRoots(), false);
+  child.stdout.write(denial.slice(12) + '\n');
+  send(child, status()); send(child, pose({ timestamp: now + 1 })); send(child, worldDrops());
+  child.emit('close', 1);
+  assert.equal(reader.child, null);
+  assert.deepEqual(reader.getState(), { status: 'permission-denied', trackingSession: null });
+  assert.equal(statuses.some(state => state.status === 'process-gone'), false);
+  assert.equal(poses.length, 1); assert.equal(drops.length, 0);
 });
 
 test('spawn errors, missing helpers, invalid PIDs, and unsupported platforms fail cleanly', () => {

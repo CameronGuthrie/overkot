@@ -1,9 +1,8 @@
 # Remote game data
 
-Official desktop releases v0.0.17 through v0.0.19 read the account-protected version 2 feed.
+The official desktop app reads the account-protected version 2 feed.
 The public `/files/*` and `/overlay/*` routes were retired on 22 November 2026.
 The legacy image distribution was disabled and its S3 read permission was removed.
-Users of earlier builds can upgrade to v0.0.19 and connect their avakot.dev account.
 Community builds can select their own version 2 feed with `dataManifest`. [Build instructions](../README.md)
 Version 2 adds compact wolf labels/progression and vector dungeon outlines with
 ordered generator tables. Dungeon geometry is fetched only for the active set;
@@ -13,7 +12,14 @@ pipeline build. Connect avakot.dev in **Settings → Connections** to authorize 
 The main process exchanges the existing native account credential for a five-minute,
 read-only data token and refreshes it before expiry. No shared API key is bundled,
 and no game inventory is uploaded to authorize data. Signed-out clients keep using
-verified saved data; a first launch without authorization shows a waiting state.
+verified saved data. When tiles are missing, the sign-in button on Mini-Map
+and the full map opens **Settings → Connections**. The Widgets menu offers
+the same shortcut for services, catalogues, and protected artwork. For example,
+Collection Log and Cosmetics can show saved inventory while signed out. Their
+**Sign in to load images** buttons let users download the missing thumbnails.
+Open maps request their visible tiles as soon as the
+authorized manifest arrives. If a download fails while connected, retry with
+**Settings → Game files → Check for new data**.
 
 Item artwork uses the `overkot-game-data://images` protocol. The official profile reads
 validated artwork paths from its protected API. A community profile can set `imageBase`

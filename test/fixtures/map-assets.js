@@ -17,4 +17,4 @@ function serveMapAsset(request) {
   return new Response(tile, { headers: { 'Content-Type': 'image/webp' } });
 }
 
-module.exports = { tile, serveMapAsset };
+module.exports = { tile, marker, serveMapAsset };

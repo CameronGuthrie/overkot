@@ -7,6 +7,7 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { PlayerTracking } = require('../src/modules/playerTracking');
+const { DungeonWatcher } = require('../src/modules/dungeonWatcher');
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const dungeon = instanceId => ({ active: true, status: 'ready', instanceId, layoutCode: 'SAME',
@@ -19,6 +20,7 @@ async function fixture(t, options = {}) {
   let state = { active: false, status: 'outside', instanceId: 'world-one', levelPath: '/SF/Levels/Procs/MidrathProc' };
   let account = 'account-one', now = 10000;
   const reader = new EventEmitter(); reader.status = { status: 'stopped', trackingSession: null };
+  reader.processStartMs = options.processStartMs;
   reader.getState = () => reader.status;
   reader.start = pid => { reader.pid = pid; };
   reader.update = (status, trackingSession = 'process-one') => {
@@ -26,7 +28,8 @@ async function fixture(t, options = {}) {
   };
   reader.stop = () => { reader.pid = null; reader.update('stopped', null); };
   const tracking = new PlayerTracking({ directory, reader, now: () => now,
-    getState: () => state, getAccountId: () => account, getVersion: () => 'feed',
+    getState: options.getState || (() => state), getAccountId: options.getAccountId || (() => account), getVersion: () => 'feed',
+    canShowAnonymousOverworld: options.canShowAnonymousOverworld, isPlayerAreaCurrent: options.isPlayerAreaCurrent,
     getLayoutSnapshot: options.getLayoutSnapshot || (async captured => ({ state: captured,
       status: 'ready', version: 'feed', coordinateSpace: 'world' })),
     getScene: async captured => ({ state: captured, version: 'feed', mode: 'placed', rooms: [] }) });
@@ -39,6 +42,138 @@ async function fixture(t, options = {}) {
     get state() { return state; }, set state(value) { state = value; },
     set account(value) { account = value; }, set now(value) { now = value; } };
 }
+
+test('the first fresh pose is visible after a logged game login even while inventory is unavailable', async t => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'overkot-tracking-login-'));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const file = path.join(directory, 'EE.log');
+  const watcher = new DungeonWatcher({ candidates: () => [file] });
+  const account = 'a'.repeat(24);
+  let inventoryAccount = null;
+  await fs.writeFile(file, `12.345 Sys [Info]: Logged in FirstEnvoy (${account})\nSTATS ENTER_LEVEL /SF/Levels/Procs/MidrathProc\n`);
+  watcher._poll();
+  const f = await fixture(t, { processStartMs: (await fs.stat(file)).mtimeMs - 1000, getState: () => watcher.getState(),
+    getAccountId: startMs => watcher.getPlayerAccountId(inventoryAccount, startMs),
+    canShowAnonymousOverworld: startMs => watcher.canUseAreaWithoutAccount(startMs),
+    isPlayerAreaCurrent: startMs => watcher.isPlayerAreaCurrent(startMs) });
+  f.pose();
+  assert.equal(f.tracking.getStatus().status, 'tracking');
+  assert.equal(f.tracking.getLocation().isOverworld, true);
+  assert.equal(f.tracking.getOwner().account, account);
+  assert.equal(JSON.stringify(f.tracking.getLocation()).includes(account), false);
+  inventoryAccount = account;
+  assert.equal(f.tracking.getLocation().status, 'found');
+  inventoryAccount = null;
+  assert.equal(f.tracking.getLocation().status, 'found');
+
+  inventoryAccount = account;
+  watcher._processLine('QUIT :Logged out of game');
+  f.pose();
+  assert.equal(f.tracking.getLocation().status, 'unavailable');
+  assert.equal(f.tracking.getOwner(), null);
+  const nextAccount = 'b'.repeat(24);
+  watcher._processLine(`Sys [Info]: Logged in SecondEnvoy (${nextAccount})`);
+  watcher._processLine('STATS ENTER_LEVEL /SF/Levels/MidrathRedux');
+  f.pose();
+  assert.equal(f.tracking.getLocation().status, 'unavailable');
+  assert.equal(f.tracking.getOwner(), null, 'Conflicting login and poller identities cannot own discovery');
+  inventoryAccount = null; f.pose();
+  assert.equal(f.tracking.getLocation().isOverworld, true);
+  assert.equal(f.tracking.getOwner().account, nextAccount);
+});
+
+test('a current game log with overworld evidence and no login record places the player until explicit logout', async t => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'overkot-tracking-area-'));
+  t.after(() => fs.rm(directory, { recursive: true, force: true }));
+  const file = path.join(directory, 'EE.log');
+  const watcher = new DungeonWatcher({ candidates: () => [file] });
+  await fs.writeFile(file, 'STATS ENTER_LEVEL /SF/Levels/MidrathRedux\n');
+  watcher._poll();
+  const f = await fixture(t, { processStartMs: (await fs.stat(file)).mtimeMs - 1000,
+    getState: () => watcher.getState(), getAccountId: start => watcher.getPlayerAccountId(null, start),
+    canShowAnonymousOverworld: start => watcher.canUseAreaWithoutAccount(start),
+    isPlayerAreaCurrent: start => watcher.isPlayerAreaCurrent(start) });
+  f.reader.update('searching', null); f.pose();
+  assert.equal(f.tracking.getStatus().status, 'searching');
+  assert.equal(f.tracking.getLocation().status, 'unavailable');
+  f.reader.update('tracking'); f.pose();
+  assert.equal(f.tracking.getStatus().status, 'tracking');
+  assert.equal(f.tracking.getLocation().isOverworld, true); assert.equal(f.tracking.getOwner(), null);
+  await fs.appendFile(file, 'QUIT :Logged out of game\nSTATS ENTER_LEVEL /SF/Levels/MidrathRedux\n'); watcher._poll();
+  f.pose(); assert.equal(f.tracking.getLocation().status, 'unavailable');
+  await fs.unlink(file); watcher._poll(); f.pose();
+  assert.equal(f.tracking.getStatus().status, 'waiting-for-area');
+  await fs.writeFile(file, 'STATS ENTER_LEVEL /SF/Levels/MidrathRedux\n');
+  await fs.utimes(file, new Date(1000), new Date(1000)); watcher._poll(); f.pose();
+  assert.equal(f.tracking.getStatus().status, 'waiting-for-area');
+  assert.equal(f.tracking.getLocation().status, 'unavailable');
+});
+
+test('support report distinguishes map placement without sharing locations or changing tracker state', async t => {
+  const f = await fixture(t);
+  f.reader.getDiagnostics = () => ({ readerStage: 'tracking' });
+  const report = () => f.tracking.getDiagnostics();
+  assert.deepEqual(report(), { mapStatus: 'stale', mapPlacement: 'no-live-sample', loginRecognized: true,
+    areaRecognized: true, readerStage: 'tracking' });
+  f.pose();
+  const emitted = f.locations.length;
+  assert.equal(report().mapPlacement, 'overworld');
+  assert.equal(f.locations.length, emitted);
+  f.pose({ position: { x: 1800, y: 0, z: 0 } });
+  assert.equal(report().mapPlacement, 'outside-overworld-bounds');
+  f.state = { active: false, status: 'outside', levelPath: '/SF/Levels/Other' }; f.pose();
+  assert.equal(report().mapPlacement, 'other-area');
+  f.state = dungeon('entry'); f.pose();
+  assert.equal(report().mapPlacement, 'dungeon');
+  f.account = null; f.tracking.refresh();
+  assert.equal(report().mapStatus, 'waiting-for-login');
+  assert.equal(report().loginRecognized, false);
+});
+
+test('a current Midrath entry can show a live marker before login identity is known', async t => {
+  let allow = true;
+  const f = await fixture(t, { processStartMs: 9000, getAccountId: () => null,
+    canShowAnonymousOverworld: start => start === 9000 && allow });
+  f.reader.getDiagnostics = () => ({ readerStage: 'tracking' });
+  f.pose({ dungeonFrames: [{ source: 'level-info', matrix: [] }], dungeonFramesTimestamp: 10000 });
+  const marker = f.tracking.getLocation();
+  assert.equal(marker.status, 'found'); assert.equal(marker.isOverworld, true);
+  assert.equal(marker.trackingSession, 'process-one');
+  assert.equal(marker.heading, 90); assert.deepEqual(marker.position, { x: 100, y: 20, z: -10 });
+  assert.equal(f.tracking.getDiagnostics().mapStatus, 'tracking');
+  assert.equal(f.tracking.getDiagnostics().loginRecognized, false);
+  assert.equal(f.tracking.getOwner(), null); assert.equal(f.tracking.frameCloud, null);
+  assert.equal(marker.dungeon, undefined);
+  f.reader.emit('world-drops', { type: 'world-drops', source: 'memory', status: 'available', sampledAt: 10000,
+    trackingSession: 'process-one', items: [] });
+  assert.equal(f.tracking.getLocation().worldDrops.status, 'unavailable');
+
+  allow = false; // An explicit logout or conflicting identity can arrive without a new level.
+  assert.equal(f.tracking.getLocation().status, 'unavailable'); f.pose();
+  assert.equal(f.tracking.getStatus().status, 'waiting-for-login');
+  allow = true; assert.equal(f.tracking.getLocation().status, 'unavailable');
+  f.pose(); assert.equal(f.tracking.getLocation().status, 'found');
+  f.tracking.setEnabled(false); f.pose(); assert.equal(f.tracking.getLocation().status, 'unavailable');
+});
+
+test('an unowned live pose cannot identify an area, cross processes or unlock dungeon discovery', async t => {
+  let areaCurrent = true;
+  const f = await fixture(t, { getAccountId: () => null, processStartMs: 9000,
+    canShowAnonymousOverworld: () => true, isPlayerAreaCurrent: start => start === 9000 && areaCurrent });
+  f.pose();
+  areaCurrent = false; assert.equal(f.tracking.getLocation().status, 'unavailable');
+  f.pose(); assert.equal(f.tracking.getStatus().status, 'waiting-for-area');
+  areaCurrent = true;
+  for (const state of [{ active: false, status: 'unknown' },
+    { active: false, status: 'outside', levelPath: '/SF/Levels/PlayerTower' }, dungeon('other-entry')]) {
+    f.state = state; f.pose(); assert.equal(f.tracking.getLocation().status, 'unavailable');
+    assert.equal(f.tracking.context, null); assert.equal(f.tracking.getOwner(), null);
+  }
+  f.state = { active: false, status: 'outside', levelPath: '/SF/Levels/MidrathRedux', instanceId: 'entry' };
+  f.reader.processStartMs = 10001; f.reader.update('tracking', 'new-process'); f.pose();
+  assert.equal(f.tracking.getStatus().status, 'waiting-for-area');
+  assert.equal(f.tracking.getLocation().status, 'unavailable');
+});
 
 test('a pending F6 capture completes on area change and its delayed old-area result cannot return', async t => {
   const f = await fixture(t);

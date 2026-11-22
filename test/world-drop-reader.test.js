@@ -50,7 +50,8 @@ internal static class DropWalkChecks {
    byte[] folderBytes=Encoding.ASCII.GetBytes("/SF/Weapons/Melee/Test/");Marshal.Copy(folderBytes,0,new IntPtr(directory),folderBytes.Length);
    byte[] leafBytes=Encoding.ASCII.GetBytes("TestWeapon");Marshal.Copy(leafBytes,0,new IntPtr(leaf),leafBytes.Length);
    using(Process process=Process.GetCurrentProcess()) {
-    reader=Activator.CreateInstance(readerType,BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic,null,new object[]{process,module},null);
+    reader=Activator.CreateInstance(readerType,new object[]{process});
+    readerType.GetField("ModuleBase").SetValue(reader,module);
     object profile=Activator.CreateInstance(host.GetNestedType("ImageProfile",BindingFlags.NonPublic));
     Field(profile,"Base",module);Field(profile,"Size",0x10000);Field(profile,"Code",0x2000);Field(profile,"CodeSize",0x1000);
     Field(profile,"Data",0x1000);Field(profile,"DataSize",0x1000);Field(profile,"Metadata",0x3000);Field(profile,"MetadataSize",0x2000);

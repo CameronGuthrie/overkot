@@ -7,7 +7,7 @@ const { requestMarketFrontend } = require('./marketFrontendApi');
 
 const MARKET_SCHEME = 'overkot-market';
 const MARKET_ORIGIN = `${MARKET_SCHEME}://app`;
-const INVENTORY_ASSETS = new Set(['market.js', 'market.css', 'theme.js', 'theme.css', 'icons.css', 'ui-icons.js', 'inventory-bridge.js', 'inventory-embedded.css']);
+const INVENTORY_ASSETS = new Set(['market.js', 'market.css', 'theme.js', 'theme.css', 'icons.css', 'ui-icons.js', 'inventory-bridge.js', 'inventory-embedded.css', 'game-artwork-recovery.js']);
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon',
   '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf' };
@@ -57,6 +57,9 @@ function createMarketProtocolHandler({ uiRoot, rendererRoot, assetsRoot }) {
       .replace('<head>', '<head><base href="/inventory-assets/"><script src="inventory-bridge.js"></script>')
       .replace('</head>', '<link rel="stylesheet" href="inventory-embedded.css"></head>')
       .replace('<body>', '<body class="inventory-embedded">');
+    else if (file === path.join(uiRoot, 'index.html')) {
+      body = body.toString('utf8').replace('</head>', '<script src="/inventory-assets/game-artwork-recovery.js" defer></script></head>');
+    }
     return new Response(body, { headers: { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream',
       'Content-Security-Policy': CSP, 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-cache' } });
   };

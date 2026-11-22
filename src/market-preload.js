@@ -36,6 +36,10 @@ contextBridge.exposeInMainWorld('api', {
   marketUpdateListing: value => action('update', value), marketCloseListing: id => action('update', { id, status: 'CLOSED' }),
   marketCopyContact: id => action('copy-contact', id), openMarketWebsite: section => action('website', section),
   onMarketChanged: callback => subscribe('market:changed', callback),
+  onGameArtworkAvailable: callback => subscribe('game-artwork-available', () => callback()),
+  onMapTilesUpdated: callback => subscribe('map-tiles-updated', info => {
+    if (!info?.requiresSignIn) callback();
+  }),
   openAccountSettings: () => action('account-settings'),
   getState: () => action('appearance'), onConfigChanged: callback => subscribe('config-changed', callback),
   onThemeChanged: callback => subscribe('config-changed', callback), windowClose: () => action('close'),

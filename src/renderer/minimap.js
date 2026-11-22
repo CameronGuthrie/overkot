@@ -41,13 +41,13 @@ const Minimap = (() => {
 
   // ── Mutable state ────────────────────────────────────────
   let inited = false;
-  let tileImages = [];
-  let tileGeneration = 0;
+  const tileImages = [];
   const tileUsed = new Map();
   let mapTilesVersion = '';
   let mapTilesSource = 'bundled';
+  let mapTilesRequireSignIn = false;
   let mapInfoLoaded = false;
-  let tileLoadingEl = null;
+  let updateTileStatus;
   let zoom = window.MapAppearance.DEFAULT_OVERWORLD_ZOOM;
   let panX = 0, panY = 0;
   let dragging = false;
@@ -131,28 +131,27 @@ const Minimap = (() => {
   }
 
 
-  function loadTiles() {
-    tileGeneration++;
-    for (const img of tileImages) {
-      if (img) { img.onload = null; img.onerror = null; img.src = ''; }
-    }
-    tileImages = [];
-    tileUsed.clear();
-    if (tileLoadingEl) tileLoadingEl.classList.remove('loaded');
+  function loadTiles(keepDecoded = false) {
+    tileImages.forEach((img, idx) => {
+      if (keepDecoded && img.complete && img.naturalWidth > 0) return;
+      img.onload = null; img.onerror = null; img.src = '';
+      delete tileImages[idx];
+      tileUsed.delete(idx);
+    });
     scheduleRender();
   }
 
   function ensureTile(idx) {
     tileUsed.set(idx, performance.now());
     if (!tileImages[idx]) {
-      const generation = tileGeneration;
       const img = new Image();
 
       img.onload = () => {
-        if (generation === tileGeneration) scheduleRender();
+        if (tileImages[idx] === img) scheduleRender();
       };
       img.onerror = () => {
-        if (generation !== tileGeneration) return;
+        if (tileImages[idx] !== img) return;
+        img.tileFailed = true;
         scheduleRender();
       };
       tileImages[idx] = img;
@@ -164,11 +163,18 @@ const Minimap = (() => {
   function applyMapTileInfo(info) {
     const nextVersion = info && info.version ? String(info.version) : '';
     const nextSource = info && info.source ? String(info.source) : 'bundled';
-    if (!info?.reload && mapInfoLoaded && nextVersion === mapTilesVersion && nextSource === mapTilesSource) return;
+    const requiresSignIn = info?.requiresSignIn === true;
+    const sameFeed = mapInfoLoaded && nextVersion === mapTilesVersion && nextSource === mapTilesSource;
+    if (!info?.reload && sameFeed && requiresSignIn === mapTilesRequireSignIn) return;
     mapInfoLoaded = true;
     mapTilesVersion = nextVersion;
     mapTilesSource = nextSource;
-    if (inited) { loadTiles(); loadPOIs(); }
+    mapTilesRequireSignIn = requiresSignIn;
+    if (inited) {
+      if (nextVersion && !requiresSignIn) MapPOIs.retryMissingLegendIcons(_$('#minimap-legend-panel'));
+      if (sameFeed && !info?.reload && requiresSignIn) scheduleRender();
+      else { loadTiles(sameFeed && !info?.reload); loadPOIs(); }
+    }
   }
 
   // ── Coordinate conversion ────────────────────────────────
@@ -353,19 +359,21 @@ const Minimap = (() => {
     const viewBottom = viewTop + h / zoom;
 
     const visibleTiles = new Set();
-    let tilesPending = false;
+    let painted = 0, failed = false;
     for (let idx = 0; idx < TOTAL_TILES; idx++) {
       const pos = getTilePos(idx);
       if (pos.x + TILE_SIZE < viewLeft || pos.x > viewRight ||
           pos.y + TILE_SIZE < viewTop || pos.y > viewBottom) continue;
       visibleTiles.add(idx);
       const img = ensureTile(idx);
-      if (!img.complete) tilesPending = true;
-      if (img && img.complete && img.naturalWidth > 0) {
+      if (img.complete && img.naturalWidth > 0) {
+        painted++;
         ctx.drawImage(img, pos.x, pos.y, TILE_SIZE, TILE_SIZE);
-      }
+      } else if (img.tileFailed) failed = true;
     }
-    if (tileLoadingEl) tileLoadingEl.classList.toggle('loaded', !tilesPending);
+    updateTileStatus?.(mapLabels, {
+      visible: visibleTiles.size, painted, failed, requiresSignIn: mapTilesRequireSignIn,
+    });
     // Release decoded tiles after zooming/panning away. An overview may need all
     // 196, while a zoomed view keeps at most 64 (about 64 MiB of decoded pixels).
     const limit = Math.max(64, visibleTiles.size);
@@ -548,7 +556,7 @@ const Minimap = (() => {
       const button = _$('#' + id);
       if (button) { button.title = label; button.setAttribute('aria-label', label); }
     }
-    if (tileLoadingEl) tileLoadingEl.textContent = tr.mapTilesLoading || 'Loading map tiles…';
+    scheduleRender();
     updateCenterButton();
 
     const mmLegendTitle = _$('#minimap-legend-title');
@@ -612,7 +620,7 @@ const Minimap = (() => {
     const canvas = _$('#minimap-canvas');
     const loadingEl = _$('#minimap-loading');
     if (!viewport || !canvas) return;
-    tileLoadingEl = loadingEl;
+    if (loadingEl) updateTileStatus = window.MapAppearance.bindTileStatus(loadingEl, () => window.api.openSettings('connections'));
 
     // Dungeon outlines share the minimap's space and automatically give it
     // back to the overworld on exit, preserving the overworld pan and zoom.
@@ -646,7 +654,9 @@ const Minimap = (() => {
       loadPOIs();
     };
     if (window.api && window.api.getMapTiles) {
-      window.api.getMapTiles().then(applyMapTileInfo).catch(loadInitialMap);
+      window.api.getMapTiles().then(info => {
+        if (!mapInfoLoaded) applyMapTileInfo(info);
+      }).catch(() => { if (!mapInfoLoaded) loadInitialMap(); });
     } else loadInitialMap();
     document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleRender(); });
     if (window.api && window.api.onMapTilesUpdated) {

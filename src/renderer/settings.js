@@ -268,6 +268,10 @@ function renderPlayerTracking() {
   const element = $('#player-tracking-status');
   if (!element) return;
   const status = config.livePlayerTracking === false ? 'disabled' : playerTrackingState?.status || 'idle';
+  const permissionMessages = {
+    win32: tr('settingsPositionWindowsDenied', 'Windows denied access to the player position. Restart Soulframe and Overkot under the same Windows account with “Run as administrator” turned off for both.'),
+    linux: 'Linux blocked the player position reader. Install or reinstall the DEB/Pacman package to configure its reader permissions.',
+  };
   const messages = {
     tracking: tr('settingsPositionActive', 'Tracking player position and facing.'),
     searching: tr('settingsPositionFinding', 'Finding the player in the current game session…'),
@@ -277,8 +281,8 @@ function renderPlayerTracking() {
     'unsupported-platform': tr('settingsPositionPlatforms', 'Live player tracking supports Windows and Linux with Wine/Proton.'),
     'game-closed': tr('settingsPositionStartGame', 'Start Soulframe to track your player position.'),
     'waiting-for-game': tr('settingsPositionStartGame', 'Start Soulframe to track your player position.'),
-    'waiting-for-login': tr('settingsPositionLogin', 'Log in to Soulframe to track your player position.'),
-    'waiting-for-area': tr('settingsPositionMap', 'Waiting for your current map…'),
+    'waiting-for-login': tr('settingsPositionLogin', 'Player found. Waiting for Overkot to identify the current Soulframe account.'),
+    'waiting-for-area': tr('settingsPositionArea', 'Player found. Waiting for the current area in EE.log. Check the log file in Settings → Game files.'),
     'waiting-context': tr('settingsPositionMap', 'Waiting for your current map…'),
     'waiting-position': tr('settingsPositionPosition', 'Waiting for a player position…'),
     'helper-missing': tr('settingsPositionUnavailableReader', 'The player position reader is unavailable.'),
@@ -286,9 +290,7 @@ function renderPlayerTracking() {
     'scan-incomplete': tr('settingsPositionSearching', 'The player search is still incomplete. Waiting while it retries.'),
     'process-gone': tr('settingsPositionStartGame', 'Start Soulframe to track your player position.'),
     'profile-mismatch': tr('settingsPositionSession', 'Live tracking could not verify this Soulframe session.'),
-    'permission-denied': platformSupport.platform === 'linux'
-      ? 'Linux blocked the player position reader. Install or reinstall the DEB/Pacman package to configure its reader permissions.'
-      : tr('settingsPositionUnreadable', 'Your player position could not be read.'),
+    'permission-denied': permissionMessages[platformSupport.platform] || tr('settingsPositionUnreadable', 'Your player position could not be read.'),
     'not-found': tr('settingsPositionRetry', 'Waiting to find your player while the reader retries.'),
     ambiguous: tr('settingsPositionAmbiguous', 'Waiting to verify your player position while the reader retries.'),
     'scan-failed': tr('settingsPositionUnavailable', 'Live player tracking is unavailable.'),
@@ -925,6 +927,13 @@ async function replayTutorial(id) {
 }
 
 function bindEvents() {
+  $('#copy-player-tracking-report').addEventListener('click', async () => {
+    const result = $('#player-tracking-report-result');
+    result.textContent = '';
+    let copied = false;
+    try { copied = await window.api.copyPlayerTrackingReport(); } catch { /* Clipboard can be unavailable. */ }
+    result.textContent = copied ? tr('gfCopied', 'Copied!') : tr('gfActionFailed', 'Action failed — try again');
+  });
   $('#close-btn').addEventListener('click', () => {
     stopShortcutCapture();
     for (const timer of sliderTimers.values()) clearTimeout(timer);
@@ -1074,7 +1083,9 @@ function bindEvents() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const selectSection = section => { if (section === 'connections' || section === 'moonsteel-alert') setTab(section); };
+  const selectSection = section => {
+    if (section === 'connections' || section === 'moonsteel-alert') setTab(section, true);
+  };
   window.api.onSettingsSection?.(selectSection);
   selectSection(new URLSearchParams(window.location?.search || '').get('section'));
   loadTranslations();

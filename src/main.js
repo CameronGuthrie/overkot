@@ -91,6 +91,7 @@ const { getLocaleTag, windowMessages } = require('./modules/localization');
 const { catalogAsset, localizedCatalog } = require('./modules/localizedCatalogs');
 const { ensureNamesForLanguage, downloadLanguage, lookupName, loadLanguageData, setDataManager, setDebug: setLangDebug } = require('./modules/languageNames');
 const { MapTileManager } = require('./modules/mapTiles');
+const { widgetConnections } = require('./modules/widgetConnections');
 const { DataUpdateManager, MANIFEST_URL, POI_FILES } = require('./modules/dataUpdates');
 const { GameDataAccess } = require('./modules/gameDataAccess');
 const { createTemperIconHandler } = require('./modules/temperIconProtocol');
@@ -165,7 +166,10 @@ const market = new MarketService({ getSession: () => activeInventoryPoller, getT
 const marketAccount = new MarketAccountConnection({ account: avakotAccount, market });
 market.getAccountConnection = () => accountConnectionState({ ...avakotAccount.snapshot(), ...marketAccount.snapshot(),
   busy: avakotAccount.busy || marketAccount.busy, error: marketAccount.error || avakotAccount.error });
-marketAccount.on('changed', () => market.update());
+marketAccount.on('changed', () => {
+  market.update();
+  updateWidgetConnections();
+});
 market.on('changed', snapshot => {
   for (const win of [marketWindow, settingsWindow]) {
     if (!win || win.isDestroyed()) continue;
@@ -353,7 +357,7 @@ wolfTraining.on('changed', snapshot => {
     }
   }
 });
-function appearanceFrames() {
+function applicationFrames() {
   const frames = [];
   for (const win of BrowserWindow.getAllWindows()) {
     try {
@@ -369,7 +373,7 @@ function appearanceFrames() {
 function broadcastTheme(allConfig) {
   const effective = appearanceSession.effectiveConfig(allConfig);
   const theme = { ...Appearance.appearanceConfig(effective), locale: getLocaleTag(effective.language) };
-  for (const frame of appearanceFrames()) {
+  for (const frame of applicationFrames()) {
     try { frame.send('theme-changed', theme); } catch { /* Frame closed during the update. */ }
   }
 }
@@ -377,7 +381,7 @@ function broadcastTheme(allConfig) {
 function broadcastAppearance(current) {
   const allConfig = appearanceSession.effectiveConfig(current);
   broadcastTheme(allConfig);
-  for (const frame of appearanceFrames()) {
+  for (const frame of applicationFrames()) {
     try { frame.send('config-changed', allConfig); } catch { /* Frame closed during editing. */ }
   }
 }
@@ -429,20 +433,29 @@ const dataManager = new DataUpdateManager({
 });
 setDataManager(dataManager);
 gameDataAccess.on('changed', state => {
-  if (state.signedIn && app.isReady()) {
+  if (!app.isReady()) return;
+  if (state.signedIn) {
+    updateWidgetConnections();
+    if (services.dataOrigin && !services.imageBase) {
+      for (const frame of applicationFrames()) {
+        try { frame.send('game-artwork-available'); } catch { /* Widget closed during sign-in. */ }
+      }
+    }
     // A signed-out startup check may still be unwinding and setting backoff.
     // Queue the authorized force refresh after it, just like the Settings action.
     void checkGameDataNow().then(() => Promise.all([
       refreshTitleData({ force: true }),
       warmMapTiles(),
     ])).catch(error => log('DATA', `Post-sign-in refresh failed: ${error.message}`));
-  }
+  } else broadcastMapTilesUpdated(mapTileManager.getInfo());
 });
 const dungeonMap = new DungeonMap({ dataManager });
 const playerTracking = new PlayerTracking({
   directory: path.join(APP_DIR, 'dungeon-discovery'),
   getState: () => dungeonWatcher?.getState() || { status: 'unknown', active: false },
-  getAccountId: () => activeInventoryPoller?.accountId || null,
+  getAccountId: processStartMs => dungeonWatcher?.getPlayerAccountId(activeInventoryPoller?.accountId, processStartMs) || null,
+  canShowAnonymousOverworld: processStartMs => dungeonWatcher?.canUseAreaWithoutAccount(processStartMs) === true,
+  isPlayerAreaCurrent: processStartMs => dungeonWatcher?.isPlayerAreaCurrent(processStartMs) === true,
   getVersion: () => dataManager.getInfo().version,
   getLayoutSnapshot: state => dungeonMap.getLayoutSnapshot(state),
   getScene: state => dungeonMap.getSnapshot(state),
@@ -520,11 +533,29 @@ function registerMapTileProtocol() {
   });
 }
 
+function mapTilesRequireSignIn() {
+  return Boolean(services.accountApi && services.accountPortal && MANIFEST_URL &&
+    dataManager.manifestUrl === MANIFEST_URL && !avakotAccount.snapshot().signedIn);
+}
+
+function getWidgetConnections() {
+  return widgetConnections({ signedIn: avakotAccount.snapshot().signedIn, services, dataManager,
+    mapTileManager, language: config.get('language', 'en'), marketConnection: marketAccount.snapshot() });
+}
+
+function updateWidgetConnections() {
+  if (widgetsWindow && !widgetsWindow.isDestroyed()) {
+    widgetsWindow.webContents.send('widget-connections-changed', getWidgetConnections());
+  }
+}
+
 function broadcastMapTilesUpdated(info) {
+  updateWidgetConnections();
+  const state = { ...info, requiresSignIn: mapTilesRequireSignIn() };
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) {
       for (const frame of win.webContents.mainFrame.framesInSubtree) {
-        try { frame.send('map-tiles-updated', info); } catch { /* Frame closed during refresh. */ }
+        try { frame.send('map-tiles-updated', state); } catch { /* Frame closed during refresh. */ }
       }
     }
   }
@@ -574,7 +605,7 @@ function refreshGameData({ force = false } = {}) {
   if (dataRefreshPromise) return dataRefreshPromise;
   dataRefreshPromise = (async () => {
     const result = await dataManager.checkForUpdates({ force });
-    let assets = { failed: [], updated: false };
+    let assetRefresh;
     if (force && !result.error) {
       const locale = config.get('language', 'en');
       const language = normalizeLocale(locale);
@@ -588,8 +619,12 @@ function refreshGameData({ force = false } = {}) {
       if (services.buildWebsite && visible['build-exporter']) keys.push('build-export/catalog.json');
       if (visible.daily || visible.calendar || visible['world-watch']) keys.push('calendar/calendar.json');
       if (visible.minimap || (mapWindow && !mapWindow.isDestroyed())) keys.push(...POI_FILES.map(name => `map-json/${name}.json`));
-      assets = await dataManager.refreshCachedAssets(keys);
+      assetRefresh = dataManager.refreshCachedAssets(keys);
     }
+    // Visible tiles can download as soon as the manifest is ready and any
+    // per-asset backoff has been cleared, even if other catalogues are slow.
+    if (result.updated || force) broadcastMapTilesUpdated({ ...dataManager.getInfo(), reload: force });
+    const assets = assetRefresh ? await assetRefresh : { failed: [], updated: false };
     for (const module of ['temper-tracker', 'build-exporter', 'wolf-training']) {
       if (config.get('widgetVisibility', {})[module] || module === 'temper-tracker' && (config.get('widgetVisibility', {}).daily || config.get('widgetVisibility', {}).market)) await refreshModuleData(module);
     }
@@ -606,7 +641,6 @@ function refreshGameData({ force = false } = {}) {
       if (mapWindow && !mapWindow.isDestroyed()) mapWindow.webContents.send('map-language-updated', locale);
     }
     pushStateToRenderer();
-    if (result.updated || force) broadcastMapTilesUpdated({ ...dataManager.getInfo(), reload: force });
     return { status: result.error ? 'error' : assets.failed.length ? 'partial' : result.updated || assets.updated ? 'updated' : 'current' };
   })().catch(error => { log('DATA', error.message); return { status: 'error' }; }).finally(() => { dataRefreshPromise = null; });
   return dataRefreshPromise;
@@ -614,7 +648,7 @@ function refreshGameData({ force = false } = {}) {
 
 let manualDataRefreshPromise = null;
 function checkGameDataNow() {
-  if (MANIFEST_URL && dataManager.manifestUrl === MANIFEST_URL && !avakotAccount.snapshot().signedIn) {
+  if (mapTilesRequireSignIn()) {
     return Promise.resolve({ status: 'signin' });
   }
   if (!manualDataRefreshPromise) {
@@ -622,6 +656,7 @@ function checkGameDataNow() {
       // A settings click must still reach the network if an automatic refresh
       // was already using the six-hour cached result.
       if (dataRefreshPromise) await dataRefreshPromise;
+      if (dataManager.checkPromise) await dataManager.checkPromise;
       return refreshGameData({ force: true });
     })().finally(() => { manualDataRefreshPromise = null; });
   }
@@ -2805,7 +2840,7 @@ ipcMain.on('updates:installer', () => {
   require('electron').shell.openExternal(`${services.releases}/overkot.exe`).catch(error => log('UPDATE', error.message));
 });
 
-ipcMain.handle('get-state', () => ({
+ipcMain.handle('get-state', event => ({
   status: appStatus,
   overlayShortcutWarning,
   visibilityShortcutWarning,
@@ -2826,9 +2861,13 @@ ipcMain.handle('get-state', () => ({
   arenaWave,
   ancestors: ancestorMarkers,
   mapTiles: mapTileManager.getInfo(),
+  ...(widgetsWindow && event.sender === widgetsWindow.webContents ? { widgetConnections: getWidgetConnections() } : {}),
 }));
 
-ipcMain.handle('get-map-tiles', async () => { await dataManager.checkForUpdates(); return mapTileManager.getInfo(); });
+ipcMain.handle('get-map-tiles', async () => {
+  await dataManager.checkForUpdates();
+  return { ...mapTileManager.getInfo(), requiresSignIn: mapTilesRequireSignIn() };
+});
 ipcMain.handle('check-data-updates', () => checkGameDataNow());
 ipcMain.handle('get-map-data', async (_event, name) => {
   if (!POI_FILES.includes(name)) throw new Error('Unknown map layer');
@@ -2985,6 +3024,7 @@ ipcMain.handle('save-config', (_e, newConfig) => {
 
   // If language actually changed, reload names map
   if (newConfig.language !== undefined && newConfig.language !== prevLang) {
+    updateWidgetConnections();
     updateTrayLanguage();
     if (COLLECTION_WIDGET_IDS.some(id => config.get('widgetVisibility', {})[id])) void refreshCollectionLanguage();
     ensureNamesForLanguage(newConfig.language)
@@ -3119,7 +3159,7 @@ ipcMain.on('window-close', (event) => {
 // });
 
 // Popout windows
-ipcMain.on('open-settings', () => createSettingsWindow());
+ipcMain.on('open-settings', (_event, section) => createSettingsWindow(section));
 ipcMain.on('open-changelog', () => createChangelogWindow());
 ipcMain.on('open-modules', () => createWidgetsWindow());
 ipcMain.on('open-widgets', () => createWidgetsWindow());
@@ -3168,6 +3208,13 @@ ipcMain.handle('get-player-location', () => {
   return playerTracking.getLocation();
 });
 ipcMain.handle('get-player-tracking', () => playerTracking.getStatus());
+ipcMain.handle('copy-player-tracking-report', event => {
+  if (!settingsWindow || settingsWindow.isDestroyed() || event.sender !== settingsWindow.webContents || event.senderFrame !== event.sender.mainFrame) return false;
+  const report = { report: 'Overkot player location', reportVersion: 1, appVersion: app.getVersion(),
+    platform: process.platform, ...playerTracking.getDiagnostics() };
+  require('electron').clipboard.writeText(JSON.stringify(report, null, 2));
+  return true;
+});
 ipcMain.handle('dungeon-discovery:get', (_e, data) => playerTracking.discovery.load(data));
 ipcMain.handle('dungeon-discovery:save', (_e, data) => playerTracking.discovery.save(data));
 ipcMain.handle('dungeon-discovery:align', (_e, data) => playerTracking.discovery.addPoint(data));

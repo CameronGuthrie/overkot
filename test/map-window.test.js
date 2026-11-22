@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-function createMapWindow({ tracking = false, getLocation, getState, width = 400, height = 300 } = {}) {
+function createMapWindow({ tracking = false, getLocation, getState, getMapTiles, width = 400, height = 300 } = {}) {
   const frames = [];
   const images = [];
   const requests = [];
@@ -23,6 +23,10 @@ function createMapWindow({ tracking = false, getLocation, getState, width = 400,
     querySelectorAll() { return []; }, getContext() { return context2d; },
   });
   const elements = new Map();
+  const status = element(), connect = { ...element(), hidden: true };
+  elements.set('map-connect', connect);
+  elements.set('map-tile-status', status);
+  elements.set('map-loading', { ...element(), querySelector: selector => selector === 'button' ? connect : status });
   class FakeImage {
     constructor() { this.listeners = {}; this.complete = false; this.naturalWidth = 0; images.push(this); }
     addEventListener(event, fn) { (this.listeners[event] ||= []).push(fn); }
@@ -47,7 +51,9 @@ function createMapWindow({ tracking = false, getLocation, getState, width = 400,
       addEventListener(name, callback) { windowEvents[name] = callback; },
       api: {
         getMapData: name => new Promise(resolve => requests.push({ name, resolve })),
+        ...(getMapTiles ? { getMapTiles } : {}),
         onMapTilesUpdated: callback => { handlers.mapUpdate = callback; },
+        openSettings: tab => { handlers.openedSettings = tab; },
         onConfigChanged: callback => { handlers.config = callback; },
         ...(getState ? { getState } : {}),
         ...(tracking ? { getPlayerLocation: getLocation || (async () => null),
@@ -234,8 +240,48 @@ test('full map loads visible tiles only and settles a missing tile without a pac
   assert.match(source, /^overkot-map-tiles:\/\/tile\/\d+\.webp$/);
   tiles[0].onerror();
   map.run('render()');
-  assert.equal(tiles[0].tileSettled, true);
+  assert.equal(map.run('tilesLoaded'), 0, 'A failed image cannot count toward painted coverage');
+  assert.match(map.elements.get('map-tile-status').textContent, /Settings → Game files/);
+  assert.equal(map.elements.get('map-connect').hidden, true);
   assert.equal(map.images.length, 4);
+});
+
+test('expanded map refreshes missing tiles on sign-in and keeps decoded tiles available offline', async () => {
+  let resolveInitial;
+  const map = createMapWindow({ getMapTiles: () => new Promise(resolve => { resolveInitial = resolve; }) });
+  const info = { version: 'same-feed', source: 'remote' };
+  const markerUrl = 'overkot-map-tiles://data/map-icons/Vendor.png';
+  const legendIcon = { src: markerUrl, naturalWidth: 0, complete: true };
+  map.elements.get('map-legend-panel').querySelectorAll = selector => selector === 'img' ? [legendIcon] : [];
+  map.handlers.mapUpdate({ ...info, requiresSignIn: true });
+  assert.equal(legendIcon.src, markerUrl);
+  map.run('render()');
+  const [cached, ...missing] = map.images;
+  cached.complete = true; cached.naturalWidth = 512; cached.onload();
+  for (const tile of missing) { tile.complete = true; tile.onerror(); }
+  resolveInitial(info);
+  await flushPromises(); map.run('render()');
+  assert.match(map.elements.get('map-tile-status').textContent, /Settings → Connections/);
+  const connect = map.elements.get('map-connect');
+  assert.equal(connect.hidden, false);
+  connect.click();
+  assert.equal(map.handlers.openedSettings, 'connections');
+  assert.equal(map.run('tilesLoaded'), 1);
+  map.handlers.mapUpdate(info);
+  assert.notEqual(legendIcon.src, markerUrl, 'The expanded map retries its missing legend icon on sign-in');
+  map.run('render()');
+  assert.ok(cached.src);
+  assert.equal(map.images.length, 7);
+  for (const tile of map.images.slice(4)) { tile.complete = true; tile.naturalWidth = 512; tile.onload(); }
+  map.run('render()');
+  assert.equal(map.run('tilesLoaded'), 4);
+  assert.equal(map.elements.get('map-tile-status').textContent, '');
+  assert.equal(connect.hidden, true);
+  map.handlers.mapUpdate({ ...info, requiresSignIn: true });
+  map.run('render()');
+  assert.equal(map.elements.get('map-tile-status').textContent, '');
+  assert.equal(connect.hidden, true);
+  assert.equal(map.images.length, 7);
 });
 
 const centered = map => {

@@ -174,7 +174,7 @@ window.DailyBriefWidget = {
             const source = window.GameDataImages.temperIconUrl(temper.icon);
             if (source) {
               const image = node('img'); image.alt = ''; image.loading = 'lazy'; image.draggable = false;
-              image.addEventListener('load', () => { fallback.hidden = true; });
+              image.addEventListener('load', () => { image.hidden = false; fallback.hidden = true; });
               image.addEventListener('error', () => { image.hidden = true; fallback.hidden = false; });
               image.src = source;
               icon.append(image);

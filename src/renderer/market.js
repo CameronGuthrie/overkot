@@ -76,14 +76,16 @@
 
   function itemImage(item) {
     const source = window.GameDataImages.marketImageUrl(item?.imageUrl || item?.item?.imageUrl);
-    const fallback = () => { const element = node('span', 'item-image item-fallback icon-market'); element.setAttribute('aria-hidden', 'true'); return element; };
-    if (!source) return fallback();
+    const fallback = node('span', 'item-image item-fallback icon-market');
+    fallback.setAttribute('aria-hidden', 'true');
+    if (!source) return fallback;
     const image = node('img', 'item-image');
-    image.src = source;
     image.alt = '';
     image.loading = 'lazy';
     image.referrerPolicy = 'no-referrer';
-    image.addEventListener('error', () => image.replaceWith(fallback()), { once: true });
+    image.addEventListener('error', () => { image.hidden = true; image.after(fallback); });
+    image.addEventListener('load', () => { image.hidden = false; fallback.remove(); });
+    image.src = source;
     return image;
   }
 
@@ -394,13 +396,15 @@
     const plaque = node('span', 'market-temper-icon');
     plaque.title = temper.name;
     plaque.setAttribute('aria-hidden', 'true');
-    const fallback = () => plaque.replaceChildren(node('span', 'temper-icon-fallback', '◇'));
+    const fallback = node('span', 'temper-icon-fallback', '◇');
     const source = window.GameDataImages.temperIconUrl(temper.icon) || window.GameDataImages.marketImageUrl(temper.icon);
-    if (!source) fallback();
+    if (!source) plaque.append(fallback);
     else {
-      const image = node('img'); image.src = source; image.alt = ''; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer';
-      image.addEventListener('error', fallback, { once: true });
-      plaque.append(image);
+      const image = node('img'); image.alt = ''; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer';
+      fallback.hidden = true;
+      image.addEventListener('error', () => { image.hidden = true; fallback.hidden = false; });
+      image.addEventListener('load', () => { image.hidden = false; fallback.hidden = true; });
+      plaque.append(image, fallback); image.src = source;
     }
     return plaque;
   }

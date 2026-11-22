@@ -80,9 +80,34 @@ before emitting a pose. Layout changes can still require a reader update.
 Normal-permission live validation succeeded against hotfix `2026.11.13.15.34`,
 including its relocated getters and shifted player vtable.
 
-Discovery scans are bounded and back off when no unique avatar is found. Once
-acquired, the helper reads small live transform samples instead of repeating the
-scan. It requests query/read access only and performs no writes or injection.
+On Windows, run Soulframe, its launcher and Overkot normally under the same
+Windows account. Settings → Overlay → Player location reports when Windows
+denies read access. The reader checks whether the game is still running using
+its pinned process ID.
+
+During a search, the percentage in Settings shows how far the reader has
+advanced through the selected regions in the current pass. Windows device
+allocations marked as noncached or write-combined are excluded. If a player
+object is present while its avatar or camera is still loading, the reader
+checks it again at the end of the pass before deciding whether to retry.
+
+For a slow search, select **Copy tracking report** under **Settings → Overlay →
+Player location** while the percentage is moving. Two reports about 15 seconds
+apart show the change in bytes read, progress, and completed passes. Each report
+also shows whether a live position reached the app and whether it could be
+placed on the map. The report omits player coordinates, account IDs, and paths.
+
+Once the active game log identifies Midrath, the overworld maps can show a
+verified position even while Overkot is waiting to identify the account.
+Dungeon discovery and pickups still require an identified account. If Settings
+says it is waiting for the current area, check the **Game log · EE.log** path
+under **Settings → Game files**.
+
+The map shows the first verified position before collecting nearby room and
+item data. A completed search that finds no unique avatar retries after
+one second. Consecutive misses back off to a maximum ten-second pause between
+searches. Once acquired, the helper reads small live transform samples instead
+of repeating the scan. It requests query/read access only and performs no writes or injection.
 Only sanitized positions, headings, timestamps and opaque session identity reach
 the overlay. Process pointers, credentials and raw scan bytes do not reach the UI.
 Samples older than two seconds are removed from the maps.

@@ -65,6 +65,76 @@ test('fresh log appends resolve every successive captured visit and re-entry', t
   }
 });
 
+test('login identity follows the current log and stays private while a historical area is replayed', t => {
+  const { watcher, log } = logWatcher(t);
+  const first = 'a'.repeat(24), second = 'b'.repeat(24);
+  const inventory = 'c'.repeat(24);
+  assert.equal(watcher.getPlayerAccountId(inventory), inventory, 'Logs with no login evidence retain the inventory fallback');
+  fs.writeFileSync(log, [
+    `1.0 Sys [Info]: Logged in First (${first})`, 'STATS ENTER_LEVEL /SF/Levels/PlayerTower',
+    'unrelated line\n'.repeat(20000), 'Game [Info]: Logging in as Second',
+    `2.0 Sys [Info]: Logged in Second (${second})`, 'STATS ENTER_LEVEL /SF/Levels/MidrathRedux', '',
+  ].join('\n'));
+  watcher._poll();
+  assert.equal(watcher.getPlayerAccountId(inventory), null);
+  watcher._poll();
+  assert.equal(watcher.getPlayerAccountId(null, fs.statSync(log).mtimeMs - 1000), second);
+  assert.equal(watcher.getState().levelPath, '/SF/Levels/MidrathRedux');
+  assert.equal(JSON.stringify(watcher.getState()).includes(second), false);
+
+  fs.renameSync(log, `${log}.old`);
+  fs.writeFileSync(log, 'STATS ENTER_LEVEL /SF/Levels/PlayerTower\n');
+  watcher._poll();
+  assert.equal(watcher.getPlayerAccountId(null), null);
+  assert.equal(watcher.getPlayerAccountId(inventory), inventory);
+});
+
+test('a completed login without an ID can locate the player without attributing progress to an account', t => {
+  const { watcher, log, append } = logWatcher(t);
+  const start = fs.statSync(log).mtimeMs - 1000;
+  const oldAccount = 'a'.repeat(24), newAccount = 'b'.repeat(24);
+  append('Game [Info]: Logging in as Envoy');
+  assert.equal(watcher.canUseAreaWithoutAccount(start), false);
+  append('STATS ENTER_LEVEL /SF/Levels/MidrathRedux');
+  append('Game [Info]: Logged in Envoy');
+  assert.equal(watcher.canUseAreaWithoutAccount(start), true);
+  assert.equal(watcher.getState().levelPath, '/SF/Levels/MidrathRedux');
+  assert.equal(watcher.getPlayerAccountId(oldAccount, start), null);
+  append(`123.456 Sys [Info]: Logged in Second Envoy (${newAccount})`);
+  assert.equal(watcher.getPlayerAccountId(null, start), newAccount);
+  assert.equal(watcher.getPlayerAccountId(oldAccount, start), null);
+  assert.equal(watcher.canUseAreaWithoutAccount(start), false);
+  append('QUIT :Logged out of game');
+  assert.equal(watcher.canUseAreaWithoutAccount(start), false);
+  assert.equal(watcher.getState().levelPath, undefined);
+});
+
+test('log-only ownership requires a verified process start and current-file activity; rotation discards growth evidence', t => {
+  const { watcher, log } = logWatcher(t);
+  const first = 'a'.repeat(24), second = 'b'.repeat(24);
+  const startMs = Date.now() - 10000;
+  const stale = `1.0 Sys [Info]: Logged in First (${first})\nSTATS ENTER_LEVEL /SF/Levels/PlayerTower\n`;
+  fs.renameSync(log, `${log}.original`);
+  fs.writeFileSync(log, stale);
+  fs.utimesSync(log, 1000, 1000);
+  watcher._poll();
+  assert.equal(watcher.getPlayerAccountId(null, startMs), null);
+  assert.equal(watcher.getPlayerAccountId(first, startMs), first, 'A current inventory account independently identifies its owner');
+  fs.appendFileSync(log, 'game activity\n');
+  fs.utimesSync(log, 1000, 1000);
+  watcher._poll();
+  assert.equal(watcher.getPlayerAccountId(null, startMs), first);
+  assert.equal(watcher.getPlayerAccountId(null, null), null);
+  assert.equal(watcher.getPlayerAccountId(null, Date.now() + 10000), null);
+  watcher._poll();
+  assert.equal(watcher.getPlayerAccountId(null, startMs), first, 'An idle poll preserves real growth evidence');
+  fs.renameSync(log, `${log}.replaced`);
+  fs.writeFileSync(log, stale.replace(first, second) + 'longer historical log\n'.repeat(6));
+  fs.utimesSync(log, 1000, 1000);
+  watcher._poll();
+  assert.equal(watcher.getPlayerAccountId(null, startMs), null);
+});
+
 test('fresh generation split over polling boundaries waits for the complete line', t => {
   const { watcher, log, append } = logWatcher(t);
   const [, level, code] = visits[0];

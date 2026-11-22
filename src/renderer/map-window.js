@@ -14,16 +14,18 @@ const TOTAL_TILES    = GRID_COLS * GRID_ROWS; // 196
 const container  = document.getElementById('map-container');
 const canvas     = document.getElementById('map-canvas');
 const ctx        = canvas.getContext('2d');
-const loadingEl  = document.getElementById('map-loading');
+const updateTileStatus = window.MapAppearance.bindTileStatus(document.getElementById('map-loading'), () => window.api.openSettings('connections'));
 const coordRead  = document.getElementById('coord-readout');
 const tooltipEl  = document.getElementById('map-tooltip');
 
-let tileImages   = [];
+const tileImages = [];
 const tileUsed = new Map();
 let tilesLoaded  = 0;
 let mapLabels = {};
 let mapTilesVersion = '';
 let mapTilesSource = 'bundled';
+let mapTilesRequireSignIn = false;
+let mapInfoLoaded = false;
 let zoom         = 1;
 let panX         = 0, panY = 0;
 let dragging     = false;
@@ -43,10 +45,16 @@ function mapTileUrl(idx) {
 function applyMapTileInfo(info) {
   const nextVersion = info && info.version ? String(info.version) : '';
   const nextSource = info && info.source ? String(info.source) : 'bundled';
-  if (!info?.reload && nextVersion === mapTilesVersion && nextSource === mapTilesSource && tileImages.length > 0) return;
+  const requiresSignIn = info?.requiresSignIn === true;
+  const sameFeed = mapInfoLoaded && nextVersion === mapTilesVersion && nextSource === mapTilesSource;
+  if (!info?.reload && sameFeed && requiresSignIn === mapTilesRequireSignIn) return;
+  mapInfoLoaded = true;
   mapTilesVersion = nextVersion;
   mapTilesSource = nextSource;
-  loadTiles();
+  mapTilesRequireSignIn = requiresSignIn;
+  if (nextVersion && !requiresSignIn) MapPOIs.retryMissingLegendIcons(legendPanel);
+  if (sameFeed && !info?.reload && requiresSignIn) scheduleRender();
+  else { loadTiles(sameFeed && !info?.reload); loadMapPOIs(); }
 }
 
 // Player location marker
@@ -293,7 +301,7 @@ function render() {
   const viewRight  = viewLeft + w / zoom;
   const viewBottom = viewTop  + h / zoom;
 
-  let visiblePending = false;
+  let painted = 0, failed = false;
   const visibleTiles = new Set();
   for (let idx = 0; idx < TOTAL_TILES; idx++) {
     const pos = getTilePos(idx);
@@ -301,13 +309,14 @@ function render() {
         pos.y + TILE_SIZE < viewTop  || pos.y > viewBottom) continue;
     visibleTiles.add(idx);
     const img = ensureTile(idx);
-    if (img && img.complete && img.naturalWidth > 0) {
+    if (img.complete && img.naturalWidth > 0) {
+      painted++;
       ctx.drawImage(img, pos.x, pos.y, TILE_SIZE, TILE_SIZE);
-    } else if (!img.tileSettled) visiblePending = true;
+    } else if (img.tileFailed) failed = true;
   }
-  // Image completion schedules a frame. Failed tiles must not keep a polling
-  // timer repainting this window forever.
-  if (loadingEl) loadingEl.classList.toggle('loaded', !visiblePending);
+  updateTileStatus(mapLabels, {
+    visible: visibleTiles.size, painted, failed, requiresSignIn: mapTilesRequireSignIn,
+  });
   const keepCount = Math.max(64, visibleTiles.size);
   const retired = [...tileUsed.keys()].filter(idx => !visibleTiles.has(idx))
     .sort((a, b) => tileUsed.get(a) - tileUsed.get(b));
@@ -457,34 +466,31 @@ async function loadMapPOIs() {
   scheduleRender();
 }
 
-function loadTiles() {
-  for (const image of tileImages) {
-    if (image) { image.onload = null; image.onerror = null; image.src = ''; }
-  }
-  tileImages = new Array(TOTAL_TILES);
-  tileUsed.clear();
+function loadTiles(keepDecoded = false) {
   tilesLoaded = 0;
+  tileImages.forEach((image, idx) => {
+    if (keepDecoded && image.complete && image.naturalWidth > 0) { tilesLoaded++; return; }
+    image.onload = null; image.onerror = null; image.src = '';
+    delete tileImages[idx];
+    tileUsed.delete(idx);
+  });
   scheduleRender();
 }
 
 function ensureTile(idx) {
   tileUsed.set(idx, performance.now());
   if (tileImages[idx]) return tileImages[idx];
-  const currentTiles = tileImages;
   const img = new Image();
-
-  img.tileSettled = false;
   tileImages[idx] = img;
-  const settled = () => {
-    if (currentTiles !== tileImages) return;
-    img.tileSettled = true;
+  img.onload = () => {
+    if (tileImages[idx] !== img) return;
     tilesLoaded++;
     scheduleRender();
   };
-  img.onload = settled;
   img.onerror = () => {
-    if (currentTiles !== tileImages) return;
-    settled();
+    if (tileImages[idx] !== img) return;
+    img.tileFailed = true;
+    scheduleRender();
   };
   img.src = mapTileUrl(idx);
   return img;
@@ -729,7 +735,7 @@ function buildLegendRows(lang) {
   mapLabels = t;
   document.title = t.mapWorldTitle || 'Midrath – World Map';
   document.getElementById('world-map-title').textContent = document.title;
-  if (loadingEl) loadingEl.textContent = t.mapTilesLoading || 'Loading map tiles…';
+  scheduleRender();
   for (const [id, label] of [
     ['close-btn', t.tooltipClose || 'Close'], ['zoom-in-btn', t.mapZoomIn || 'Zoom in'],
     ['zoom-out-btn', t.mapZoomOut || 'Zoom out'], ['zoom-fit-btn', t.mapFitView || 'Fit to view'],
@@ -849,17 +855,14 @@ if (window.api?.onConfigChanged) {
 
 // ── Boot ─────────────────────────────────────────────────────
 
-loadTiles();
 if (window.api && window.api.getMapTiles) {
-  window.api.getMapTiles().then(applyMapTileInfo).catch(() => {});
-}
+  window.api.getMapTiles().then(info => {
+    if (!mapInfoLoaded) applyMapTileInfo(info);
+  }).catch(() => { if (!mapInfoLoaded) applyMapTileInfo(null); });
+} else applyMapTileInfo(null);
 if (window.api && window.api.onMapTilesUpdated) {
-  window.api.onMapTilesUpdated((info) => {
-    applyMapTileInfo(info);
-    loadMapPOIs();
-  });
+  window.api.onMapTilesUpdated(applyMapTileInfo);
 }
-loadMapPOIs();
 requestAnimationFrame(() => {
   initializeView();
   if (followingPlayer) updatePlayerCenter();
