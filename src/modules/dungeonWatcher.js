@@ -54,6 +54,7 @@ class DungeonWatcher {
     this.onChange = onChange; this.debug = debug; this.candidates = candidates;
     this.getIndex = getIndex; this._index = null;
     this._interval = null; this._drainTimer = null; this._filePath = null;
+    this._candidateStats = new Map();
     this._state = { status: 'unknown', active: false };
     this._resetLog();
   }
@@ -67,6 +68,7 @@ class DungeonWatcher {
     if (this._interval) clearInterval(this._interval);
     if (this._drainTimer) clearImmediate(this._drainTimer);
     this._interval = null; this._drainTimer = null; this._filePath = null;
+    this._candidateStats.clear();
     this._resetLog(); this._setState({ status: 'unknown', active: false });
   }
   _resetLog() {
@@ -149,9 +151,13 @@ class DungeonWatcher {
       if (transition[1] === 'ENTER') {
         if (info) this._enter(info, transition[2]);
         else this._leave(transition[2]);
-      } else if (info && (!this._state.active || ((this._state.levelPath === path || (!this._state.levelPath && this._state.key === info.key))
-          && (!layoutCode || !this._state.layoutCode || layoutCode === this._state.layoutCode)))) this._leave();
-      else if (!info && !this._state.active && this._state.levelPath === path) this._leave();
+      } else if (this._state.active && info) {
+        const sameLevel = this._state.levelPath ? this._state.levelPath === path : this._state.key === info.key;
+        if (sameLevel && (!layoutCode || !this._state.layoutCode || this._state.layoutCode === layoutCode)) this._leave();
+      } else if (!this._state.active && (this._state.levelPath === path || (!this._state.levelPath && info))) {
+        // Clear only an unbound or matching area. An old dungeon can exit after Midrath entry.
+        this._leave();
+      }
       return;
     }
     // Background room preloads and Spot-building alone do not identify the
@@ -178,18 +184,46 @@ class DungeonWatcher {
       }
     }
   }
+  _openActiveLog() {
+    const previous = this._candidateStats;
+    const files = new Map();
+    for (const filename of this.candidates()) {
+      try {
+        const stat = fs.statSync(filename, { throwIfNoEntry: false });
+        if (stat?.isFile()) files.set(filename, stat);
+      } catch { /* A candidate may be inaccessible while the game is starting. */ }
+    }
+    this._candidateStats = files;
+    const rank = filename => {
+      const before = previous.get(filename), after = files.get(filename);
+      // An open game log can grow before Windows updates its last-write time.
+      if (before && (before.size !== after.size || before.mtimeMs !== after.mtimeMs
+          || before.ino !== after.ino || before.birthtimeMs !== after.birthtimeMs)) return 2;
+      // Once an active log wins, an untouched older install must not take it
+      // back on the next idle poll. New candidates still compete by timestamp.
+      return Number(!files.has(this._filePath) || filename === this._filePath || !before);
+    };
+    const ranked = [...files.keys()].sort((a, b) => rank(b) - rank(a)
+      || files.get(b).mtimeMs - files.get(a).mtimeMs
+      || Number(b === this._filePath) - Number(a === this._filePath));
+    for (const filename of ranked) {
+      try { return { filename, fd: fs.openSync(filename, 'r') }; }
+      catch { files.delete(filename); } // Metadata can be visible for a locked file.
+    }
+    return null;
+  }
   _poll() {
-    const candidates = this.candidates();
-    if (this._filePath && (!candidates.includes(this._filePath) || !fs.existsSync(this._filePath))) {
-      this._filePath = null; this._resetLog(); this._setState({ status: 'unknown', active: false });
+    const opened = this._openActiveLog();
+    const filename = opened?.filename || null;
+    if (filename !== this._filePath) {
+      this._filePath = filename; this._resetLog(); this._setState({ status: 'unknown', active: false });
+      if (this.debug && filename) console.log('[MAP] Reading area updates from', filename);
     }
-    if (!this._filePath) {
-      this._filePath = candidates.find(filename => fs.existsSync(filename)) || null;
-      if (!this._filePath) return;
-    }
-    let fd, stat, buf, bytesRead;
+    if (!opened) return;
+    const fd = opened.fd;
+    let stat, buf, bytesRead;
     try {
-      fd = fs.openSync(this._filePath, 'r'); stat = fs.fstatSync(fd);
+      stat = fs.fstatSync(fd);
       const identity = [stat.dev, stat.ino, stat.birthtimeMs].join(':');
       const head = Buffer.alloc(Math.min(128, stat.size));
       const headBytes = fs.readSync(fd, head, 0, head.length, 0);
@@ -208,7 +242,7 @@ class DungeonWatcher {
       const toRead = Math.min(Math.max(0, stat.size - this._pos), 262144);
       buf = Buffer.alloc(toRead); bytesRead = fs.readSync(fd, buf, 0, toRead, this._pos);
     } catch { return; }
-    finally { if (fd !== undefined) fs.closeSync(fd); }
+    finally { fs.closeSync(fd); }
     this._pos += bytesRead;
     const chunk = this._tail + this._decoder.write(buf.subarray(0, bytesRead));
     const newline = chunk.lastIndexOf('\n');

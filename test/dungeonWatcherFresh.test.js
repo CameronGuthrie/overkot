@@ -96,6 +96,27 @@ test('startup replay and incremental appends finish on the same fresh generated 
   assert.equal(replay.getState().layoutCode, visits.at(-1)[2]);
 });
 
+test('returning to Midrath before the old dungeon exits preserves the world entry across relaunch', t => {
+  const { watcher, log, changes, append } = logWatcher(t);
+  const [, level, code] = visits[0];
+  const world = '/SF/Levels/Procs/MidrathProc';
+  append(`STATS ENTER_LEVEL ${level}/${code}.lp`);
+  append(`STATS ENTER_LEVEL ${world}`);
+  const entry = watcher.getState();
+  assert.equal(entry.levelPath, world);
+  const changeCount = changes.length;
+  append(`STATS EXIT_LEVEL ${level}/${code}.lp`);
+  assert.deepEqual(watcher.getState(), entry);
+  assert.equal(changes.length, changeCount);
+
+  const replay = new DungeonWatcher({ candidates: () => [log] });
+  t.after(() => replay.stop());
+  replay._poll();
+  assert.deepEqual(replay.getState(), entry);
+  append(`STATS EXIT_LEVEL ${world}`);
+  assert.equal(watcher.getState().levelPath, undefined);
+});
+
 test('connected and ENTER generated resource paths resolve their generator and explicit fingerprint', () => {
   const [, level, code, key] = visits[0];
   for (const line of [
