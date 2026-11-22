@@ -771,10 +771,21 @@ function registerOverlayShortcut() {
   if (previousWarning !== overlayShortcutWarning) pushStateToRenderer();
 }
 
+function updateGameFocus(focused) {
+  const changed = focused !== gameFocusedActive;
+  gameFocusedActive = focused;
+  // Closing a native popup onto another app can leave the game unfocused
+  // throughout, without another Electron blur event to update visibility.
+  if (!overlayHiddenByUser && (changed || mainHiddenForFocus !== (!focused && !isAnyOverlayWindowFocused()))) {
+    applyGameHiddenState();
+  }
+}
+
 /** Check whether any overlay-related window currently has focus. */
 function isAnyOverlayWindowFocused() {
-  // Chromium can retain active=true during native child-view focus changes.
-  // After a short focus-transfer grace, the Win32 foreground owner wins.
+  // Native menus and dialogs can own focus while every BrowserWindow is blurred.
+  if (nativeOverlayForeground === true) return true;
+  // Allow Chromium to report newly acquired focus before the next native sample.
   if (nativeOverlayForeground === false && Date.now() - overlayFocusRequestedAt >= 200) return false;
   if (mainWindow && !mainWindow.isDestroyed() && mainWindow.isFocused()) return true;
   if (dockWindow && !dockWindow.isDestroyed() && dockWindow.isFocused()) return true;
@@ -2094,7 +2105,10 @@ function startDockRuntime() {
     const overPanel = pointerInteraction && [...widgetWindows.values()].some(win => !win.isDestroyed() && win.isVisible() && pointInBounds(point, getWindowBounds(win)));
     const popoutFocused = [settingsWindow, tutorialWindow, widgetsWindow, changelogWindow, marketWindow, dailyBriefWindow, wikiWindow, groupFinderWindow, mapWindow, dungeonOverlayWindow, calendarSettingsWindow, updateWindow]
       .some(win => win && !win.isDestroyed() && win.isFocused());
-    const focusedActivity = overlayFocused && (layoutEditing || popoutFocused || (dockKeyboardActive && mainWindow.isFocused()));
+    // Keep an open rail stable while input is in a widget or its native menu,
+    // including keyboard navigation with the pointer outside the widget.
+    const panelInteraction = overlayInteractive && !dockAutoHidden && !mainWindow.isFocused();
+    const focusedActivity = overlayFocused && (layoutEditing || popoutFocused || panelInteraction || (dockKeyboardActive && mainWindow.isFocused()));
     if (hovered || (overPanel && !dockAutoHidden) || focusedActivity) { lastDockHover = Date.now(); setDockAutoHidden(false); }
     else if (config.get('dockAutoHide', false) && Date.now() - lastDockHover > 850) setDockAutoHidden(true);
     else if (!config.get('dockAutoHide', false)) setDockAutoHidden(false);
@@ -3289,11 +3303,7 @@ async function startBackgroundLoop() {
         const now = Date.now();
         if (now - lastForegroundCheck >= 400) {
           lastForegroundCheck = now;
-          const focused = await detector.isProcessForeground(pid);
-          if (focused !== gameFocusedActive) {
-            gameFocusedActive = focused;
-            applyGameHiddenState();
-          }
+          updateGameFocus(await detector.isProcessForeground(pid));
         }
       }
 
@@ -3326,11 +3336,7 @@ async function startBackgroundLoop() {
         const now = Date.now();
         if (now - lastForegroundCheck >= 400) {
           lastForegroundCheck = now;
-          const focused = await detector.isProcessForeground(pid);
-          if (focused !== gameFocusedActive) {
-            gameFocusedActive = focused;
-            applyGameHiddenState();
-          }
+          updateGameFocus(await detector.isProcessForeground(pid));
         }
       } else if (!gameFocusedActive) {
         // If the feature is disabled while unfocused, unhide immediately.

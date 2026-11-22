@@ -40,6 +40,16 @@ test('tracking settings explain live, stale, unsupported and disabled states wit
   assert.equal(status.dataset.status, 'disabled');
 });
 
+test('settings show the current search percentage across pauses and clear it when tracking ends', () => {
+  const view = settings(), label = view.node('#player-tracking-status');
+  for (const status of ['searching', 'scan-incomplete']) {
+    view.run(`playerTrackingState = {status: '${status}', scanProgress: 47}; renderPlayerTracking()`);
+    assert.match(label.textContent, /Finding the player.*47%/);
+  }
+  view.run('config.livePlayerTracking = false; renderPlayerTracking()');
+  assert.doesNotMatch(label.textContent, /47%/);
+});
+
 test('Linux tracking permission failures explain how to enable the packaged native reader', () => {
   const view = settings();
   view.run("platformSupport = {platform:'linux'}; playerTrackingState = {status:'permission-denied'}; renderPlayerTracking()");

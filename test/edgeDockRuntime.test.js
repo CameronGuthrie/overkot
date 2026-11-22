@@ -62,6 +62,7 @@ function visibilityFixture() {
     pushDockState: () => calls.push(['dock-state']), pushStateToRenderer: () => calls.push(['state']),
   });
   loadFunctions(context, 'function applyGameHiddenState()', 'function pushStateToRenderer()');
+  loadFunctions(context, 'function updateGameFocus(', '/** Check whether any overlay-related window');
   loadFunctions(context, 'function setOverlayHidden(', 'function endShortcutCapture()');
   return { context, calls, settings, rail, panel, closedPanel, settingsWindow, closedPopout, registered, shortcutAttempts,
     run: code => vm.runInContext(code, context), registration: value => { registrationResult = value; } };
@@ -98,6 +99,21 @@ test('manual overlay hiding remains authoritative across waiting, focus loss and
   assert.equal(f.context.overlayHiddenByUser, true);
   assert.equal(f.rail.visible, false);
   assert.equal(f.panel.visible, false);
+});
+
+test('focus-only visibility follows focus from an overlay menu directly to another app', () => {
+  const f = visibilityFixture();
+  f.settingsWindow.focused = true;
+  f.run('updateGameFocus(false)');
+  assert.equal(f.rail.visible, true);
+  assert.equal(f.panel.visible, true);
+  f.settingsWindow.focused = false;
+  f.run('updateGameFocus(false)');
+  assert.equal(f.rail.visible, false);
+  assert.equal(f.panel.visible, false);
+  f.run('updateGameFocus(true)');
+  assert.equal(f.rail.visible, true);
+  assert.equal(f.panel.visible, true);
 });
 
 test('showing the overlay restores previously open windows and keeps closed panels and popouts hidden', () => {

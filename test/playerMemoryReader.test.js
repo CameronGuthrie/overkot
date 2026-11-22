@@ -80,6 +80,21 @@ test('protocol accepts bounded native statuses and strips untrusted details', ()
   assert.equal(parseMessage(JSON.stringify(status('unsupported-build', { moduleHash: null })), now).moduleHash, null);
 });
 
+test('search progress exposes only a bounded percentage and clears when tracking starts', () => {
+  const { reader, children } = setup(); reader.start(123);
+  for (const progress of [-1, 100, '15', 3.5]) {
+    send(children[0], status('searching', { ...identity, scanProgress: progress }));
+    assert.equal(reader.getState().scanProgress, undefined);
+  }
+  for (const [phase, percent] of [['searching', 0], ['scan-incomplete', 42], ['searching', 99]]) {
+    send(children[0], status(phase, { ...identity, scanProgress: percent, bytesScanned: 12345 }));
+    assert.deepEqual(reader.getState(), { status: phase, trackingSession: null, scanProgress: percent });
+  }
+  send(children[0], status('tracking', { ...identity, scanProgress: 99 }));
+  assert.equal(reader.getState().scanProgress, undefined);
+  reader.stop();
+});
+
 test('pose parser bounds coordinates, heading, timestamp, and source', () => {
   assert.deepEqual(parseMessage(JSON.stringify(pose({ extra: 'discard' })), now), {
     type: 'pose', source: 'memory', sampledAt: now, position: { x: 12, y: -4, z: 56 }, heading: 270,

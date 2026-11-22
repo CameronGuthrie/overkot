@@ -51,7 +51,12 @@ function parseMessage(line, now = Date.now()) {
     const start = typeof value.processStartUtcTicks === 'string' && /^[1-9]\d{0,18}$/.test(value.processStartUtcTicks)
       && BigInt(value.processStartUtcTicks) <= 3155378975999999999n ? value.processStartUtcTicks : null;
     const hash = typeof value.moduleHash === 'string' && /^[a-f0-9]{64}$/.test(value.moduleHash) ? value.moduleHash : null;
-    return { type: 'status', status: value.status, processStartUtcTicks: start, moduleHash: hash };
+    const result = { type: 'status', status: value.status, processStartUtcTicks: start, moduleHash: hash };
+    if ((value.status === 'searching' || value.status === 'scan-incomplete')
+      && Number.isInteger(value.scanProgress) && value.scanProgress >= 0 && value.scanProgress < 100) {
+      result.scanProgress = value.scanProgress;
+    }
+    return result;
   }
   if (value.type === 'world-drops') return normalizeWorldDropsMessage(value, now);
   if (value.type !== 'pose' || value.source !== 'memory' || !vector(value.position)
@@ -92,8 +97,9 @@ class PlayerMemoryReader extends EventEmitter {
     this.child = null; this.epoch = 0; this.pid = null; this.session = null; this.identity = null;
     this.lastSampleAt = null; this.lastDropSampleAt = null; this.lastStatus = null;
   }
-  _status(status, session = this.session) {
+  _status(status, session = this.session, scanProgress) {
     const next = { status, trackingSession: session };
+    if (scanProgress !== undefined) next.scanProgress = scanProgress;
     if (JSON.stringify(next) !== JSON.stringify(this.lastStatus)) { this.lastStatus = next; this.emit('status', next); }
   }
   start(pid) {
@@ -144,7 +150,8 @@ class PlayerMemoryReader extends EventEmitter {
           if (identity !== this.identity) { this.lastSampleAt = null; this.lastDropSampleAt = null; }
           this.identity = identity;
           this.session = message.status === 'tracking' ? identity : null;
-          this._status(message.status === 'tracking' && !identity ? 'unavailable' : message.status);
+          this._status(message.status === 'tracking' && !identity ? 'unavailable' : message.status,
+            this.session, message.scanProgress);
         } else if (message.type === 'world-drops') {
           if (this.session && this.lastStatus?.status === 'tracking'
             && (this.lastDropSampleAt === null || message.sampledAt > this.lastDropSampleAt)) {

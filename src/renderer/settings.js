@@ -292,7 +292,9 @@ function renderPlayerTracking() {
     error: tr('settingsPositionUnavailable', 'Live player tracking is unavailable.'),
     idle: tr('settingsWaitingForTracking', 'Waiting for player tracking…'),
   };
-  element.textContent = messages[status] || messages.idle;
+  const progress = playerTrackingState?.scanProgress;
+  element.textContent = (status === 'searching' || status === 'scan-incomplete') && Number.isInteger(progress)
+    ? `${messages.searching} ${progress}%` : messages[status] || messages.idle;
   element.dataset.status = Object.hasOwn(messages, status) ? status : 'idle';
 }
 

@@ -7,14 +7,30 @@ function startLayoutKeyMonitor({ onShift, onButtonUp = () => {}, onForeground = 
   spawnProcess = spawn, platform = process.platform } = {}) {
   if (platform !== 'win32') return { stop() {} };
   const script = `
-Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class OverlayLayoutKeys { [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int key); [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr window, out uint pid); }'
+Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class OverlayLayoutKeys {
+  [DllImport("user32.dll")] public static extern short GetAsyncKeyState(int key);
+  [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr window, out uint pid);
+  [DllImport("user32.dll")] public static extern IntPtr GetAncestor(IntPtr window, uint flags);
+}'
 $overlayParent = Get-Process -Id ${Number(parentPid)} -ErrorAction Stop
 $previousShift = $false
 $previousButton = $false
 while (-not $overlayParent.HasExited) {
   $foregroundWindow = [OverlayLayoutKeys]::GetForegroundWindow()
   [uint32]$foregroundPid = 0
-  if ($foregroundWindow -ne [IntPtr]::Zero) { [void][OverlayLayoutKeys]::GetWindowThreadProcessId($foregroundWindow, [ref]$foregroundPid) }
+  if ($foregroundWindow -ne [IntPtr]::Zero) {
+    [void][OverlayLayoutKeys]::GetWindowThreadProcessId($foregroundWindow, [ref]$foregroundPid)
+    if ($foregroundPid -ne $overlayParent.Id) {
+      # A native popup hosted in another process can belong to an Overkot window.
+      $rootOwner = [OverlayLayoutKeys]::GetAncestor($foregroundWindow, 3) # GA_ROOTOWNER
+      if ($rootOwner -ne [IntPtr]::Zero -and $rootOwner -ne $foregroundWindow) {
+        [uint32]$ownerPid = 0
+        [void][OverlayLayoutKeys]::GetWindowThreadProcessId($rootOwner, [ref]$ownerPid)
+        if ($ownerPid -eq $overlayParent.Id) { $foregroundPid = $ownerPid }
+      }
+    }
+  }
   [Console]::WriteLine('foreground:' + $foregroundPid)
   $currentShift = [OverlayLayoutKeys]::GetAsyncKeyState(16) -lt 0
   $currentButton = [OverlayLayoutKeys]::GetAsyncKeyState(1) -lt 0

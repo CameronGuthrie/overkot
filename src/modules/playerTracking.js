@@ -56,11 +56,16 @@ class PlayerTracking extends EventEmitter {
       && pose.trackingSession === this.session && pose.position && ['x', 'y', 'z'].every(key => finite(pose.position[key]));
   }
   _status() {
-    let status = this.enabled ? this.reader.getState().status : 'disabled';
+    const readerState = this.reader.getState();
+    let status = this.enabled ? readerState.status : 'disabled';
     if (status === 'tracking') status = !this.account ? 'waiting-for-login' : !zoneOf(this.state) ? 'waiting-for-area'
       : !this._fresh(this.pose) ? 'stale' : 'tracking';
     const next = { status };
-    if (this.lastStatus?.status !== status) { this.lastStatus = next; this.emit('status', next); }
+    if (this.enabled && readerState.scanProgress !== undefined) next.scanProgress = readerState.scanProgress;
+    if (this.lastStatus?.status !== status || this.lastStatus?.scanProgress !== next.scanProgress) {
+      this.lastStatus = next;
+      this.emit('status', next);
+    }
     return next;
   }
   _clear({ preserveCapture = false } = {}) {

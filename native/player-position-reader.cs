@@ -47,6 +47,53 @@ internal static partial class PlayerPositionReader
         public long Size;
     }
 
+    // One pass belongs to one verified game process. Keep its work position
+    // between budget slices; only a finished pass can select a player.
+    sealed class DiscoveryPass
+    {
+        const int MaximumCandidates = 16;
+        readonly List<Region> regions;
+        readonly HashSet<long> candidates = new HashSet<long>();
+        readonly long total;
+        int index;
+        long offset, visited;
+        public long BytesRead { get; private set; }
+        public int Count { get { return candidates.Count; } }
+        public bool AmbiguousOverflow { get { return Count > MaximumCandidates; } }
+        public bool Complete { get { return index == regions.Count; } }
+        public int? Progress { get { return total == 0 ? (int?)null : (int)Math.Min(99, visited * 100 / total); } }
+
+        public DiscoveryPass(List<Region> regions)
+        {
+            this.regions = regions;
+            foreach (Region region in regions) total += region.Size;
+        }
+        public bool Contains(long player) { return candidates.Contains(player); }
+        public void Add(long player) { if (!AmbiguousOverflow) candidates.Add(player); }
+
+        public void RunSlice(long byteBudget, Func<bool> pause, Func<long, int, int> inspect)
+        {
+            long start = visited;
+            while (!Complete && visited - start < byteBudget && !pause())
+            {
+                Region region = regions[index];
+                int length = (int)Math.Min(Math.Min(ChunkBytes, byteBudget - (visited - start)), region.Size - offset);
+                BytesRead += inspect(region.Address + offset, length);
+                visited += length;
+                offset += length;
+                if (offset == region.Size) { index++; offset = 0; }
+            }
+        }
+
+        public long SelectPlayer(Predicate<long> stillValid)
+        {
+            if (!Complete || AmbiguousOverflow) return 0;
+            candidates.RemoveWhere(candidate => !stillValid(candidate));
+            if (Count == 1) foreach (long candidate in candidates) return candidate;
+            return 0;
+        }
+    }
+
     sealed class Pose
     {
         public float[] Position;
@@ -306,6 +353,7 @@ internal static partial class PlayerPositionReader
         public readonly string StartTicks;
         readonly byte[] smallBuffer = new byte[256];
         readonly byte[] scanBuffer = new byte[ChunkBytes];
+        DiscoveryPass discovery;
         readonly HashSet<long> playerTypes = new HashSet<long>();
         ImageProfile profile;
         readonly Stopwatch frameClock = Stopwatch.StartNew();
@@ -743,7 +791,7 @@ internal static partial class PlayerPositionReader
             return Read(address, smallBuffer, 4) ? BitConverter.ToUInt32(smallBuffer, 0) : 0;
         }
 
-        public List<long> Discover(out long bytesScanned, out bool completed)
+        List<Region> DiscoveryRegions()
         {
             TypeMatches = VtableMatches = ValidPlayerHeaders = DynamicAvatarHandles = DynamicAvatars = ValidCameraMatrices = 0;
             var regions = new List<Region>();
@@ -764,38 +812,65 @@ internal static partial class PlayerPositionReader
                 int rightGroup = right.Size >= 0x10000 && right.Size <= 8L * 1024 * 1024 ? 0 : right.Size < 0x10000 ? 2 : 1;
                 return leftGroup == rightGroup ? left.Size.CompareTo(right.Size) : leftGroup.CompareTo(rightGroup);
             });
-            var candidates = new HashSet<long>();
-            bytesScanned = 0;
-            completed = true;
-            Stopwatch elapsed = Stopwatch.StartNew();
-            long nextStatus = 1000;
-            foreach (Region region in regions)
-            {
-                for (long offset = 0; offset < region.Size; offset += ChunkBytes)
-                {
-                    if (bytesScanned >= MaximumScanBytes || elapsed.Elapsed.TotalSeconds >= MaximumScanSeconds || Process.HasExited)
-                    { completed = false; return new List<long>(candidates); }
-                    int wanted = (int)Math.Min(ChunkBytes, region.Size - offset);
-                    UIntPtr got;
-                    ReadProcessMemory(Handle, new IntPtr(region.Address + offset), scanBuffer, new UIntPtr((uint)wanted), out got);
-                    int read = (int)Math.Min((ulong)wanted, got.ToUInt64());
-                    bytesScanned += read;
-                    Inspect(scanBuffer, read, region.Address + offset, candidates);
-                    if (ReportDiscoveryProgress && elapsed.ElapsedMilliseconds >= nextStatus)
-                    {
-                        Status("searching", StartTicks, candidates.Count, bytesScanned, false);
-                        nextStatus = elapsed.ElapsedMilliseconds + 1000;
-                    }
-                    // Yield without a millisecond sleep: Windows can round each sleep
-                    // to a full timer tick, starving discovery on many small regions.
-                    Thread.Yield();
-                }
-            }
-            return new List<long>(candidates);
+            return regions;
         }
 
-        unsafe void Inspect(byte[] bytes, int length, long start, HashSet<long> candidates)
+        int InspectChunk(long address, int length, DiscoveryPass pass)
         {
+            // A region can split or change protection while the pass is paused.
+            // Check its current boundaries and eligibility before each read.
+            long end = address + length;
+            int totalRead = 0;
+            while (address < end)
+            {
+                MemoryRegion info;
+                if (VirtualQueryEx(Handle, new IntPtr(address), out info, new UIntPtr((uint)Marshal.SizeOf<MemoryRegion>())) == UIntPtr.Zero) break;
+                long start = info.Address.ToInt64();
+                ulong size = info.Size.ToUInt64();
+                if (start < 0 || start > address || size > (ulong)(long.MaxValue - start) || start + (long)size <= address) break;
+                int span = (int)(Math.Min(end, start + (long)size) - address);
+                if (IsHeap(info))
+                {
+                    UIntPtr got;
+                    ReadProcessMemory(Handle, new IntPtr(address), scanBuffer, new UIntPtr((uint)span), out got);
+                    int read = (int)Math.Min((ulong)span, got.ToUInt64());
+                    totalRead += read;
+                    Inspect(scanBuffer, read, address, pass);
+                }
+                address += span;
+            }
+            Thread.Yield();
+            return totalRead;
+        }
+
+        public DiscoveryPass Discover(out long player)
+        {
+            if (discovery == null) discovery = new DiscoveryPass(DiscoveryRegions());
+            DiscoveryPass pass = discovery;
+            Status("searching", StartTicks, pass.Count, pass.BytesRead, false, pass.Progress);
+            Stopwatch elapsed = Stopwatch.StartNew();
+            long nextStatus = 1000;
+            pass.RunSlice(MaximumScanBytes, delegate {
+                if (Process.HasExited || elapsed.Elapsed.TotalSeconds >= MaximumScanSeconds) return true;
+                if (ReportDiscoveryProgress && elapsed.ElapsedMilliseconds >= nextStatus)
+                {
+                    Status("searching", StartTicks, pass.Count, pass.BytesRead, false, pass.Progress);
+                    nextStatus = elapsed.ElapsedMilliseconds + 1000;
+                }
+                return false;
+            }, (address, length) => InspectChunk(address, length, pass));
+            player = 0;
+            if (pass.Complete)
+            {
+                if (!Process.HasExited) player = pass.SelectPlayer(delegate(long address) { Pose pose; return TryPose(address, out pose); });
+                discovery = null;
+            }
+            return pass;
+        }
+
+        unsafe void Inspect(byte[] bytes, int length, long start, DiscoveryPass candidates)
+        {
+            if (candidates.AmbiguousOverflow) return;
             fixed (byte* data = bytes)
             {
                 int initial = (int)((8 - (start & 7)) & 7);
@@ -814,7 +889,7 @@ internal static partial class PlayerPositionReader
                     if (candidates.Contains(player)) continue;
                     Pose pose;
                     if (TryPose(player, out pose)) candidates.Add(player);
-                    if (candidates.Count > 16) return;
+                    if (candidates.AmbiguousOverflow) return;
                 }
             }
         }
@@ -949,11 +1024,12 @@ internal static partial class PlayerPositionReader
         return result + "}";
     }
 
-    static void Status(string status, string ticks, int candidates, long scanned, bool completed)
+    static void Status(string status, string ticks, int candidates, long scanned, bool completed, int? progress = null)
     {
         Console.WriteLine("{\"type\":\"status\",\"status\":\"" + status + "\",\"processStartUtcTicks\":\"" + ticks +
             "\",\"moduleHash\":" + (activeHash == null ? "null" : "\"" + activeHash + "\"") + ",\"candidateCount\":" + candidates.ToString(Invariant) +
-            ",\"bytesScanned\":" + scanned.ToString(Invariant) + ",\"scanCompleted\":" + (completed ? "true" : "false") + "}");
+            ",\"bytesScanned\":" + scanned.ToString(Invariant) + ",\"scanCompleted\":" + (completed ? "true" : "false") +
+            (progress.HasValue ? ",\"scanProgress\":" + progress.Value.ToString(Invariant) : "") + "}");
         Console.Out.Flush();
     }
 
@@ -1088,24 +1164,21 @@ internal static partial class PlayerPositionReader
                     {
                         if (player == 0)
                         {
-                            Status("searching", reader.StartTicks, 0, 0, false);
-                            long scanned; bool completed;
-                            List<long> candidates = reader.Discover(out scanned, out completed);
+                            DiscoveryPass pass = reader.Discover(out player);
                             if (probe) Console.WriteLine("{\"type\":\"diagnostic\",\"typeMatches\":" + reader.TypeMatches +
                                 ",\"vtableMatches\":" + reader.VtableMatches + ",\"validPlayerHeaders\":" + reader.ValidPlayerHeaders +
                                 ",\"dynamicAvatarHandles\":" + reader.DynamicAvatarHandles + ",\"dynamicAvatars\":" + reader.DynamicAvatars +
                                 ",\"validCameraMatrices\":" + reader.ValidCameraMatrices + "}");
                             if (process.HasExited) break;
-                            if (!completed || candidates.Count != 1)
+                            if (player == 0)
                             {
-                                Status(!completed ? "scan-incomplete" : candidates.Count == 0 ? "not-found" : "ambiguous",
-                                    reader.StartTicks, candidates.Count, scanned, completed);
+                                Status(!pass.Complete ? "scan-incomplete" : pass.Count == 0 ? "not-found" : "ambiguous",
+                                    reader.StartTicks, pass.Count, pass.BytesRead, pass.Complete, pass.Complete ? null : pass.Progress);
                                 if (probe) return 4;
-                                Thread.Sleep(30000);
+                                Thread.Sleep(pass.Complete ? 30000 : 1000);
                                 continue;
                             }
-                            player = candidates[0];
-                            Status("tracking", reader.StartTicks, 1, scanned, true);
+                            Status("tracking", reader.StartTicks, 1, pass.BytesRead, true);
                         }
                         if (!probe && rootRefresh.TryStart(rootClock.ElapsedMilliseconds))
                         {

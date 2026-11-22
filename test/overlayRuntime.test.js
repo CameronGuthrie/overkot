@@ -844,6 +844,26 @@ test('focused interaction and layout sessions can reveal the sidebar by pointer 
   }
 });
 
+test('widget keyboard and native popup focus keep an active overlay usable away from the rail', () => {
+  const f = dockPointerFixture();
+  f.context.dockAutoHidden = false;
+  f.context.nativeOverlayForeground = true;
+  f.run('overlayInteractive = true');
+  for (const browserFocused of [true, false]) {
+    // A native menu can own keyboard focus without a focused BrowserWindow.
+    f.widget.focused = browserFocused;
+    f.advance(1000);
+    f.poll();
+    assert.equal(f.run('overlayInteractive'), true);
+    assert.equal(f.context.dockAutoHidden, false);
+  }
+  f.context.nativeOverlayForeground = false;
+  f.advance(1000);
+  f.poll();
+  assert.equal(f.run('overlayInteractive'), false);
+  assert.equal(f.context.dockAutoHidden, true);
+});
+
 test('native foreground ownership blocks stale pointer, layout, keyboard and popout reveal', () => {
   for (const activity of ['interaction', 'layout', 'keyboard', 'popout']) {
     const f = dockPointerFixture('left');

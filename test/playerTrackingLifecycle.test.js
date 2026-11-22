@@ -125,6 +125,19 @@ test('discovery final saves cannot cross an account switch between periodic refr
   assert.equal(f.tracking.getOwner(), null);
 });
 
+test('settings receive search progress changes even while the tracking status stays the same', async t => {
+  const f = await fixture(t), updates = [];
+  f.tracking.on('status', update => updates.push(update));
+  for (const percent of [0, 25, 25, 63]) {
+    f.reader.status = { status: 'searching', trackingSession: null, scanProgress: percent };
+    f.reader.emit('status', f.reader.status);
+    assert.equal(f.tracking.getStatus().scanProgress, percent);
+  }
+  assert.deepEqual(updates.map(update => update.scanProgress), [0, 25, 63]);
+  f.reader.update('not-found', null);
+  assert.deepEqual(f.tracking.getStatus(), { status: 'not-found' });
+});
+
 test('synchronous status observers can request a location without recursive status emission', async t => {
   const f = await fixture(t); let notifications = 0;
   f.tracking.on('status', () => { notifications++; f.tracking.getLocation(); });

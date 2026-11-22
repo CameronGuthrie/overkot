@@ -115,7 +115,7 @@ Module._load = function(request, parent, isMain) {
     MemoryScanner: class { scanForAccountAndNonce() { return Promise.resolve({ accountId: '', nonce: '' }); } }, scannerAvailableSync: () => false,
   };
   if (request.endsWith('/modules/logWatcher')) return { LogWatcher: class {
-    start() {} stop() {} extractDisplayName() { return ''; }
+    start() {} stop() {} currentLogin() { return null; } extractDisplayName() { return ''; }
     consumeLoginSignal() { return false; } consumeLogoutSignal() { return false; } extractAccountId() { return ''; }
   } };
   if (request.endsWith('/modules/dungeonWatcher')) return { DungeonWatcher: class {
@@ -177,10 +177,11 @@ require('../src/main');
 const { railBounds, layoutDockedWidgets, snapWidgetToGrid, GRID_SIZE } = require('../src/modules/edgeDockGeometry');
 const { getWindowBounds } = require('../src/modules/windowDrag');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-const find = (file, widget) => BrowserWindow.getAllWindows().find(win => {
+const matchesPage = (win, file, widget) => {
   const url = new URL(win.webContents.getURL() || 'about:blank');
   return url.pathname.endsWith('/' + file) && (!widget || url.searchParams.get('widget') === widget);
-});
+};
+const find = (file, widget) => BrowserWindow.getAllWindows().find(win => matchesPage(win, file, widget));
 async function until(fn, label, timeout = 10000) {
   const started = Date.now();
   while (Date.now() - started < timeout) { const value = await fn(); if (value) return value; await pause(50); }
@@ -350,10 +351,10 @@ app.whenReady().then(async () => {
   layoutMonitor.onShift(true);
   await until(async () => (await getState(main)).layoutEditing, 'Shift layout mode');
   const grid = await until(() => BrowserWindow.getAllWindows().find(win =>
-    win.webContents.getURL().endsWith('/layout-grid.html') && win.isVisible() && screen.getDisplayMatching(win.getBounds()).id === display.id), 'primary layout grid visible');
+    matchesPage(win, 'layout-grid.html') && win.isVisible() && screen.getDisplayMatching(win.getBounds()).id === display.id), 'primary layout grid visible');
   await until(async () => !grid.webContents.isLoading() && await evaluate(grid, "document.readyState === 'complete' && getComputedStyle(document.body).backgroundImage !== 'none'"), 'painted layout grid');
   await pause(120);
-  for (const visibleGrid of BrowserWindow.getAllWindows().filter(win => win.webContents.getURL().endsWith('/layout-grid.html'))) {
+  for (const visibleGrid of BrowserWindow.getAllWindows().filter(win => matchesPage(win, 'layout-grid.html'))) {
     assert.deepEqual(visibleGrid.getBounds(), screen.getDisplayMatching(visibleGrid.getBounds()).bounds, 'The editing scrim must cover the entire native display');
   }
   assert.equal(await evaluate(boss, "document.body.classList.contains('layout-editing')"), true);
@@ -468,8 +469,28 @@ app.whenReady().then(async () => {
     'interaction shortcut explicitly reveals collapsed sidebar');
   wiki.focus();
   await until(() => wiki.isFocused(), 'attached widget retains overlay interaction focus');
+  await evaluate(wiki, "document.getElementById('wiki-search-input').focus()");
+  await wiki.webContents.insertText(' test');
   cursor = { x: display.bounds.x + display.bounds.width - 100, y: display.bounds.y + 100 };
-  await until(async () => (await getState(main)).dockState.autoHidden, 'active widget interaction lets idle sidebar collapse');
+  await pause(1050);
+  assert.equal((await getState(main)).overlayInteractive, true);
+  assert.equal(main.isVisible(), true, 'The sidebar stays visible while editing a widget away from its bounds');
+  assert.equal(await evaluate(wiki, "document.getElementById('wiki-search-input').value.includes(' test')"), true);
+  outside.show(); outside.focus();
+  await until(() => outside.isFocused(), 'focus leaves the active widget for the game fixture');
+  // Windows can reassign foreground again when the rail's native window hides.
+  await until(async () => {
+    const state = await getState(main);
+    return !state.overlayInteractive && state.dockState.autoHidden && !main.isVisible();
+  }, 'leaving active widget input collapses the sidebar');
+
+  // A pointer-driven rail can auto-hide while the overlay is interactive.
+  // Keep focus in an available panel as the launcher relinquishes it.
+  shortcutCallbacks.get('Shift+F1')();
+  await until(() => main.isFocused() && main.isVisible(), 'interaction reveals rail before edge check');
+  main.once('hide', () => wiki.focus());
+  await evaluate(main, 'window.api.setDockKeyboardActive(false)');
+  await until(async () => wiki.isFocused() && (await getState(main)).dockState.autoHidden, 'idle rail yields focus to the open widget');
   const reveal = railBounds(display.bounds, 'bottom', true); cursor = { x: reveal.x + 100, y: reveal.y + 1 };
   await until(async () => !(await getState(main)).dockState.autoHidden, 'focused interaction permits edge reveal');
   assert.deepEqual(main.getBounds(), railBounds(display.bounds, 'bottom'));
@@ -477,7 +498,7 @@ app.whenReady().then(async () => {
   outside.focus();
   await until(() => outside.isFocused(), 'game focus returns with pointer still on sidebar');
   await until(async () => (await getState(main)).dockState.autoHidden, 'game cursor over visible sidebar cannot keep it open');
-  checks.push('auto-hide releases panel space; explicit interaction enables edge reveal, and game focus ends pointer keep-open');
+  checks.push('widget text input keeps the sidebar visible, outside focus collapses it, and active edge interaction reveals it');
   await save(main, { dockAutoHide: false });
   await evaluate(main, 'window.api.windowMinimize()');
   await until(() => BrowserWindow.getAllWindows().every(win => !win.isVisible()), 'minimize hides complete overlay');
@@ -610,6 +631,7 @@ app.whenReady().then(async () => {
   // Windows can hand focus from one blurred overlay window to another. Keep
   // this controlled game-focus scenario independent of that native behavior.
   for (const win of [main, boss, wiki, clock]) { win.setFocusable(false); win.blur(); }
+  layoutMonitor.onForeground(process.pid + 1);
   simulatedGameForeground = false;
   await until(() => !main.isVisible() && [boss, wiki, clock].every(win => !win.isVisible()), 'overlay hidden when game loses focus');
   overlayShortcut();
