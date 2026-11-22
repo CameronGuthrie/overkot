@@ -993,7 +993,9 @@ function bindEvents() {
   for (const [key, { id, defaultValue }] of Object.entries(shortcutControls)) {
     const button = $('#' + id + '-capture');
     button.addEventListener('click', () => startShortcutCapture(key));
-    button.addEventListener('blur', stopShortcutCapture);
+    button.addEventListener('blur', () => {
+      if (recordingShortcut === key) stopShortcutCapture();
+    });
     $('#' + id + '-reset').addEventListener('click', () => changeShortcut(key, defaultValue));
   }
   document.addEventListener('keydown', captureShortcut, true);

@@ -49,7 +49,7 @@ function fixture() {
     BrowserWindow: { fromWebContents: () => ctx.settingsWindow, getAllWindows: () => [win] },
     mainWindow: win, calendarSettingsWindow: null, dungeonOverlayWindow: null, marketWindow: null, dailyBriefWindow: null,
     widgetsWindow: null, mapWindow: null, dockWindow: null, tutorialWindow: null, widgetWindows: new Map(),
-    overlayHiddenByUser: false, shortcutCapture: false, registeredShortcut: null, registeredVisibilityShortcut: null,
+    overlayHiddenByUser: false, shortcutCapture: false, registeredShortcut: null, registeredVisibilityShortcut: null, mouseFocusGraceUntil: 0,
     overlayShortcutWarning: '', visibilityShortcutWarning: '', launchFocusChordUsed: false, focusReminder: null,
     config: { get: (k, fallback) => config[k] ?? fallback, getAll: () => ({ ...config }),
       setMany: patch => { if (ctx.failWrite) return false; Object.assign(config, patch); return true; } },
@@ -133,4 +133,26 @@ test('mouse bindings follow config and capture, restore prior state on failures 
   assert.equal(f.save({ allowSingleKeyShortcuts: true, overlayVisibilityHotkey: 'Mouse3' }), false);
   assert.deepEqual([...f.held.keys()].sort(), ['Shift+F1', 'Shift+F2']);
   assert.equal(f.config.allowSingleKeyShortcuts, false);
+});
+
+test('only a mouse interaction activation offers its selected window for native foreground handoff', () => {
+  const f = fixture(), requests = [];
+  assert.equal(f.save({ allowSingleKeyShortcuts: true, interactionHotkey: 'Mouse3', overlayVisibilityHotkey: 'Mouse4' }), true);
+  const target = { getNativeWindowHandle: () => Buffer.from([0x78, 0x56, 0x34, 0x12, 1, 0, 0, 0]) };
+  f.ctx.toggleOverlayInteraction = () => target;
+  f.ctx.Date = { now: () => 1000 };
+  f.ctx.requestFocus = hwnd => { requests.push(hwnd); return true; };
+  vm.runInContext("dispatchOverlayShortcut('Mouse3', requestFocus); dispatchOverlayShortcut('Mouse4', requestFocus)", f.ctx);
+  assert.deepEqual(requests, [String(0x112345678)]);
+  assert.equal(f.ctx.mouseFocusGraceUntil, 2400);
+  f.ctx.mouseFocusGraceUntil = 0;
+  vm.runInContext("dispatchOverlayShortcut('Mouse3', () => false)", f.ctx);
+  assert.equal(f.ctx.mouseFocusGraceUntil, 0, 'No grace is granted without an accepted native request');
+  f.ctx.toggleOverlayInteraction = () => undefined;
+  vm.runInContext("dispatchOverlayShortcut('Mouse3', requestFocus)", f.ctx);
+  assert.equal(requests.length, 1, 'Turning interaction off has no native focus target');
+  f.capture(true);
+  f.ctx.toggleOverlayInteraction = () => target;
+  vm.runInContext("dispatchOverlayShortcut('Mouse3', requestFocus)", f.ctx);
+  assert.equal(requests.length, 1);
 });

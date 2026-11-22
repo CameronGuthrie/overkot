@@ -19,7 +19,7 @@ test('Linux passive input policy never queries Windows-only native focusability'
 });
 const { configureOverlayWorkspace, configureOverlayPopout, refreshOverlayStack } = require('../src/modules/overlayWindowPolicy');
 function overlayContext(values) {
-  return vm.createContext({ platformSupport: { platform: 'win32' }, appStatus: 'waiting', registeredShortcut: null,
+  return vm.createContext({ platformSupport: { platform: 'win32' }, appStatus: 'waiting', registeredShortcut: null, mouseFocusGraceUntil: 0,
     OverlayShortcuts: require('../src/modules/overlayShortcuts'), registeredVisibilityShortcut: null, syncMouseShortcuts() {},
     BrowserWindow: { getAllWindows: () => [] },
     ...require('../src/modules/overlayDisplays'), broadcastOverlayDisplays() {},
@@ -292,12 +292,12 @@ test('Settings paints and unlocks before first show, restores passive windows, a
 
 test('with click-through disabled, the hotkey shows/focuses the overlay and raises only visible widgets', () => {
   const f = interactionFixture(false);
-  f.run('toggleOverlayInteraction()');
+  assert.equal(f.run('toggleOverlayInteraction()'), f.mainWindow);
   assert.deepEqual(f.calls.filter(call => ['show', 'raise', 'focus'].includes(call[1])), [['main', 'show'], ['dock', 'raise'], ['widget', 'raise'], ['docked', 'raise'], ['main', 'focus']]);
   assert.equal(f.autoHidden, false, 'Focusing the dock reveals an auto-hidden rail');
   assert.equal(f.run('overlayInteractive'), true);
   f.calls.length = 0;
-  f.run('toggleOverlayInteraction(true)');
+  assert.equal(f.run('toggleOverlayInteraction(true)'), undefined);
   assert.equal(f.calls.filter(call => ['show', 'raise', 'focus'].includes(call[1])).length, 0, 'An automatic blur does not steal focus back from the game');
   assert.ok(f.calls.some(call => call[0] === 'widget' && call[1] === 'ignore' && call[2] === false), 'Click-through stays disabled');
 });
@@ -946,6 +946,25 @@ test('focus reconciliation lets an explicit hotkey transfer settle before releas
   clock = 1200;
   poll();
   assert.equal(f.run('overlayInteractive'), false, 'A failed transfer still releases input after the grace period');
+});
+
+test('mouse handoff stays interactive through a slow foreground transition and expires or ends on confirmed native focus', () => {
+  const f = dockPointerFixture();
+  f.context.process = { pid: 123 };
+  f.run(main.slice(main.indexOf('function onNativeForeground('), main.indexOf('function startDockRuntime()')));
+  f.run('overlayInteractive = true; mouseFocusGraceUntil = Date.now() + 1400;');
+  f.advance(500);
+  f.run('onNativeForeground(456)');
+  f.poll();
+  assert.equal(f.run('overlayInteractive'), true);
+  assert.equal(f.context.dockAutoHidden, false);
+  f.advance(901);
+  f.poll();
+  assert.equal(f.run('overlayInteractive'), false);
+  f.run('overlayInteractive = true; mouseFocusGraceUntil = Date.now() + 1400; onNativeForeground(123)');
+  assert.equal(f.run('mouseFocusGraceUntil'), 0);
+  f.run('onNativeForeground(456)');
+  assert.equal(f.run('overlayInteractive'), false);
 });
 
 test('native monitor failure releases editing and notifies every live overlay renderer', () => {

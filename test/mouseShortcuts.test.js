@@ -57,3 +57,21 @@ test('native mouse errors release the hook and do not disable keyboard-only oper
   assert.ok(other.monitor.setState({ interactionHotkey: 'F13' }));
   assert.equal(other.children.length, 0);
 });
+
+test('an interaction gesture authorizes one request for an overlay window', () => {
+  const helper = new EventEmitter();
+  helper.stdin = new PassThrough(); helper.stdout = new PassThrough(); helper.kill = () => {};
+  let request;
+  const monitor = createMouseShortcuts({ platform: 'win32', start: () => helper, onError: assert.fail,
+    onCapture: assert.fail, onPress: (_stroke, requestFocus) => { request = requestFocus; } });
+  monitor.setState({ interactionHotkey: 'Mouse3' });
+  helper.stdin.read();
+  helper.stdout.write('press:Mouse3:28\n');
+  assert.equal(request('0'), false);
+  assert.equal(request('12345'), true);
+  assert.equal(request('12345'), false);
+  assert.equal(helper.stdin.read().toString(), 'focus|28|12345\n');
+  helper.stdout.write('press:Mouse3:29\n');
+  monitor.stop();
+  assert.equal(request('12345'), false);
+});

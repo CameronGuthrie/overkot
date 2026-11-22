@@ -224,8 +224,9 @@ async function prepare({ skipScanner = false, platform = process.platform, beta 
     const scannerDir = path.join(stage, 'bin');
     fs.mkdirSync(scannerDir, { recursive: true });
     if (process.platform === 'win32') {
-      const compiler = path.join(process.env.WINDIR || 'C:\\Windows', 'Microsoft.NET', 'Framework64', 'v4.0.30319', 'csc.exe');
-      execFileSync(compiler, ['/nologo', '/optimize+', '/target:exe', '/reference:System.Windows.Forms.dll',
+      const framework = path.join(process.env.WINDIR || 'C:\\Windows', 'Microsoft.NET', 'Framework64', 'v4.0.30319');
+      const automation = ['UIAutomationClient.dll', 'UIAutomationTypes.dll', 'WindowsBase.dll'].map(name => '/reference:' + path.join(framework, 'WPF', name));
+      execFileSync(path.join(framework, 'csc.exe'), ['/nologo', '/optimize+', '/target:exe', '/reference:System.Windows.Forms.dll', ...automation,
         '/out:' + path.join(scannerDir, 'overkot-mouse-shortcuts.exe'), path.join(ROOT, 'native', 'mouse-shortcuts.cs')],
         { stdio: 'inherit', windowsHide: true });
     }

@@ -35,7 +35,7 @@ function fixture() {
     settingsWindow, mapWindow, tutorialWindow: null, changelogWindow: null, widgetsWindow: null,
     groupFinderWindow: null, marketWindow: null, dailyBriefWindow: null, wikiWindow: null, calendarSettingsWindow: null, updateWindow: null,
     alertWindows: new Set([alert]), layoutGridWindows: new Map(), setImmediate: callback => pending.push(callback),
-    overlayHiddenByUser: false, gameHiddenActive: false, mainHiddenForFocus: false, dockAutoHidden: false,
+    overlayHiddenByUser: false, gameHiddenActive: false, mainHiddenForFocus: false, dockAutoHidden: false, mouseFocusGraceUntil: 0,
     marketShutdownStarted: false, appStatus: 'connected', gameFocusedActive: true, gameFocusRequest: null,
     config: { get: (key, fallback) => settings[key] ?? fallback }, BrowserWindow: { getAllWindows: () => windows },
     isCollapsed: false, overlayInteractive: false, isAnyOverlayWindowFocused: () => false,
@@ -90,7 +90,7 @@ test('re-entering an already-visible dungeon repairs menu ordering after the fin
   const f = fixture();
   f.settingsWindow.focused = false;
   f.load('function focusOverlay()', 'function toggleOverlayInteraction(');
-  f.run('focusOverlay()');
+  assert.equal(f.run('focusOverlay()'), f.dungeon);
   assert.deepEqual(f.calls, ['menu:show', 'widget', 'dungeon:focus', 'dungeon', 'widget', 'menu', 'settings', 'map', 'alert']);
   assert.equal(f.dungeon.focused, true);
 });

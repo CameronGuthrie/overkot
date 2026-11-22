@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Automation;
 using System.Windows.Forms;
 
 // A low-level mouse hook is needed for global wheel/side-button shortcuts.
@@ -18,6 +19,8 @@ public static class OverkotMouseShortcuts
     [DllImport("user32.dll")] static extern IntPtr CallNextHookEx(IntPtr handle, int code, IntPtr message, IntPtr data);
     [DllImport("user32.dll")] static extern short GetAsyncKeyState(int key);
     [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] static extern bool SetForegroundWindow(IntPtr window);
+    [DllImport("user32.dll")] static extern bool AllowSetForegroundWindow(uint process);
     [DllImport("user32.dll")] static extern IntPtr WindowFromPoint(Point point);
     [DllImport("user32.dll")] static extern IntPtr GetAncestor(IntPtr window, uint flags);
     [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
@@ -32,6 +35,9 @@ public static class OverkotMouseShortcuts
         public bool Matches(string stroke) { return stroke == Interact || stroke == Visibility; }
     }
     sealed class Held { public string Stroke; public Bindings AtPress; }
+    sealed class FocusRequest { public long Id, Time; public IntPtr Foreground; }
+    static FocusRequest pendingFocus;
+    static long sequence;
     static volatile Bindings current = new Bindings();
     static readonly Dictionary<string, Held> held = new Dictionary<string, Held>();
     static readonly MouseProc callback = OnMouse;
@@ -57,7 +63,50 @@ public static class OverkotMouseShortcuts
 
     static void Report(bool capture, string stroke)
     {
-        Console.WriteLine((capture ? "capture:" : "press:") + stroke);
+        if (!capture && current.Interact == stroke)
+        {
+            // Electron receives this user gesture via a pipe, so Windows may
+            // still consider the game the last application to receive input.
+            var request = new FocusRequest { Id = ++sequence, Time = clock.ElapsedMilliseconds, Foreground = GetForegroundWindow() };
+            Interlocked.Exchange(ref pendingFocus, request);
+            AllowSetForegroundWindow(owner);
+            Console.WriteLine("press:" + stroke + ":" + request.Id);
+        }
+        else Console.WriteLine((capture ? "capture:" : "press:") + stroke);
+    }
+
+    static void FocusOverlay(string[] fields)
+    {
+        long id, raw;
+        var request = Interlocked.Exchange(ref pendingFocus, null);
+        if (request == null || fields.Length != 3 || !long.TryParse(fields[1], out id) || request.Id != id
+            || !long.TryParse(fields[2], out raw) || clock.ElapsedMilliseconds - request.Time > 750) return;
+        IntPtr target = new IntPtr(raw), foreground = GetForegroundWindow();
+        if (ProcessOf(target) != owner || target == foreground || foreground != request.Foreground) return;
+        if (SetForegroundWindow(target)) return;
+        // The foreground game may own keyboard activation even after the
+        // deliberate mouse gesture. Focus the now-interactive Overkot window.
+        try
+        {
+            AutomationElement element = AutomationElement.FromHandle(target);
+            if (element != null && !element.Current.IsKeyboardFocusable)
+            {
+                // Chromium's top-level HWND may be a non-focusable pane. Its
+                // document or an accessible descendant can accept keyboard focus.
+                var focusable = new PropertyCondition(AutomationElement.IsKeyboardFocusableProperty, true);
+                var document = new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Document);
+                element = element.FindFirst(TreeScope.Descendants, new AndCondition(focusable, document))
+                       ?? element.FindFirst(TreeScope.Descendants, focusable);
+            }
+
+            if (element != null && GetForegroundWindow() == foreground && ProcessOf(target) == owner
+                && clock.ElapsedMilliseconds - request.Time <= 750) element.SetFocus();
+        }
+        catch (ElementNotAvailableException) { } // Target closed during activation.
+        catch (ElementNotEnabledException) { }
+        catch (InvalidOperationException) { }   // Already hidden or no longer focusable.
+        catch (TimeoutException) { }
+        catch (COMException) { }                // Accessibility provider unavailable.
     }
 
     static bool Handle(int message, IntPtr data)
@@ -134,6 +183,7 @@ public static class OverkotMouseShortcuts
         while ((line = Console.ReadLine()) != null)
         {
             string[] fields = line.Split('|');
+            if (fields[0] == "focus") { FocusOverlay(fields); continue; }
             uint game; long window;
             if (fields.Length == 5 && uint.TryParse(fields[3], out game) && long.TryParse(fields[4], out window))
                 current = new Bindings { Interact = fields[0], Visibility = fields[1], Capture = fields[2] == "1",

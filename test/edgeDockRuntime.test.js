@@ -30,7 +30,7 @@ function visibilityFixture() {
   settingsWindow.webContents = { send() {} };
   const windows = [rail, panel, closedPanel, settingsWindow, closedPopout];
   let registrationResult = true;
-  const context = vm.createContext({ tutorialWindow: null, updateWindow: null,
+  const context = vm.createContext({ tutorialWindow: null, updateWindow: null, mouseFocusGraceUntil: 0,
     OverlayShortcuts: require('../src/modules/overlayShortcuts'), registeredShortcut: null, overlayShortcutWarning: '',
     overlayHiddenByUser: false, gameHiddenActive: false, mainHiddenForFocus: false, gameFocusRequest: null,
     appStatus: 'connected', gameFocusedActive: true, platformSupport: { gameConnection: true, gameFocusTracking: true },
@@ -228,7 +228,7 @@ test('blur ends held-Shift editing only when focus leaves all overlay windows; n
   const timers = [], calls = [], win = new EventEmitter();
   const context = vm.createContext({ tutorialWindow: null, updateWindow: null, dailyBriefWindow: null, mainWindow: null,
     platformSupport: { platform: 'win32' }, configureOverlayPopout() {},
-    config: { get: () => false }, overlayInteractive: true, dungeonOverlayWindow: null, overlayFocusRequestedAt: 0,
+    config: { get: () => false }, overlayInteractive: true, dungeonOverlayWindow: null, overlayFocusRequestedAt: 0, mouseFocusGraceUntil: 0,
     shiftStartTimer: 4, isAnyOverlayWindowFocused: () => focused,
     setTimeout: callback => { timers.push(callback); }, clearTimeout() {},
     setLayoutEditing: active => calls.push(['editing', active]),

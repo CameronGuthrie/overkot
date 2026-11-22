@@ -667,6 +667,7 @@ let overlayInteractive = false;
 let gameFocusRequest = null;
 let nativeOverlayForeground = null;
 let overlayFocusRequestedAt = 0;
+let mouseFocusGraceUntil = 0;
 let isCollapsed = false;
 let registeredShortcut = null;
 let overlayShortcutWarning = '';
@@ -777,7 +778,7 @@ function bindOverlayAccelerator(hotkey) {
   return globalShortcut.register(hotkey, () => dispatchOverlayShortcut(hotkey));
 }
 
-function dispatchOverlayShortcut(hotkey) {
+function dispatchOverlayShortcut(hotkey, requestFocus) {
   if (shortcutCapture) return;
   const id = OverlayShortcuts.shortcutIdentity(hotkey);
   if (id === OverlayShortcuts.shortcutIdentity(registeredVisibilityShortcut)) {
@@ -785,7 +786,10 @@ function dispatchOverlayShortcut(hotkey) {
   } else if (id === OverlayShortcuts.shortcutIdentity(registeredShortcut) && mainWindow && !mainWindow.isDestroyed()) {
     launchFocusChordUsed = true;
     focusReminder?.dismiss();
-    toggleOverlayInteraction();
+    const target = toggleOverlayInteraction();
+    // The native mouse handoff can take longer on its first activation.
+    // Keep the target clickable while Windows processes this specific request.
+    if (target && requestFocus?.(nativeWindowId(target))) mouseFocusGraceUntil = Date.now() + 1400;
     scheduleAppTutorial();
   }
 }
@@ -801,12 +805,14 @@ function publishShortcutWarnings() {
   pushStateToRenderer();
 }
 
+function nativeWindowId(win) {
+  const handle = win.getNativeWindowHandle();
+  return (handle.length >= 8 ? handle.readBigUInt64LE() : handle.readUInt32LE()).toString();
+}
+
 function syncMouseShortcuts(interactionHotkey, overlayVisibilityHotkey, allowSingle = config.get('allowSingleKeyShortcuts', false)) {
-  let settingsHwnd = '0';
-  if (platformSupport.platform === 'win32' && settingsWindow && !settingsWindow.isDestroyed()) {
-    const handle = settingsWindow.getNativeWindowHandle();
-    settingsHwnd = (handle.length >= 8 ? handle.readBigUInt64LE() : handle.readUInt32LE()).toString();
-  }
+  const settingsHwnd = platformSupport.platform === 'win32' && settingsWindow && !settingsWindow.isDestroyed()
+    ? nativeWindowId(settingsWindow) : '0';
   return mouseShortcuts.setState({ interactionHotkey: OverlayShortcuts.nativeMouseBinding(interactionHotkey),
     overlayVisibilityHotkey: OverlayShortcuts.nativeMouseBinding(overlayVisibilityHotkey), gamePid: playerTracking.pid || 0,
     settingsHwnd, capture: platformSupport.platform === 'win32' && shortcutCapture && allowSingle });
@@ -816,6 +822,7 @@ function recoverUnavailableInteraction(hotkey) {
   // A pass-through window must never depend on a shortcut that did not bind.
   config.set('clickThrough', false);
   overlayInteractive = false;
+  mouseFocusGraceUntil = 0;
   applyOverlayMousePolicy();
   const allConfig = appearanceSession.effectiveConfig();
   for (const win of BrowserWindow.getAllWindows()) {
@@ -935,7 +942,7 @@ function attachOverlayBlurHandler(win) {
   });
   win.on('blur', () => {
     setTimeout(() => {
-      if (isAnyOverlayWindowFocused() || Date.now() - overlayFocusRequestedAt < 200) return;
+      if (isAnyOverlayWindowFocused() || Date.now() - overlayFocusRequestedAt < 200 || Date.now() < mouseFocusGraceUntil) return;
       clearTimeout(shiftStartTimer);
       setLayoutEditing(false);
       if (overlayInteractive) toggleOverlayInteraction(true);
@@ -1012,6 +1019,7 @@ function focusOverlay() {
   target.focus();
   if (dungeonOverlayWindow) refreshOverlayWindowStack();
   else raiseAlertWindows();
+  return target;
 }
 
 function toggleOverlayInteraction(forceOff = false) {
@@ -1023,6 +1031,7 @@ function toggleOverlayInteraction(forceOff = false) {
   }
 
   if (overlayInteractive || forceOff) {
+    mouseFocusGraceUntil = 0;
     clearTimeout(shiftStartTimer);
     setLayoutEditing(false);
     overlayInteractive = false;
@@ -1038,8 +1047,9 @@ function toggleOverlayInteraction(forceOff = false) {
     gameFocusRequest = null;
     overlayInteractive = true;
     applyOverlayMousePolicy();
-    focusOverlay();
+    const target = focusOverlay();
     log('HOTKEY', 'Overlay -> interactive');
+    return target;
   }
 }
 
@@ -2238,7 +2248,8 @@ function onGlobalShift(held) {
 function onNativeForeground(pid) {
   const changed = nativeOverlayForeground !== (pid === process.pid);
   nativeOverlayForeground = pid === process.pid;
-  if (!nativeOverlayForeground && Date.now() - overlayFocusRequestedAt >= 200) {
+  if (nativeOverlayForeground) mouseFocusGraceUntil = 0;
+  if (!nativeOverlayForeground && Date.now() - overlayFocusRequestedAt >= 200 && Date.now() >= mouseFocusGraceUntil) {
     clearTimeout(shiftStartTimer);
     setLayoutEditing(false);
     if (overlayInteractive) toggleOverlayInteraction(true);
@@ -2263,7 +2274,8 @@ function startDockRuntime() {
   dockPollTimer = setInterval(() => {
     // Reconcile even while the rail is auto-hidden: native blur events can be
     // missed when windows close or the fullscreen game regains focus.
-    if ((overlayInteractive || layoutEditing) && Date.now() - overlayFocusRequestedAt >= 200 && !isAnyOverlayWindowFocused()) {
+    const awaitingMouseFocus = Date.now() < mouseFocusGraceUntil;
+    if ((overlayInteractive || layoutEditing) && !awaitingMouseFocus && Date.now() - overlayFocusRequestedAt >= 200 && !isAnyOverlayWindowFocused()) {
       setLayoutEditing(false);
       if (overlayInteractive) toggleOverlayInteraction(true);
     }
@@ -2284,7 +2296,7 @@ function startDockRuntime() {
     // including keyboard navigation with the pointer outside the widget.
     const panelInteraction = overlayInteractive && !dockAutoHidden && !mainWindow.isFocused();
     const focusedActivity = overlayFocused && (layoutEditing || popoutFocused || panelInteraction || (dockKeyboardActive && mainWindow.isFocused()));
-    if (hovered || (overPanel && !dockAutoHidden) || focusedActivity) { lastDockHover = Date.now(); setDockAutoHidden(false); }
+    if (awaitingMouseFocus || hovered || (overPanel && !dockAutoHidden) || focusedActivity) { lastDockHover = Date.now(); setDockAutoHidden(false); }
     else if (config.get('dockAutoHide', false) && Date.now() - lastDockHover > 850) setDockAutoHidden(true);
     else if (!config.get('dockAutoHide', false)) setDockAutoHidden(false);
   }, 60);
@@ -3673,7 +3685,7 @@ function applyGameHiddenState() {
   const hideWhenNotFocused = platformSupport.gameFocusTracking && config.get('showOnlyWhenGameFocused', false)
     && (appStatus === 'connected' || appStatus === 'connecting')
     && !gameFocusedActive
-    && !overlayFocused;
+    && !overlayFocused && Date.now() >= mouseFocusGraceUntil;
   const shouldHide = hideWhenGameClosed || hideWhenNotFocused;
 
   // When the game is not running, ensure the main overlay can stay visible

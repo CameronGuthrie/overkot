@@ -11,9 +11,11 @@ const script = fs.readFileSync(path.join(__dirname, '../src/renderer/settings.js
 function settings(config = {}, { save = async () => true, platform = 'win32' } = {}) {
   const elements = new Map(), captureStates = [], patches = [];
   const documentEvents = {}, windowEvents = {};
+  let focusedElement;
   const element = selector => {
     if (!elements.has(selector)) elements.set(selector, { textContent: '', dataset: {}, attributes: {},
-      addEventListener(key, cb) { this[key] = cb; }, setAttribute(key, value) { this.attributes[key] = value; }, focus() {} });
+      addEventListener(key, cb) { this[key] = cb; }, setAttribute(key, value) { this.attributes[key] = value; },
+      focus() { if (focusedElement !== this) { focusedElement?.blur?.(); focusedElement = this; } } });
     return elements.get(selector);
   };
   const document = { querySelector: element, hasFocus: () => true,
@@ -40,6 +42,20 @@ function settings(config = {}, { save = async () => true, platform = 'win32' } =
   };
 }
 const turn = () => new Promise(resolve => setImmediate(resolve));
+
+test('moving focus directly between recorder buttons only cancels capture on the button being left', async () => {
+  const ui = settings({ allowSingleKeyShortcuts: true });
+  ui.start('interaction'); ui.key({ key: 'F9', code: 'F9' });
+  await turn();
+  ui.start('overlay');
+  assert.equal(ui.element('#overlay-hotkey-capture').attributes['aria-pressed'], 'true');
+  ui.key({ key: 'F10', code: 'F10' });
+  await turn();
+  assert.deepEqual(ui.patches, [{ interactionHotkey: 'F9' }, { overlayVisibilityHotkey: 'F10' }]);
+  ui.start('interaction');
+  ui.element('#interaction-hotkey-capture').blur();
+  assert.equal(ui.element('#interaction-hotkey-capture').attributes['aria-pressed'], 'false');
+});
 
 test('chord mode records on release, ignores modifiers and leaves the other action alone', async () => {
   const ui = settings({ interactionHotkey: 'Shift+F1', overlayVisibilityHotkey: 'Shift+F2' });
