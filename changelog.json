@@ -1,6 +1,12 @@
 {
   "versions": [
     {
+      "version": "v0.0.22",
+      "changes": [
+        "Fixed an issue that prevented some icons from loading."
+      ]
+    },
+    {
       "version": "v0.0.21",
       "changes": [
         "Improved overlay shortcuts. Bind a single key or a key combination to interact with Overkot or show and hide it. On Windows, you can also bind mouse buttons, wheel clicks, scrolling, and wheel tilt. Existing shortcuts are preserved, and key combinations remain the default.",

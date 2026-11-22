@@ -12,12 +12,13 @@ function headers(url, resourceType = 'mainFrame', responseHeaders = {}) {
   return result;
 }
 
-test('packaged app documents permit map tiles while retaining script restrictions', () => {
+test('packaged app documents permit map tiles and item artwork while retaining script restrictions', () => {
   for (const type of ['mainFrame', 'subFrame']) {
     const result = headers(pathToFileURL(path.join(root, 'widget-host.html')).href, type,
       { 'content-security-policy': ['old policy'], 'Content-Type': ['text/html'] });
     const policy = result.responseHeaders['Content-Security-Policy'][0];
     assert.match(policy, /img-src[^;]*overkot-map-tiles:/);
+    assert.match(policy, /img-src[^;]*overkot-game-data:/);
     assert.match(policy, /script-src 'self'(?:;|$)/);
     assert.equal(result.responseHeaders['content-security-policy'], undefined);
     assert.deepEqual(result.responseHeaders['Content-Type'], ['text/html']);

@@ -8,7 +8,7 @@ const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: https: overkot-map-tiles:",
+  "img-src 'self' data: https: overkot-map-tiles: overkot-game-data:",
   "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.firebaseapp.com https://api.soulframe.com wss://*.firebaseio.com",
   "font-src 'self' https://fonts.gstatic.com",
   "object-src 'none'",
