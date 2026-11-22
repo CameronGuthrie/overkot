@@ -174,7 +174,7 @@ async function bundle({ outDir = OUT_DIR, channel = STABLE_CHANNEL, packageMetad
 
   // These browser-safe modules are shared by main-process validation and script
   // tags. Other Node modules remain bundled into main.js.
-  for (const filename of ['trackerPreferences.js', 'tutorials.js', 'dungeonExploration.js', 'playerMarkerMotion.js', 'mapAppearance.js', 'appearance.js', 'widgetSizing.js', 'moonsteelAlertSettings.js', 'gameDataImages.js']) {
+  for (const filename of ['trackerPreferences.js', 'tutorials.js', 'dungeonExploration.js', 'playerMarkerMotion.js', 'mapAppearance.js', 'appearance.js', 'widgetSizing.js', 'moonsteelAlertSettings.js', 'gameDataImages.js', 'overlayShortcuts.js']) {
     const source = path.join(SRC_DIR, 'modules', filename);
     const output = path.join(outDir, 'modules', filename);
     fs.mkdirSync(path.dirname(output), { recursive: true });

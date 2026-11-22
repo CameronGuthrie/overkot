@@ -249,7 +249,7 @@
         },
         {
           title: tr('tourAppFocusTitle', 'Focus when you need it'),
-          body: tr('tourAppFocusBody', 'Press {shortcut} to focus the overlay and interact with its dock and widgets. Press the chord again or Escape to return control to your game.').replace('{shortcut}', () => focusChord),
+          body: tr('tourAppFocusBody', 'Press {shortcut} to focus the overlay and interact with its dock and widgets. Press it again or Escape to return control to your game.').replace('{shortcut}', () => focusChord),
           tip: tr('tourAppFocusTip', 'The dock stays passive until you focus it. Widget click-through can be changed in Settings → Overlay.'), visual: 'focus', chord: focusChord,
         },
         {

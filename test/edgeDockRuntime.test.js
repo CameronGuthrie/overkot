@@ -27,9 +27,11 @@ function visibilityFixture() {
     showInactive() { this.visible = true; calls.push([name, 'show']); } });
   const rail = surface('rail'), panel = surface('map', true, 'map'), closedPanel = surface('calendar', false, 'calendar');
   const settingsWindow = surface('settings'), closedPopout = surface('closed-popout', false);
+  settingsWindow.webContents = { send() {} };
   const windows = [rail, panel, closedPanel, settingsWindow, closedPopout];
   let registrationResult = true;
   const context = vm.createContext({ tutorialWindow: null, updateWindow: null,
+    OverlayShortcuts: require('../src/modules/overlayShortcuts'), registeredShortcut: null, overlayShortcutWarning: '',
     overlayHiddenByUser: false, gameHiddenActive: false, mainHiddenForFocus: false, gameFocusRequest: null,
     appStatus: 'connected', gameFocusedActive: true, platformSupport: { gameConnection: true, gameFocusTracking: true },
     isAnyOverlayWindowFocused: () => windows.some(win => win.focused), isCollapsed: false, mainWindow: rail,
@@ -63,6 +65,7 @@ function visibilityFixture() {
   });
   loadFunctions(context, 'function applyGameHiddenState()', 'function pushStateToRenderer()');
   loadFunctions(context, 'function updateGameFocus(', '/** Check whether any overlay-related window');
+  loadFunctions(context, 'function bindOverlayAccelerator(', 'function updateGameFocus(');
   loadFunctions(context, 'function setOverlayHidden(', 'function endShortcutCapture()');
   return { context, calls, settings, rail, panel, closedPanel, settingsWindow, closedPopout, registered, shortcutAttempts,
     run: code => vm.runInContext(code, context), registration: value => { registrationResult = value; } };

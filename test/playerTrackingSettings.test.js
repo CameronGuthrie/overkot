@@ -102,7 +102,7 @@ test('tracking checkbox uses the ordinary config save path and saves only its ow
 
 test('hidden alerts are opt-in, save independently and follow external config changes', async () => {
   const view = settings();
-  view.run('bindEvents(); renderStatus = loadTranslations = populateLanguageDropdown = updateOpacityControls = renderMapColors = populateInteractionHotkey = renderOverlayHotkey = renderPlatformSupport = renderMarket = renderPlayerTracking = () => {}; initialized = true; confirmedConfig = {language: "en", enableAlertPopup: false, enableAlertSound: true}; config = {...confirmedConfig}; applyConfigToDOM()');
+  view.run('bindEvents(); renderStatus = loadTranslations = populateLanguageDropdown = updateOpacityControls = renderMapColors = renderOverlayHotkey = renderPlatformSupport = renderMarket = renderPlayerTracking = () => {}; initialized = true; confirmedConfig = {language: "en", enableAlertPopup: false, enableAlertSound: true}; config = {...confirmedConfig}; applyConfigToDOM()');
   const checkbox = view.node('#chk-alerts-when-hidden');
   assert.equal(checkbox.checked, false);
   checkbox.checked = true;
@@ -118,7 +118,7 @@ test('hidden alerts are opt-in, save independently and follow external config ch
 
 test('progressive dungeon reveal starts on, saves independently and follows shared config changes', async () => {
   const view = settings();
-  view.run('bindEvents(); renderStatus = loadTranslations = populateLanguageDropdown = updateOpacityControls = renderMapColors = populateInteractionHotkey = renderOverlayHotkey = renderPlatformSupport = renderMarket = renderPlayerTracking = () => {}; initialized = true; confirmedConfig = {language: "en", dungeonMapAutoSwitch: true}; config = {...confirmedConfig}; applyConfigToDOM()');
+  view.run('bindEvents(); renderStatus = loadTranslations = populateLanguageDropdown = updateOpacityControls = renderMapColors = renderOverlayHotkey = renderPlatformSupport = renderMarket = renderPlayerTracking = () => {}; initialized = true; confirmedConfig = {language: "en", dungeonMapAutoSwitch: true}; config = {...confirmedConfig}; applyConfigToDOM()');
   const checkbox = view.node('#chk-dungeon-progressive-reveal');
   assert.equal(checkbox.checked, true);
   checkbox.checked = false;
@@ -133,7 +133,7 @@ test('progressive dungeon reveal starts on, saves independently and follows shar
 
 test('a failed progressive reveal save restores the last confirmed preference', async () => {
   const view = settings({ saveConfig: async () => false });
-  view.run('bindEvents(); renderStatus = loadTranslations = populateLanguageDropdown = updateOpacityControls = renderMapColors = populateInteractionHotkey = renderOverlayHotkey = renderPlatformSupport = renderMarket = renderPlayerTracking = () => {}; initialized = true; confirmedConfig = {dungeonMapProgressiveReveal: true}; config = {...confirmedConfig}; applyConfigToDOM()');
+  view.run('bindEvents(); renderStatus = loadTranslations = populateLanguageDropdown = updateOpacityControls = renderMapColors = renderOverlayHotkey = renderPlatformSupport = renderMarket = renderPlayerTracking = () => {}; initialized = true; confirmedConfig = {dungeonMapProgressiveReveal: true}; config = {...confirmedConfig}; applyConfigToDOM()');
   const checkbox = view.node('#chk-dungeon-progressive-reveal');
   checkbox.checked = false;
   checkbox.change();
@@ -145,7 +145,7 @@ test('a failed progressive reveal save restores the last confirmed preference', 
 
 test('a failed hidden-alert preference save restores the confirmed choice', async () => {
   const view = settings({ saveConfig: async () => false });
-  view.run('bindEvents(); renderStatus = loadTranslations = populateLanguageDropdown = updateOpacityControls = renderMapColors = populateInteractionHotkey = renderOverlayHotkey = renderPlatformSupport = renderMarket = renderPlayerTracking = () => {}; initialized = true; confirmedConfig = {showAlertsWhenHidden: false}; config = {...confirmedConfig}; applyConfigToDOM()');
+  view.run('bindEvents(); renderStatus = loadTranslations = populateLanguageDropdown = updateOpacityControls = renderMapColors = renderOverlayHotkey = renderPlatformSupport = renderMarket = renderPlayerTracking = () => {}; initialized = true; confirmedConfig = {showAlertsWhenHidden: false}; config = {...confirmedConfig}; applyConfigToDOM()');
   const checkbox = view.node('#chk-alerts-when-hidden');
   checkbox.checked = true;
   checkbox.change();

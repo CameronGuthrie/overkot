@@ -14,6 +14,7 @@ const { normalizeSavedLayouts } = require('./layouts');
 const WidgetSizing = require('./widgetSizing');
 const MoonsteelAlertSettings = require('./moonsteelAlertSettings');
 const { normalizeDisplayId } = require('./overlayDisplays');
+const OverlayShortcuts = require('./overlayShortcuts');
 
 const isWindowCloseFocus = value => ['game', 'overlay', 'desktop'].includes(value);
 
@@ -80,7 +81,8 @@ class ConfigStore {
       dailyAutoReset: true,
       dailyBriefVersion: 1,
       widgetVisibility: { daily: true },
-      overlayVisibilityHotkey: 'Shift+F2',
+      allowSingleKeyShortcuts: false,
+      ...OverlayShortcuts.defaults,
       widgetDocked: {},
       widgetOpen: { daily: false },
       dockParadigmVersion: 1,
@@ -197,7 +199,7 @@ class ConfigStore {
     data.dockWidgetOrder = [...new Set((Array.isArray(data.dockWidgetOrder) ? data.dockWidgetOrder : [])
       .filter(id => typeof id === 'string' && id.trim())
       .map(id => id.trim() === retired ? 'minimap' : id.trim()))];
-    if (typeof data.overlayVisibilityHotkey !== 'string' || !data.overlayVisibilityHotkey.trim()) data.overlayVisibilityHotkey = 'Shift+F2';
+    Object.assign(data, OverlayShortcuts.normalizeShortcuts(data));
     return data;
   }
 

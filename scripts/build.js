@@ -223,6 +223,12 @@ async function prepare({ skipScanner = false, platform = process.platform, beta 
   if (platform === 'win32') {
     const scannerDir = path.join(stage, 'bin');
     fs.mkdirSync(scannerDir, { recursive: true });
+    if (process.platform === 'win32') {
+      const compiler = path.join(process.env.WINDIR || 'C:\\Windows', 'Microsoft.NET', 'Framework64', 'v4.0.30319', 'csc.exe');
+      execFileSync(compiler, ['/nologo', '/optimize+', '/target:exe', '/reference:System.Windows.Forms.dll',
+        '/out:' + path.join(scannerDir, 'overkot-mouse-shortcuts.exe'), path.join(ROOT, 'native', 'mouse-shortcuts.cs')],
+        { stdio: 'inherit', windowsHide: true });
+    }
     if (!skipScanner) {
       execFileSync(process.execPath, [path.join(__dirname, 'build-scanner.js'), '--output-dir', scannerDir], {
         cwd: ROOT, stdio: 'inherit', windowsHide: true,

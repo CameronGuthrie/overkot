@@ -52,6 +52,11 @@ contextBridge.exposeInMainWorld('api', {
   toggleDockWidget: id => ipcRenderer.invoke('dock-toggle-widget', id),
   setDockKeyboardActive: active => ipcRenderer.send('dock-keyboard-active', !!active),
   setShortcutCapture: active => ipcRenderer.send('shortcut-capture', !!active),
+  onShortcutMouseCaptured: callback => {
+    const listener = (_event, binding) => callback(binding);
+    ipcRenderer.on('shortcut-mouse-captured', listener);
+    return () => ipcRenderer.removeListener('shortcut-mouse-captured', listener);
+  },
   setLayoutEditing: active => ipcRenderer.send('layout-editing-request', !!active),
   onLayoutEditing: callback => {
     ipcRenderer.on('layout-editing', (_event, active) => callback(active));

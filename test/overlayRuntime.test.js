@@ -20,6 +20,7 @@ test('Linux passive input policy never queries Windows-only native focusability'
 const { configureOverlayWorkspace, configureOverlayPopout, refreshOverlayStack } = require('../src/modules/overlayWindowPolicy');
 function overlayContext(values) {
   return vm.createContext({ platformSupport: { platform: 'win32' }, appStatus: 'waiting', registeredShortcut: null,
+    OverlayShortcuts: require('../src/modules/overlayShortcuts'), registeredVisibilityShortcut: null, syncMouseShortcuts() {},
     BrowserWindow: { getAllWindows: () => [] },
     ...require('../src/modules/overlayDisplays'), broadcastOverlayDisplays() {},
     appearanceSession: { effectiveConfig: () => values.config?.getAll?.() || {} },

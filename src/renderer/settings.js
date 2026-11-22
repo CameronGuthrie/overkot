@@ -12,9 +12,16 @@ let saveFailed = false;
 let closeAfterSave = false;
 let t = {};
 let activeTab = 'appearance';
-let recordingOverlayHotkey = false;
-let overlayHotkeyMessage = '';
-let visibilityShortcutWarning = '';
+const shortcutControls = {
+  interactionHotkey: { id: 'interaction-hotkey', defaultValue: 'Shift+F1' },
+  overlayVisibilityHotkey: { id: 'overlay-hotkey', defaultValue: 'Shift+F2' },
+};
+let recordingShortcut = null;
+let capturedKey = null;
+let capturedMouse = null;
+let suppressMouseClick = null;
+let shortcutMessage = '';
+const shortcutWarnings = {};
 const pendingConfig = new Map();
 const sliderTimers = new Map();
 const configSaveWaiters = new Set();
@@ -65,6 +72,7 @@ const checkboxSettings = {
   'chk-live-player-tracking': ['livePlayerTracking', true],
   'chk-world-drops': ['showWorldDrops', true],
   'chk-dock-auto-hide': ['dockAutoHide', false],
+  'chk-allow-single-key-shortcuts': ['allowSingleKeyShortcuts', false],
 };
 const opacitySettings = [
   ['slider-dungeon-opacity', 'dungeon-opacity-value', 'dungeonMapBackgroundOpacity', 45],
@@ -187,7 +195,7 @@ async function setTutorialsEnabled(enabled) {
 }
 
 function setTab(next, focus = false) {
-  if (recordingOverlayHotkey) stopOverlayHotkeyCapture();
+  stopShortcutCapture();
   activeTab = next;
   for (const button of document.querySelectorAll('.settings-tab')) {
     const selected = button.dataset.tab === next;
@@ -244,8 +252,6 @@ function applyConfigToDOM() {
   }
   updateOpacityControls();
   renderMapColors();
-  populateInteractionHotkey();
-  $('#hotkey-row').hidden = false;
   $('#dock-edge-select').value = ['top', 'bottom', 'left', 'right'].includes(config.dockEdge) ? config.dockEdge : 'bottom';
   $('#window-close-focus-select').value = config.windowCloseFocus ?? 'game';
   renderOverlayDisplays();
@@ -372,118 +378,158 @@ async function loadPlayerTracking() {
   }
 }
 
-function populateInteractionHotkey() {
-  let hotkey = config.interactionHotkey || 'Shift+F1';
-  if (['Alt', 'Control', 'Shift'].includes(hotkey)) hotkey = 'Shift+F1';
-  const select = $('#hotkey-select');
-  select.querySelector('option[data-custom]')?.remove();
-  if (![...select.options].some(option => option.value === hotkey)) {
-    const option = document.createElement('option');
-    option.value = hotkey;
-    option.textContent = hotkey.replaceAll('+', ' + ');
-    option.dataset.custom = 'true';
-    select.append(option);
-  }
-  for (const option of select.options) {
-    option.disabled = hotkeyIdentity(option.value) === hotkeyIdentity(config.overlayVisibilityHotkey || 'Shift+F2');
-    option.title = option.disabled ? tr('settingsHotkeyUsedForVisibility', 'Used to show / hide the overlay') : '';
-  }
-  select.value = hotkey;
-}
+const mouseButtons = ['Mouse1', 'Mouse3', 'Mouse2', 'Mouse4', 'Mouse5'];
+const mouseShortcutNames = {
+  Mouse1: ['settingsMouseButton1', 'Left click'], Mouse2: ['settingsMouseButton2', 'Right click'],
+  Mouse3: ['settingsMouseButton3', 'Wheel click'], Mouse4: ['settingsMouseButton4', 'Mouse 4 (Back)'],
+  Mouse5: ['settingsMouseButton5', 'Mouse 5 (Forward)'],
+  WheelUp: ['settingsWheelUp', 'Scroll up'], WheelDown: ['settingsWheelDown', 'Scroll down'],
+  WheelLeft: ['settingsWheelLeft', 'Scroll left'], WheelRight: ['settingsWheelRight', 'Scroll right'],
+};
 
 function renderOverlayHotkey() {
-  const button = $('#overlay-hotkey-capture');
-  button.textContent = recordingOverlayHotkey ? tr('settingsHotkeyRecording', 'Press a shortcut…')
-    : (config.overlayVisibilityHotkey || 'Shift+F2').replaceAll('+', ' + ');
-  button.setAttribute('aria-pressed', String(recordingOverlayHotkey));
+  const mouseSupported = platformSupport.platform === 'win32';
+  $('#single-key-shortcuts-label').textContent = mouseSupported
+    ? tr('settingsAllowSingleKeyMouseShortcuts', 'Allow single keys or mouse buttons')
+    : tr('settingsAllowSingleKeyShortcuts', 'Allow single-key shortcuts');
+  for (const [key, { id, defaultValue }] of Object.entries(shortcutControls)) {
+    const button = $('#' + id + '-capture');
+    const value = config[key] || defaultValue;
+    button.textContent = recordingShortcut === key ? tr('settingsHotkeyRecording', 'Press a shortcut…')
+      : value.split('+').map(part => Object.hasOwn(mouseShortcutNames, part) ? tr(...mouseShortcutNames[part]) : part).join(' + ');
+    button.setAttribute('aria-pressed', String(recordingShortcut === key));
+  }
+  const message = shortcutMessage || Object.values(shortcutWarnings).filter(Boolean).join(' ');
   const hint = $('#overlay-hotkey-hint');
-  hint.textContent = overlayHotkeyMessage || (recordingOverlayHotkey
+  if (message) hint.textContent = message;
+  else if (config.allowSingleKeyShortcuts === true) hint.textContent = mouseSupported
+    ? tr('settingsSingleKeyMouseHint', 'Click a shortcut, then press a key, click a mouse button or scroll. Escape cancels. A single key also works while typing in other apps. Unmodified left and right clicks only trigger while Soulframe is focused.')
+    : tr('settingsSingleKeyHint', 'Click a shortcut, then press a key or key combination. Escape cancels. Single keys also work while typing in other apps.');
+  else hint.textContent = recordingShortcut
     ? tr('settingsHotkeyRecordingHint', 'Press a modifier and a key. Escape cancels.')
-    : visibilityShortcutWarning || tr('settingsHotkeyHint', 'Click the shortcut, then press a modifier and a key. Escape cancels.'));
-  hint.dataset.error = String(!!overlayHotkeyMessage || !!visibilityShortcutWarning);
+    : tr('settingsHotkeyHint', 'Click the shortcut, then press a modifier and a key. Escape cancels.');
+  hint.dataset.error = String(!!message);
 }
 
-function stopOverlayHotkeyCapture() {
-  if (!recordingOverlayHotkey) return;
-  recordingOverlayHotkey = false;
+function stopShortcutCapture() {
+  if (!recordingShortcut) return;
+  recordingShortcut = null;
+  capturedKey = null;
+  capturedMouse = null;
+  shortcutMessage = '';
   window.api.setShortcutCapture?.(false);
   renderOverlayHotkey();
 }
 
-function startOverlayHotkeyCapture() {
-  if (recordingOverlayHotkey) { stopOverlayHotkeyCapture(); return; }
-  recordingOverlayHotkey = true;
-  overlayHotkeyMessage = '';
+function startShortcutCapture(key) {
+  if (recordingShortcut === key) { stopShortcutCapture(); return; }
+  recordingShortcut = key;
+  capturedKey = null;
+  capturedMouse = null;
+  suppressMouseClick = null;
+  shortcutMessage = '';
   window.api.setShortcutCapture?.(true);
   renderOverlayHotkey();
-  $('#overlay-hotkey-capture').focus();
+  $('#' + shortcutControls[key].id + '-capture').focus();
 }
 
-function hotkeyFromEvent(event) {
+function eventBinding(event, key) {
   const modifiers = [];
   if (event.ctrlKey) modifiers.push('Ctrl');
   if (event.altKey) modifiers.push('Alt');
   if (event.shiftKey) modifiers.push('Shift');
   if (event.metaKey) modifiers.push('Super');
-  if (!modifiers.length) return null;
-  const code = event.code || '';
-  const named = { Space: 'Space', Enter: 'Enter', Tab: 'Tab', Backspace: 'Backspace', Delete: 'Delete',
-    Insert: 'Insert', Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown',
-    ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right' };
-  const key = /^Key[A-Z]$/.test(code) ? code.slice(3)
-    : /^Digit[0-9]$/.test(code) ? code.slice(5)
-      : /^F(?:[1-9]|1[0-9]|2[0-4])$/.test(event.key) ? event.key : named[code];
   return key ? [...modifiers, key].join('+') : null;
 }
 
-function hotkeyIdentity(value) {
-  return String(value).toLowerCase().split('+').map(part => part.trim())
-    .map(part => ({ control: 'ctrl', command: 'super', cmd: 'super', meta: 'super' }[part] || part)).sort().join('+');
+function hotkeyFromEvent(event) {
+  const code = event.code || '';
+  const named = { ' ': 'Space', '+': 'Plus', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right',
+    AudioVolumeUp: 'VolumeUp', AudioVolumeDown: 'VolumeDown', AudioVolumeMute: 'VolumeMute',
+    MediaTrackNext: 'MediaNextTrack', MediaTrackPrevious: 'MediaPreviousTrack' };
+  const keypad = { NumpadAdd: 'numadd', NumpadSubtract: 'numsub', NumpadMultiply: 'nummult', NumpadDivide: 'numdiv' };
+  let key = named[event.key] || event.key;
+  if (/^Numpad[0-9]$/.test(code) && /^[0-9]$/.test(event.key)) key = 'num' + event.key;
+  else if (Object.hasOwn(keypad, code)) key = keypad[code];
+  else if (code === 'NumpadDecimal' && event.key !== 'Delete') key = 'numdec';
+  else if (/^[a-z0-9]$/i.test(event.key)) key = event.key.toUpperCase();
+  else if (/^Digit[0-9]$/.test(code) && event.shiftKey) key = code.slice(5);
+  else if (/^Key[A-Z]$/.test(code) && !/^[!-~]$/.test(event.key)) key = code.slice(3);
+  const binding = eventBinding(event, key);
+  return window.OverlayShortcuts.validShortcut(binding, config.allowSingleKeyShortcuts === true, platformSupport.platform) ? binding : null;
 }
 
-function changeOverlayHotkey(hotkey) {
-  if (hotkeyIdentity(hotkey) === hotkeyIdentity(config.interactionHotkey || 'Shift+F1')) {
-    overlayHotkeyMessage = tr('settingsHotkeyConflict', 'Choose a shortcut different from the interact hotkey.');
+function changeShortcut(key, hotkey) {
+  const other = key === 'interactionHotkey' ? 'overlayVisibilityHotkey' : 'interactionHotkey';
+  const identity = value => window.OverlayShortcuts.shortcutIdentity(value, platformSupport.platform);
+  if (identity(hotkey) === identity(config[other] || shortcutControls[other].defaultValue)) {
+    shortcutMessage = key === 'interactionHotkey'
+      ? tr('settingsInteractHotkeyConflict', 'This shortcut shows / hides the overlay. Choose a different interact hotkey.')
+      : tr('settingsHotkeyConflict', 'Choose a shortcut different from the interact hotkey.');
     renderOverlayHotkey();
     return false;
   }
-  overlayHotkeyMessage = '';
-  visibilityShortcutWarning = '';
-  stopOverlayHotkeyCapture();
-  queueConfig({ overlayVisibilityHotkey: hotkey });
-  populateInteractionHotkey();
+  stopShortcutCapture();
+  shortcutMessage = '';
+  delete shortcutWarnings[key];
+  queueConfig({ [key]: hotkey });
   renderOverlayHotkey();
   return true;
 }
 
-function changeInteractionHotkey(hotkey) {
-  if (hotkeyIdentity(hotkey) === hotkeyIdentity(config.overlayVisibilityHotkey || 'Shift+F2')) {
-    overlayHotkeyMessage = tr('settingsInteractHotkeyConflict', 'This shortcut shows / hides the overlay. Choose a different interact hotkey.');
-    populateInteractionHotkey();
-    renderOverlayHotkey();
-    return false;
-  }
-  overlayHotkeyMessage = '';
-  stopOverlayHotkeyCapture();
-  queueConfig({ interactionHotkey: hotkey });
-  populateInteractionHotkey();
-  renderOverlayHotkey();
-  return true;
-}
-
-function captureOverlayHotkey(event) {
-  if (!recordingOverlayHotkey) return;
+function captureShortcut(event) {
+  if (!recordingShortcut) return;
   event.preventDefault();
   event.stopPropagation();
-  if (event.key === 'Escape') { overlayHotkeyMessage = ''; stopOverlayHotkeyCapture(); return; }
-  if (event.repeat || ['Control', 'Alt', 'Shift', 'Meta'].includes(event.key)) return;
-  const hotkey = hotkeyFromEvent(event);
-  if (!hotkey) {
-    overlayHotkeyMessage = tr('settingsHotkeyUnsupported', 'Use a modifier with a letter, number, function key or navigation key.');
-    renderOverlayHotkey();
+  if (event.type === 'keyup') {
+    if (capturedKey && capturedKey.code === event.code) {
+      const { hotkey } = capturedKey;
+      capturedKey = null;
+      changeShortcut(recordingShortcut, hotkey);
+    }
     return;
   }
-  changeOverlayHotkey(hotkey);
+  if (event.key === 'Escape') { stopShortcutCapture(); return; }
+  if (capturedKey || capturedMouse || event.repeat || ['Control', 'Alt', 'AltGraph', 'Shift', 'Meta'].includes(event.key)) return;
+  const hotkey = hotkeyFromEvent(event);
+  if (hotkey) capturedKey = { code: event.code, hotkey };
+  else shortcutMessage = config.allowSingleKeyShortcuts === true
+    ? tr('settingsSingleKeyUnsupported', 'Use a letter, number, function key or navigation key, with or without modifiers.')
+    : tr('settingsHotkeyUnsupported', 'Use a modifier with a letter, number, function key or navigation key.');
+  renderOverlayHotkey();
+}
+
+function canCaptureMouse() {
+  return recordingShortcut && !capturedKey && config.allowSingleKeyShortcuts === true && platformSupport.platform === 'win32' && document.hasFocus();
+}
+
+function commitMouseShortcut(binding) {
+  if (!canCaptureMouse() || !window.OverlayShortcuts.isMouseShortcut(binding)
+    || !window.OverlayShortcuts.validShortcut(binding, true, 'win32')) return;
+  capturedMouse = null;
+  // A native release or DOM mouseup can be followed by a click on the recorder.
+  // Consume that click so it cannot start a new capture or activate another control.
+  suppressMouseClick = binding.split('+').at(-1);
+  changeShortcut(recordingShortcut, binding);
+}
+
+function captureMouseEvent(event) {
+  const button = mouseButtons[event.button];
+  if (event.type === 'mousedown') suppressMouseClick = null;
+  if (['click', 'auxclick', 'contextmenu'].includes(event.type)) {
+    if (event.type === 'click' && event.detail === 0) return; // Keyboard activation.
+    if (!button || (button !== suppressMouseClick && !canCaptureMouse())) return;
+  } else if (!canCaptureMouse()) return;
+  event.preventDefault();
+  event.stopPropagation();
+  if (event.type === 'mousedown' && button) capturedMouse = { button, binding: eventBinding(event, button) };
+  if (event.type === 'mouseup' && capturedMouse && capturedMouse.button === button) commitMouseShortcut(capturedMouse.binding);
+  if (event.type === 'wheel') {
+    const horizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+    const delta = horizontal ? event.deltaX : event.deltaY;
+    const direction = horizontal ? (delta < 0 ? 'WheelLeft' : 'WheelRight') : (delta < 0 ? 'WheelUp' : 'WheelDown');
+    if (delta) commitMouseShortcut(eventBinding(event, direction));
+  }
 }
 
 function renderPlatformSupport() {
@@ -562,12 +608,18 @@ async function loadSettings() {
   try {
     const state = await window.api.getState();
     platformSupport = state?.platformSupport || {};
-    visibilityShortcutWarning = typeof state?.visibilityShortcutWarning === 'string' ? state.visibilityShortcutWarning : state?.visibilityShortcutWarning?.message || '';
+    receiveShortcutWarnings(state);
     if (revision === configRevision) receiveConfig(state?.config || {});
   } catch {
     if (!initialized) loadFailed = true;
     renderStatus();
   }
+}
+
+function receiveShortcutWarnings(state) {
+  shortcutWarnings.interactionHotkey = state?.overlayShortcutWarning || '';
+  shortcutWarnings.overlayVisibilityHotkey = state?.visibilityShortcutWarning?.message || state?.visibilityShortcutWarning || '';
+  renderOverlayHotkey();
 }
 
 function queueConfig(patch, defer = false) {
@@ -592,6 +644,9 @@ async function saveConfig() {
     } catch {
       saveFailed = true;
       closeAfterSave = false;
+      if (Object.keys(shortcutControls).some(key => changes.has(key)) || changes.has('allowSingleKeyShortcuts')) {
+        shortcutMessage = tr('settingsHotkeyUnavailable', 'Could not save this shortcut. Try a different key or key combination.');
+      }
     }
     for (const [key, value] of changes) {
       if (pendingConfig.get(key) === value) pendingConfig.delete(key);
@@ -871,7 +926,7 @@ async function replayTutorial(id) {
 
 function bindEvents() {
   $('#close-btn').addEventListener('click', () => {
-    stopOverlayHotkeyCapture();
+    stopShortcutCapture();
     for (const timer of sliderTimers.values()) clearTimeout(timer);
     sliderTimers.clear();
     if (pendingConfig.size > 0) { closeAfterSave = true; void saveConfig(); }
@@ -891,7 +946,12 @@ function bindEvents() {
   });
   for (const [id, [key]] of Object.entries(checkboxSettings)) {
     $('#' + id).addEventListener('change', () => {
+      if (key === 'allowSingleKeyShortcuts') {
+        stopShortcutCapture();
+        shortcutMessage = '';
+      }
       queueConfig({ [key]: $('#' + id).checked });
+      if (key === 'allowSingleKeyShortcuts') renderOverlayHotkey();
       if (key === 'marketRememberSession') renderMarket();
       if (key === 'livePlayerTracking') { renderPlayerTracking(); renderMoonsteelAlertControls(); }
     });
@@ -927,14 +987,21 @@ function bindEvents() {
       renderMapColors();
     });
   }
-  $('#hotkey-select').addEventListener('change', () => changeInteractionHotkey($('#hotkey-select').value));
   $('#dock-edge-select').addEventListener('change', () => queueConfig({ dockEdge: $('#dock-edge-select').value }));
   $('#window-close-focus-select').addEventListener('change', () => queueConfig({ windowCloseFocus: $('#window-close-focus-select').value }));
   $('#dock-display-select').addEventListener('change', () => changeOverlayDisplay($('#dock-display-select').value));
-  $('#overlay-hotkey-capture').addEventListener('click', startOverlayHotkeyCapture);
-  $('#overlay-hotkey-reset').addEventListener('click', () => changeOverlayHotkey('Shift+F2'));
-  document.addEventListener('keydown', captureOverlayHotkey, true);
-  window.addEventListener('blur', stopOverlayHotkeyCapture);
+  for (const [key, { id, defaultValue }] of Object.entries(shortcutControls)) {
+    const button = $('#' + id + '-capture');
+    button.addEventListener('click', () => startShortcutCapture(key));
+    button.addEventListener('blur', stopShortcutCapture);
+    $('#' + id + '-reset').addEventListener('click', () => changeShortcut(key, defaultValue));
+  }
+  document.addEventListener('keydown', captureShortcut, true);
+  document.addEventListener('keyup', captureShortcut, true);
+  for (const name of ['mousedown', 'mouseup', 'click', 'auxclick', 'contextmenu', 'wheel']) {
+    document.addEventListener(name, captureMouseEvent, { capture: true, passive: false });
+  }
+  window.addEventListener('blur', stopShortcutCapture);
   for (const [sliderId, labelId, key] of opacitySettings) {
     const slider = $('#' + sliderId);
     slider.addEventListener('input', () => {
@@ -1013,7 +1080,9 @@ document.addEventListener('DOMContentLoaded', () => {
   layoutsSettings = window.LayoutsSettings?.mount({ api: window.api, flushPending: flushPendingSettings });
   widgetSizingSettings = window.WidgetSizingSettings?.mount({ api: window.api, flushPending: flushPendingSettings });
   window.api.onConfigChanged?.(receiveConfig);
+  window.api.onStateUpdate?.(receiveShortcutWarnings);
   const removeDisplayListener = window.api.onOverlayDisplaysChanged?.(receiveOverlayDisplays);
+  const removeMouseListener = window.api.onShortcutMouseCaptured?.(commitMouseShortcut);
   window.api.onMarketChanged?.(snapshot => { marketRevision++; marketState = snapshot; marketError = ''; renderMarket(); });
   const removeAccountListener = window.api.onAvakotAccountState?.(snapshot => {
     avakotAccountRevision++;
@@ -1028,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('beforeunload', () => {
     layoutsSettings?.dispose();
     widgetSizingSettings?.dispose();
-    stopOverlayHotkeyCapture(); removeAccountListener?.(); playerTrackingRevision++; removeTrackingListener?.();
+    stopShortcutCapture(); removeMouseListener?.(); removeAccountListener?.(); playerTrackingRevision++; removeTrackingListener?.();
     overlayDisplaysRevision++; removeDisplayListener?.();
   }, { once: true });
   window.api.onUpdateChanged?.(snapshot => { updateState = snapshot; renderUpdate(); });

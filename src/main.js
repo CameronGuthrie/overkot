@@ -49,6 +49,8 @@ const { ApiClient } = require('./modules/apiClient');
 const { Updater, CURRENT_VERSION } = require('./modules/updater');
 const { mergeChangelog } = require('./modules/releaseNotes');
 const { ConfigStore, isWindowCloseFocus } = require('./modules/config');
+const OverlayShortcuts = require('./modules/overlayShortcuts');
+const { createMouseShortcuts } = require('./modules/mouseShortcuts');
 const { focusDesktop } = require('./modules/desktopFocus');
 const { offerStartupLayout, restoreStartupSavedLayout } = require('./modules/startupLayout');
 const { CalendarService } = require('./modules/calendar');
@@ -693,11 +695,21 @@ let gameFocusedActive = true;
 /** Whether the main overlay window is currently hidden due to focus-only mode. */
 let mainHiddenForFocus = false;
 let detector = null;
+const mouseShortcuts = createMouseShortcuts({
+  onPress: dispatchOverlayShortcut,
+  onCapture: hotkey => {
+    if (shortcutCapture && settingsWindow && !settingsWindow.isDestroyed() && settingsWindow.isFocused()) {
+      settingsWindow.webContents.send('shortcut-mouse-captured', hotkey);
+    }
+  },
+  onError: handleMouseShortcutError,
+});
 
 app.on('will-quit', () => {
   gameDataAccess.dispose();
-  if (registeredShortcut) globalShortcut.unregister(registeredShortcut);
-  if (registeredVisibilityShortcut) globalShortcut.unregister(registeredVisibilityShortcut);
+  releaseKeyboardShortcut(registeredShortcut);
+  releaseKeyboardShortcut(registeredVisibilityShortcut);
+  mouseShortcuts.stop();
   layoutKeyMonitor?.stop();
   clearInterval(dockPollTimer);
   clearTimeout(shiftStartTimer);
@@ -730,7 +742,7 @@ app.on('before-quit', event => {
 
 function registerOverlayShortcut() {
   if (registeredShortcut) {
-    globalShortcut.unregister(registeredShortcut);
+    releaseKeyboardShortcut(registeredShortcut);
     registeredShortcut = null;
   }
   if (shortcutCapture) return;
@@ -742,13 +754,9 @@ function registerOverlayShortcut() {
   if (typeof hotkey !== 'string' || !hotkey.trim() || ['Alt', 'Control', 'Shift'].includes(hotkey)) hotkey = 'Shift+F1';
 
   try {
-    const ok = globalShortcut.register(hotkey, () => {
-      if (!mainWindow || mainWindow.isDestroyed()) return;
-      launchFocusChordUsed = true;
-      focusReminder?.dismiss();
-      toggleOverlayInteraction();
-      scheduleAppTutorial();
-    });
+    const ok = OverlayShortcuts.isMouseShortcut(hotkey)
+      ? syncMouseShortcuts(hotkey, registeredVisibilityShortcut)
+      : bindOverlayAccelerator(hotkey);
     if (ok) {
       registeredShortcut = hotkey;
       applyOverlayMousePolicy();
@@ -760,17 +768,120 @@ function registerOverlayShortcut() {
     log('HOTKEY', `Error registering shortcut ${hotkey}: ${e.message}`);
   }
   if (!registeredShortcut) {
-    // A pass-through window must never depend on a shortcut that did not bind.
-    config.set('clickThrough', false);
-    overlayInteractive = false;
-    applyOverlayMousePolicy();
-    const allConfig = appearanceSession.effectiveConfig();
-    for (const win of BrowserWindow.getAllWindows()) {
-      if (!win.isDestroyed()) win.webContents.send('config-changed', allConfig);
-    }
-    overlayShortcutWarning = `${hotkey.replaceAll('+', ' + ')} is unavailable. Click-through is off. Choose another hotkey in Settings.`;
+    recoverUnavailableInteraction(hotkey);
   }
-  if (previousWarning !== overlayShortcutWarning) pushStateToRenderer();
+  if (previousWarning !== overlayShortcutWarning) publishShortcutWarnings();
+}
+
+function bindOverlayAccelerator(hotkey) {
+  return globalShortcut.register(hotkey, () => dispatchOverlayShortcut(hotkey));
+}
+
+function dispatchOverlayShortcut(hotkey) {
+  if (shortcutCapture) return;
+  const id = OverlayShortcuts.shortcutIdentity(hotkey);
+  if (id === OverlayShortcuts.shortcutIdentity(registeredVisibilityShortcut)) {
+    setOverlayHidden(!overlayHiddenByUser);
+  } else if (id === OverlayShortcuts.shortcutIdentity(registeredShortcut) && mainWindow && !mainWindow.isDestroyed()) {
+    launchFocusChordUsed = true;
+    focusReminder?.dismiss();
+    toggleOverlayInteraction();
+    scheduleAppTutorial();
+  }
+}
+
+function releaseKeyboardShortcut(hotkey) {
+  if (hotkey && !OverlayShortcuts.isMouseShortcut(hotkey)) globalShortcut.unregister(hotkey);
+}
+
+function publishShortcutWarnings() {
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.webContents.send('state-update', { overlayShortcutWarning, visibilityShortcutWarning });
+  }
+  pushStateToRenderer();
+}
+
+function syncMouseShortcuts(interactionHotkey, overlayVisibilityHotkey, allowSingle = config.get('allowSingleKeyShortcuts', false)) {
+  let settingsHwnd = '0';
+  if (platformSupport.platform === 'win32' && settingsWindow && !settingsWindow.isDestroyed()) {
+    const handle = settingsWindow.getNativeWindowHandle();
+    settingsHwnd = (handle.length >= 8 ? handle.readBigUInt64LE() : handle.readUInt32LE()).toString();
+  }
+  return mouseShortcuts.setState({ interactionHotkey: OverlayShortcuts.nativeMouseBinding(interactionHotkey),
+    overlayVisibilityHotkey: OverlayShortcuts.nativeMouseBinding(overlayVisibilityHotkey), gamePid: playerTracking.pid || 0,
+    settingsHwnd, capture: platformSupport.platform === 'win32' && shortcutCapture && allowSingle });
+}
+
+function recoverUnavailableInteraction(hotkey) {
+  // A pass-through window must never depend on a shortcut that did not bind.
+  config.set('clickThrough', false);
+  overlayInteractive = false;
+  applyOverlayMousePolicy();
+  const allConfig = appearanceSession.effectiveConfig();
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) win.webContents.send('config-changed', allConfig);
+  }
+  overlayShortcutWarning = `${hotkey.replaceAll('+', ' + ')} is unavailable. Click-through is off. Choose another hotkey in Settings.`;
+}
+
+function handleMouseShortcutError(error) {
+  log('HOTKEY', `Mouse shortcuts unavailable: ${error.message}`);
+  if (OverlayShortcuts.isMouseShortcut(registeredShortcut)) {
+    const hotkey = registeredShortcut;
+    registeredShortcut = null;
+    recoverUnavailableInteraction(hotkey);
+  }
+  if (OverlayShortcuts.isMouseShortcut(registeredVisibilityShortcut) || shortcutCapture) {
+    if (OverlayShortcuts.isMouseShortcut(registeredVisibilityShortcut)) registeredVisibilityShortcut = null;
+    visibilityShortcutWarning = 'Mouse shortcuts are unavailable. Choose a keyboard shortcut.';
+  }
+  pushDockState();
+  publishShortcutWarnings();
+}
+
+function saveShortcutBindings(patch) {
+  const previous = { interactionHotkey: registeredShortcut, overlayVisibilityHotkey: registeredVisibilityShortcut };
+  const next = { ...previous };
+  const existing = new Map(Object.values(previous).filter(Boolean).map(key => [OverlayShortcuts.shortcutIdentity(key), key]));
+  const acquired = [];
+  let saved = false, mouseUpdated = false;
+  try {
+    for (const key of OverlayShortcuts.bindings) {
+      if (!Object.hasOwn(patch, key)) continue;
+      const hotkey = patch[key], held = existing.get(OverlayShortcuts.shortcutIdentity(hotkey));
+      if (!held && !OverlayShortcuts.isMouseShortcut(hotkey)) {
+        if (!bindOverlayAccelerator(hotkey)) return false;
+        acquired.push(hotkey);
+      }
+      next[key] = held || hotkey;
+    }
+    mouseUpdated = syncMouseShortcuts(next.interactionHotkey, next.overlayVisibilityHotkey,
+      patch.allowSingleKeyShortcuts ?? config.get('allowSingleKeyShortcuts', false));
+    if (!mouseUpdated) return false;
+    saved = config.setMany(patch) !== false;
+  } catch (error) {
+    log('HOTKEY', `Could not apply shortcuts: ${error.message}`);
+  } finally {
+    if (!saved) {
+      for (const hotkey of acquired) releaseKeyboardShortcut(hotkey);
+      if (mouseUpdated) syncMouseShortcuts(previous.interactionHotkey, previous.overlayVisibilityHotkey);
+    }
+  }
+  if (!saved) return false;
+
+  // Keep the old accelerators available until both registration and persistence
+  // succeed. A pair of shortcuts can even swap actions without releasing either.
+  registeredShortcut = next.interactionHotkey;
+  registeredVisibilityShortcut = next.overlayVisibilityHotkey;
+  for (const hotkey of existing.values()) {
+    if (!Object.values(next).includes(hotkey)) releaseKeyboardShortcut(hotkey);
+  }
+  if (Object.hasOwn(patch, 'interactionHotkey')) overlayShortcutWarning = '';
+  if (Object.hasOwn(patch, 'overlayVisibilityHotkey')) visibilityShortcutWarning = '';
+  applyOverlayMousePolicy();
+  pushDockState();
+  publishShortcutWarnings();
+  return true;
 }
 
 function updateGameFocus(focused) {
@@ -1512,6 +1623,7 @@ function createSettingsWindow(section) {
       nodeIntegration: false, backgroundThrottling: false },
   });
   settingsWindow = win;
+  syncMouseShortcuts(registeredShortcut, registeredVisibilityShortcut);
   win._settingsSection = requestedSection;
   win.webContents.on('did-finish-load', () => {
     if (win._settingsSection) win.webContents.send('settings:section', win._settingsSection);
@@ -1524,7 +1636,11 @@ function createSettingsWindow(section) {
   trackWindowBounds(win, 'settingsHubBounds');
   win.on('close', () => config.set('settingsHubBounds', win.getBounds()));
   attachOverlayBlurHandler(win);
-  win.on('closed', () => { settingsWindow = null; endShortcutCapture(); });
+  win.on('closed', () => {
+    settingsWindow = null;
+    if (shortcutCapture) endShortcutCapture();
+    else syncMouseShortcuts(registeredShortcut, registeredVisibilityShortcut);
+  });
   applyOverlayMousePolicy();
   win.loadFile(path.join(__dirname, 'renderer', 'settings.html'), requestedSection ? { query: { section: requestedSection } } : undefined);
 }
@@ -2213,24 +2329,28 @@ function setOverlayHidden(hidden) {
 }
 
 function registerVisibilityShortcut() {
-  if (registeredVisibilityShortcut) globalShortcut.unregister(registeredVisibilityShortcut);
+  releaseKeyboardShortcut(registeredVisibilityShortcut);
   registeredVisibilityShortcut = null;
   visibilityShortcutWarning = '';
   if (shortcutCapture) return;
   const hotkey = config.get('overlayVisibilityHotkey', 'Shift+F2');
   try {
-    if (globalShortcut.register(hotkey, () => setOverlayHidden(!overlayHiddenByUser))) registeredVisibilityShortcut = hotkey;
+    const ok = OverlayShortcuts.isMouseShortcut(hotkey)
+      ? syncMouseShortcuts(registeredShortcut, hotkey)
+      : bindOverlayAccelerator(hotkey);
+    if (ok) registeredVisibilityShortcut = hotkey;
     else visibilityShortcutWarning = `${hotkey.replaceAll('+', ' + ')} is unavailable. Choose another overlay visibility shortcut in Settings.`;
   } catch { visibilityShortcutWarning = 'The overlay visibility shortcut is invalid. Choose another shortcut in Settings.'; }
   pushDockState();
-  pushStateToRenderer();
+  publishShortcutWarnings();
 }
 
 function endShortcutCapture() {
   if (!shortcutCapture) return;
   shortcutCapture = false;
-  registerOverlayShortcut();
-  registerVisibilityShortcut();
+  if (!registeredShortcut) registerOverlayShortcut();
+  if (!registeredVisibilityShortcut) registerVisibilityShortcut();
+  syncMouseShortcuts(registeredShortcut, registeredVisibilityShortcut);
 }
 
 ipcMain.on('shortcut-capture', (event, active) => {
@@ -2238,9 +2358,10 @@ ipcMain.on('shortcut-capture', (event, active) => {
   if (!active) { endShortcutCapture(); return; }
   shortcutCapture = true;
   setLayoutEditing(false);
-  if (registeredShortcut) globalShortcut.unregister(registeredShortcut);
-  if (registeredVisibilityShortcut) globalShortcut.unregister(registeredVisibilityShortcut);
+  releaseKeyboardShortcut(registeredShortcut);
+  releaseKeyboardShortcut(registeredVisibilityShortcut);
   registeredShortcut = registeredVisibilityShortcut = null;
+  if (!syncMouseShortcuts(null, null)) handleMouseShortcutError(new Error('Mouse shortcut capture could not start.'));
 });
 
 ipcMain.on('layout-editing-request', (event, editing) => {
@@ -2812,20 +2933,13 @@ ipcMain.handle('save-config', (_e, newConfig) => {
     || new Set(newConfig.dockWidgetOrder).size !== newConfig.dockWidgetOrder.length)) return false;
   if (Object.hasOwn(newConfig, 'widgetOutlineOpacity') && (!Number.isFinite(newConfig.widgetOutlineOpacity)
     || newConfig.widgetOutlineOpacity < 0 || newConfig.widgetOutlineOpacity > 100)) return false;
-  const shortcutIdentity = value => String(value).toLowerCase().split('+')
-    .map(part => ({ control: 'ctrl', command: 'super', cmd: 'super', meta: 'super' }[part] || part)).sort().join('+');
-  const visibilityChord = newConfig.overlayVisibilityHotkey ?? config.get('overlayVisibilityHotkey', 'Shift+F2');
-  const interactionChord = newConfig.interactionHotkey ?? config.get('interactionHotkey', 'Shift+F1');
-  if (shortcutIdentity(visibilityChord) === shortcutIdentity(interactionChord)) return false;
-  if (Object.hasOwn(newConfig, 'overlayVisibilityHotkey')) {
-    if (typeof visibilityChord !== 'string' || !/^(?:(?:Ctrl|Control|Alt|Shift|Super|Meta|Command|CommandOrControl)\+)+(?:[A-Z0-9]|F(?:[1-9]|1[0-9]|2[0-4])|Space|Enter|Tab|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Up|Down|Left|Right)$/i.test(visibilityChord)) return false;
-    if (!shortcutCapture && visibilityChord !== registeredVisibilityShortcut) {
-      // Check availability before persisting a shortcut that could leave no way back.
-      try {
-        if (!globalShortcut.register(visibilityChord, () => {})) return false;
-        globalShortcut.unregister(visibilityChord);
-      } catch { return false; }
-    }
+  const changesShortcuts = Object.hasOwn(newConfig, 'allowSingleKeyShortcuts')
+    || OverlayShortcuts.bindings.some(key => Object.hasOwn(newConfig, key));
+  if (changesShortcuts) {
+    const current = { ...OverlayShortcuts.defaults, allowSingleKeyShortcuts: false, ...config.getAll() };
+    const bindings = OverlayShortcuts.shortcutPatch(current, newConfig);
+    if (!bindings) return false;
+    Object.assign(newConfig, bindings);
   }
   if (['dungeonMapAutoSwitch', 'dungeonMapProgressiveReveal', 'dungeonMapSeeThrough', 'livePlayerTracking', 'showWorldDrops', 'showAlertsWhenHidden'].some(key => Object.hasOwn(newConfig, key) && typeof newConfig[key] !== 'boolean')) return false;
   if (Object.hasOwn(newConfig, 'dungeonMapBackgroundOpacity') && (!Number.isFinite(newConfig.dungeonMapBackgroundOpacity)
@@ -2839,7 +2953,7 @@ ipcMain.handle('save-config', (_e, newConfig) => {
   for (const [widget, enabled] of Object.entries(newConfig.widgetVisibility || {})) {
     if (enabled === true && previousVisibility[widget] !== true) usage.track('widget_enabled', { widget });
   }
-  if (config.setMany(newConfig) === false) return false;
+  if (changesShortcuts ? !saveShortcutBindings(newConfig) : config.setMany(newConfig) === false) return false;
   if (Object.hasOwn(newConfig, 'moonsteelAlert')) moonsteelAlertWindow.close();
   if (typeof newConfig.livePlayerTracking === 'boolean') playerTracking.setEnabled(newConfig.livePlayerTracking);
   if (newConfig.widgetVisibility !== undefined) {
@@ -2874,12 +2988,12 @@ ipcMain.handle('save-config', (_e, newConfig) => {
       })
       .catch(e => log('LANG', `Failed to switch language: ${e.message}`));
   }
-  // If click-through or hotkey changed, re-register shortcut
-  if (newConfig.clickThrough !== undefined || newConfig.interactionHotkey !== undefined) {
-    registerOverlayShortcut();
+  if (newConfig.clickThrough !== undefined && !registeredShortcut && !shortcutCapture) registerOverlayShortcut();
+  // Keep the Settings recorder usable after a rebind. An update from another
+  // surface still releases an interactive full-screen map as before.
+  if (newConfig.clickThrough !== undefined || (newConfig.interactionHotkey !== undefined && _e.sender !== settingsWindow?.webContents)) {
     toggleOverlayInteraction(true);
   }
-  if (newConfig.overlayVisibilityHotkey !== undefined) registerVisibilityShortcut();
 
   // Push config update to main window and all widget windows
   const allConfig = appearanceSession.effectiveConfig();
@@ -3290,6 +3404,7 @@ async function startBackgroundLoop() {
     ancestorWatcher.stop();
     dungeonWatcher.stop();
     playerTracking.stop();
+    syncMouseShortcuts(registeredShortcut, registeredVisibilityShortcut);
     // 1. Wait for Soulframe.x64.exe
     log('LOOP', 'Status -> waiting (looking for Soulframe.x64.exe)');
     setStatus('waiting');
@@ -3306,6 +3421,7 @@ async function startBackgroundLoop() {
     ancestorWatcher.start();
     dungeonWatcher.start();
     playerTracking.start(pid);
+    syncMouseShortcuts(registeredShortcut, registeredVisibilityShortcut);
 
     // Start foreground monitor early so focus-hide works during connecting.
     let lastForegroundCheck = 0;

@@ -17,7 +17,7 @@ function configClass() {
   const commonjs = { exports: {} };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/modules/config.js'), 'utf8'), {
     module: commonjs, process, console,
-    require: name => name === './appPaths' ? {} : name === './overlayDisplays' ? overlayDisplays : name === './moonsteelAlertSettings' ? moonsteelAlertSettings : name === './widgetSizing' ? widgetSizing : name === './layouts' ? layouts : name === './appearance' ? appearance : name === './fileEncryption' ? encryption : name === './trackerPreferences' ? preferences : name === './tutorials' ? tutorials : name === './widgetMigration' ? widgetMigration : require(name),
+    require: name => name === './overlayShortcuts' ? require('../src/modules/overlayShortcuts') : name === './appPaths' ? {} : name === './overlayDisplays' ? overlayDisplays : name === './moonsteelAlertSettings' ? moonsteelAlertSettings : name === './widgetSizing' ? widgetSizing : name === './layouts' ? layouts : name === './appearance' ? appearance : name === './fileEncryption' ? encryption : name === './trackerPreferences' ? preferences : name === './tutorials' ? tutorials : name === './widgetMigration' ? widgetMigration : require(name),
   });
   return commonjs.exports.ConfigStore;
 }
@@ -172,6 +172,7 @@ test('config batches edits, skips identical values, and preserves the last file 
       if (name === './widgetSizing') return widgetSizing;
       if (name === './moonsteelAlertSettings') return moonsteelAlertSettings;
       if (name === './overlayDisplays') return overlayDisplays;
+      if (name === './overlayShortcuts') return require('../src/modules/overlayShortcuts');
       if (name === './fileEncryption') return { ...encryption, writeEncryptedJSON(file, value) {
         writes++;
         encryption.writeEncryptedJSON(file, value);

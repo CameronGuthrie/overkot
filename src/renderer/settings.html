@@ -87,14 +87,15 @@
               <option value="desktop" data-i18n="settingsWindowCloseFocusDesktop">Desktop</option>
             </select>
           </div>
-          <div class="option-row hotkey-capture-row"><label id="lbl-overlay-hotkey" for="overlay-hotkey-capture" data-i18n="settingsOverlayHotkey">Show / hide overlay</label><button id="overlay-hotkey-capture" class="settings-button hotkey-capture" type="button" aria-describedby="overlay-hotkey-hint" aria-pressed="false">Shift + F2</button><button id="overlay-hotkey-reset" class="settings-button" type="button" data-i18n="settingsHotkeyReset">Reset</button></div>
-          <p id="overlay-hotkey-hint" class="settings-hint" role="status" aria-live="polite">Click the shortcut, then press a modifier and a key. Escape cancels.</p>
         </div>
         <div class="settings-section">
           <h2 data-i18n="settingsInteraction">Interaction</h2>
           <label class="settings-check"><input type="checkbox" id="chk-click-through"><span id="lbl-click-through" data-i18n="settingsWidgetClickThrough">Click through widget panels</span></label>
           <p class="settings-hint" data-i18n="settingsWidgetClickThroughHint">Keep playing through attached and floating widgets. Use the interact hotkey to click them. Returning focus to the game restores click-through. The screen edge bar also requires interaction mode.</p>
-          <div class="option-row" id="hotkey-row"><label id="lbl-hotkey" for="hotkey-select" data-i18n="interactHotkey">Interact hotkey</label><select id="hotkey-select" class="custom-select"><option value="Shift+F1">Shift + F1</option><option value="Shift+F2">Shift + F2</option><option value="Alt+F1">Alt + F1</option><option value="Ctrl+F1">Ctrl + F1</option></select></div>
+          <label class="settings-check"><input type="checkbox" id="chk-allow-single-key-shortcuts" aria-describedby="overlay-hotkey-hint"><span id="single-key-shortcuts-label" data-i18n="settingsAllowSingleKeyShortcuts">Allow single-key shortcuts</span></label>
+          <div class="option-row hotkey-capture-row"><label id="lbl-hotkey" for="interaction-hotkey-capture" data-i18n="interactHotkey">Interact hotkey</label><button id="interaction-hotkey-capture" aria-labelledby="lbl-hotkey interaction-hotkey-capture" class="settings-button hotkey-capture" type="button" aria-describedby="overlay-hotkey-hint" aria-pressed="false">Shift + F1</button><button id="interaction-hotkey-reset" class="settings-button" type="button" aria-labelledby="interaction-hotkey-reset lbl-hotkey" data-i18n="settingsHotkeyReset">Reset</button></div>
+          <div class="option-row hotkey-capture-row"><label id="lbl-overlay-hotkey" for="overlay-hotkey-capture" data-i18n="settingsOverlayHotkey">Show / hide overlay</label><button id="overlay-hotkey-capture" aria-labelledby="lbl-overlay-hotkey overlay-hotkey-capture" class="settings-button hotkey-capture" type="button" aria-describedby="overlay-hotkey-hint" aria-pressed="false">Shift + F2</button><button id="overlay-hotkey-reset" class="settings-button" type="button" aria-labelledby="overlay-hotkey-reset lbl-overlay-hotkey" data-i18n="settingsHotkeyReset">Reset</button></div>
+          <p id="overlay-hotkey-hint" class="settings-hint" role="status" aria-live="polite">Click the shortcut, then press a modifier and a key. Escape cancels.</p>
         </div>
       </section>
 
@@ -351,6 +352,7 @@ SOFTWARE.
   <script src="shared-constants.js"></script>
   <script src="../modules/tutorials.js"></script>
   <script src="../modules/moonsteelAlertSettings.js"></script>
+  <script src="../modules/overlayShortcuts.js"></script>
   <script src="widget-icons.js"></script>
   <script src="appearance-editor.js"></script>
   <script src="layouts-settings.js"></script>

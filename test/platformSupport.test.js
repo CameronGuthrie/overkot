@@ -26,7 +26,7 @@ test('fresh native profiles retain platform input defaults and app updates are m
   const module = { exports: {} };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../src/modules/config.js'), 'utf8'), {
     module, process, console,
-    require: name => name === './overlayDisplays' ? require('../src/modules/overlayDisplays') : name === './moonsteelAlertSettings' ? require('../src/modules/moonsteelAlertSettings') : name === './appPaths' ? {} : name === './fileEncryption' ? {} : name === './widgetSizing' ? require('../src/modules/widgetSizing') : name === './layouts' ? require('../src/modules/layouts') : name === './appearance' ? require('../src/modules/appearance') : name === './trackerPreferences' ? require('../src/modules/trackerPreferences') : name === './tutorials' ? require('../src/modules/tutorials') : name === './widgetMigration' ? require('../src/modules/widgetMigration') : require(name),
+    require: name => name === './overlayShortcuts' ? require('../src/modules/overlayShortcuts') : name === './overlayDisplays' ? require('../src/modules/overlayDisplays') : name === './moonsteelAlertSettings' ? require('../src/modules/moonsteelAlertSettings') : name === './appPaths' ? {} : name === './fileEncryption' ? {} : name === './widgetSizing' ? require('../src/modules/widgetSizing') : name === './layouts' ? require('../src/modules/layouts') : name === './appearance' ? require('../src/modules/appearance') : name === './trackerPreferences' ? require('../src/modules/trackerPreferences') : name === './tutorials' ? require('../src/modules/tutorials') : name === './widgetMigration' ? require('../src/modules/widgetMigration') : require(name),
   });
   const { ConfigStore } = module.exports;
   for (const platform of ['linux', 'darwin']) {
