@@ -1,0 +1,428 @@
+name: Build & Release App
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v0.0.14)'
+        required: true
+        type: string
+
+      publish:
+        description: 'Promote the completed, scanned release from source_run_id'
+        type: boolean
+        default: false
+      source_run_id:
+        description: 'Successful same-commit staging run (required for promotion)'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: app-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+  RELEASE_PUBLISH: ${{ github.event_name == 'workflow_dispatch' && inputs.publish || false }}
+  RELEASE_SOURCE_RUN_ID: ${{ inputs.source_run_id || '' }}
+  RELEASE_AUTO_REUSE: ${{ github.event_name == 'push' }}
+
+jobs:
+  validate:
+    if: >-
+      github.repository_id == '1467149183' && github.repository == 'CameronGuthrie/overkot' && github.ref_protected &&
+      github.repository_owner_id == '76098008' &&
+      github.actor_id == '76098008' &&
+      github.triggering_actor == github.repository_owner
+    environment: official-market-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      scope: ${{ steps.release.outputs.scope }}
+      artifact_suffix: ${{ steps.release.outputs.artifact_suffix }}
+      has_windows: ${{ steps.retained.outputs.has_windows }}
+      has_linux: ${{ steps.retained.outputs.has_linux }}
+      has_release: ${{ steps.retained.outputs.has_release }}
+      source_run_id: ${{ steps.retained.outputs.source_run_id }}
+      market_commit: ${{ steps.market_source.outputs.commit }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - run: npm ci --omit=dev --ignore-scripts
+      - name: Validate release version, notes and required configuration
+        id: release
+        # Release-family notes use the production semver dependency.
+        env:
+          MARKET_SOURCE_READ_KEY: ${{ secrets.MARKET_SOURCE_READ_KEY != '' && 'configured' || '' }}
+        run: node scripts/validate-release.js --source
+      - name: Reuse already retained files when retrying this run
+        id: retained
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/retained-release.js
+      - name: Resolve the tracked private Market frontend
+        if: steps.retained.outputs.has_release != 'true' && steps.retained.outputs.has_market_source != 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: CameronGuthrie/avakot-market
+          ref: new-redesign-preview
+          path: .build/market-upstream
+          ssh-key: ${{ secrets.MARKET_SOURCE_READ_KEY }}
+          persist-credentials: false
+      - name: Restore the same Market source when retrying a partial build
+        if: steps.retained.outputs.has_release != 'true' && steps.retained.outputs.has_market_source == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: overkot-market-source-${{ github.sha }}
+          path: .build/market-pin
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.retained.outputs.source_run_id }}
+      - name: Pin the same Market source for every release package
+        if: steps.retained.outputs.has_release != 'true'
+        id: market_source
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const file = '.build/market-pin/commit.txt';
+          const commit = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim()
+            : execFileSync('git', ['-C', '.build/market-upstream', 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          if (!/^[a-f0-9]{40}$/.test(commit)) throw new Error('Invalid retained Market source commit.');
+          fs.mkdirSync('.build/market-pin', { recursive: true });
+          fs.writeFileSync(file, commit + '\n');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `commit=${commit}\n`);
+          NODE
+      - name: Retain the Market source pin before building any platform
+        if: steps.retained.outputs.has_release != 'true' && steps.retained.outputs.has_market_source != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: overkot-market-source-${{ github.sha }}
+          if-no-files-found: error
+          include-hidden-files: true
+          path: .build/market-pin/commit.txt
+
+  windows:
+    needs: validate
+    environment: official-market-source
+    if: needs.validate.outputs.scope != 'linux' && needs.validate.outputs.has_windows != 'true'
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: true
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run i18n:check
+      - run: npm test
+      - name: Check out the pinned private Market frontend
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: CameronGuthrie/avakot-market
+          ref: ${{ needs.validate.outputs.market_commit }}
+          path: .build/market-upstream
+          ssh-key: ${{ secrets.MARKET_SOURCE_READ_KEY }}
+          persist-credentials: false
+      - name: Build Windows installer
+        env:
+          OVERKOT_SERVICES_FILE: config/official-services.json
+          OVERKOT_MARKET_UI: enabled
+          OVERKOT_MARKET_REPOSITORY: ${{ github.workspace }}/.build/market-upstream
+          OVERKOT_MARKET_SOURCE_COMMIT: ${{ needs.validate.outputs.market_commit }}
+        run: npm run build:win
+      - name: Check the packaged dock, widgets and preload in the native runtime
+        run: node scripts/check-edge-dock-package.js
+      - name: Check Title Tracker progress, pinning and saved preferences in the native runtime
+        run: node scripts/check-title-tracker.js
+      - name: Retain installer and verification files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: overkot-windows-${{ github.sha }}
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            dist/overkot-setup-*.exe
+            dist/overkot-setup-*.exe.blockmap
+            dist/overkot-setup-*.exe.sha256
+            dist/latest.yml
+
+  linux:
+    needs: validate
+    environment: official-market-source
+    if: needs.validate.outputs.has_linux != 'true'
+    runs-on: ubuntu-24.04
+    container: node:22-bookworm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: true
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install Linux packaging tools
+        run: |
+          apt-get update
+          apt-get install --no-install-recommends -y build-essential clang zlib1g-dev libssl-dev cmake libx11-dev libarchive-tools libopenjp2-tools
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: npm ci
+      - run: npm run i18n:check
+      - run: npm test
+      - name: Check out the pinned private Market frontend
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: CameronGuthrie/avakot-market
+          ref: ${{ needs.validate.outputs.market_commit }}
+          path: .build/market-upstream
+          ssh-key: ${{ secrets.MARKET_SOURCE_READ_KEY }}
+          persist-credentials: false
+      - name: Build experimental Debian amd64 package
+        env:
+          OVERKOT_SERVICES_FILE: config/official-services.json
+          OVERKOT_MARKET_UI: enabled
+          OVERKOT_MARKET_REPOSITORY: ${{ github.workspace }}/.build/market-upstream
+          OVERKOT_MARKET_SOURCE_COMMIT: ${{ needs.validate.outputs.market_commit }}
+        run: npm run build:deb -- --x64
+      - name: Build experimental Arch x64 package
+        env:
+          OVERKOT_SERVICES_FILE: config/official-services.json
+          OVERKOT_MARKET_UI: enabled
+          OVERKOT_MARKET_REPOSITORY: ${{ github.workspace }}/.build/market-upstream
+          OVERKOT_MARKET_SOURCE_COMMIT: ${{ needs.validate.outputs.market_commit }}
+        run: npm run build:arch -- --x64
+      - name: Build portable Linux x64 AppImage
+        env:
+          OVERKOT_SERVICES_FILE: config/official-services.json
+          OVERKOT_MARKET_UI: enabled
+          OVERKOT_MARKET_REPOSITORY: ${{ github.workspace }}/.build/market-upstream
+          OVERKOT_MARKET_SOURCE_COMMIT: ${{ needs.validate.outputs.market_commit }}
+        run: npm run build:linux:portable -- --x64
+      - name: Retain Linux packages and checksums
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: overkot-linux-${{ github.sha }}
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            dist/overkot-*-linux-amd64.deb
+            dist/overkot-*-linux-amd64.deb.sha256
+            dist/overkot-*-linux-x64.pkg.tar.xz
+            dist/overkot-*-linux-x64.pkg.tar.xz.sha256
+            dist/overkot-*-linux-x86_64.AppImage
+            dist/overkot-*-linux-x86_64.AppImage.sha256
+
+  linux_qa:
+    needs: [validate, linux]
+    permissions:
+      contents: read
+      actions: read
+    if: >-
+      ${{ !cancelled() && needs.validate.result == 'success' &&
+          needs.validate.outputs.has_release != 'true' &&
+          (needs.linux.result == 'success' || needs.linux.result == 'skipped') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - format: deb
+            image: node:22-bookworm
+          - format: arch
+            image: archlinux:base
+    container:
+      image: ${{ matrix.image }}
+      options: --cap-add SYS_PTRACE --security-opt seccomp=unconfined --shm-size=1g
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Install Debian runtime test tools
+        if: matrix.format == 'deb'
+        run: |
+          apt-get update
+          apt-get install --no-install-recommends -y build-essential xvfb xauth libcap2-bin
+      - name: Install Arch runtime dependencies and test tools
+        if: matrix.format == 'arch'
+        run: pacman -Syu --noconfirm --needed nodejs gcc xorg-server-xvfb xorg-xauth libcap alsa-lib gtk3 libnotify nss libxss libxtst libsecret mesa xdg-utils at-spi2-core util-linux-libs libcups
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: overkot-linux-${{ github.sha }}
+          path: dist
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.validate.outputs.source_run_id }}
+      - name: Check installation, scanner, packaged renderers, reinstall and removal
+        run: bash scripts/verify-linux-package.sh '${{ matrix.format }}'
+      - name: Retain Linux runtime check results
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: overkot-linux-qa-${{ matrix.format }}-${{ github.sha }}
+          overwrite: true
+          path: output/edge-dock-package-*/
+          if-no-files-found: ignore
+
+  prepare_release:
+    needs: [validate, windows, linux, linux_qa]
+    if: >-
+      ${{ !cancelled() && needs.validate.result == 'success' &&
+          (needs.windows.result == 'success' || needs.windows.result == 'skipped') &&
+          (needs.linux.result == 'success' || needs.linux.result == 'skipped') &&
+          (needs.linux_qa.result == 'success' || (needs.linux_qa.result == 'skipped' && needs.validate.outputs.has_release == 'true')) }}
+    environment: production-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      source_run_id: ${{ steps.retained.outputs.source_run_id }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Recheck retained release before publication retries
+        id: retained
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/retained-release.js
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: steps.retained.outputs.has_release == 'true'
+        with:
+          name: overkot-release${{ needs.validate.outputs.artifact_suffix }}-${{ github.sha }}
+          path: dist
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.retained.outputs.source_run_id }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: steps.retained.outputs.has_release != 'true' && needs.validate.outputs.scope != 'linux'
+        with:
+          name: overkot-windows-${{ github.sha }}
+          path: dist
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.retained.outputs.source_run_id }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: steps.retained.outputs.has_release != 'true'
+        with:
+          name: overkot-linux-${{ github.sha }}
+          path: dist
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.retained.outputs.source_run_id }}
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: steps.retained.outputs.has_scan_progress == 'true' && steps.retained.outputs.has_release != 'true'
+        with:
+          name: overkot-scan-progress-${{ github.sha }}
+          path: dist
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.retained.outputs.source_run_id }}
+      - name: Scan the retained packages and record completed results
+        if: steps.retained.outputs.has_release != 'true'
+        env:
+          VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+          VIRUSTOTAL_SCAN_BUDGET_MINUTES: '55'
+        run: node scripts/scan-release.js
+      - name: Retain resumable scan progress, including failed attempts
+        if: always() && steps.retained.outputs.has_release != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: overkot-scan-progress-${{ github.sha }}
+          overwrite: true
+          if-no-files-found: ignore
+          path: dist/scan-progress-*.json
+      - name: Retain complete release for exact-file publication recovery
+        if: steps.retained.outputs.has_release != 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: overkot-release${{ needs.validate.outputs.artifact_suffix }}-${{ github.sha }}
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            dist/overkot-setup-*.exe
+            dist/overkot-setup-*.exe.blockmap
+            dist/overkot-setup-*.exe.sha256
+            dist/overkot-*-linux-amd64.deb
+            dist/overkot-*-linux-amd64.deb.sha256
+            dist/overkot-*-linux-x64.pkg.tar.xz
+            dist/overkot-*-linux-x64.pkg.tar.xz.sha256
+            dist/overkot-*-linux-x86_64.AppImage
+            dist/overkot-*-linux-x86_64.AppImage.sha256
+            dist/release-*.json
+            dist/latest.yml
+
+  publish:
+    needs: [validate, prepare_release]
+    if: >-
+      ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.publish &&
+          needs.validate.result == 'success' && needs.prepare_release.result == 'success' }}
+    environment: production-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: overkot-release${{ needs.validate.outputs.artifact_suffix }}-${{ github.sha }}
+          path: dist
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.prepare_release.outputs.source_run_id }}
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Publish immutable packages, then download and updater pointers
+        env:
+          CLOUDFRONT_DISTRIBUTION_ID_RELEASES: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_RELEASES }}
+          RELEASE_REQUIRE_PORTABLE: 'true'
+          RELEASE_REQUIRE_ARCH: 'true'
+        run: node scripts/publish-cdn.js
+
+  github_release:
+    needs: [validate, prepare_release, publish]
+    if: >-
+      ${{ !cancelled() && github.event_name == 'workflow_dispatch' && inputs.publish &&
+          needs.validate.result == 'success' && needs.prepare_release.result == 'success' &&
+          needs.publish.result == 'success' }}
+    permissions:
+      actions: read
+      contents: write
+    uses: ./.github/workflows/publish-release.yml
+    with:
+      version: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+      source_run_id: ${{ needs.prepare_release.outputs.source_run_id }}
+      require_linux: true
+      require_portable: true
+      require_arch: true
+      scope: ${{ needs.validate.outputs.scope }}

@@ -1,0 +1,124 @@
+.world-watch-content { min-width: 0; color: var(--text-primary); }
+.world-watch {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  height: 274px;
+  padding: 0 10px 10px;
+  font-size: 12px;
+}
+.world-watch [hidden] { display: none !important; }
+.world-watch button { -webkit-app-region: no-drag; }
+.world-watch-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; flex: none; padding-top: 5px; }
+.world-watch-tab {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 5px 3px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.world-watch-tab:hover { color: var(--text-primary); background: var(--theme-control); }
+.world-watch-tab[aria-selected="true"] { color: var(--theme-accent); border-color: var(--theme-border); background: var(--theme-accent-soft); }
+.world-watch :focus-visible { outline: 2px solid var(--theme-accent); outline-offset: -2px; }
+.world-watch-stage { flex: 1; min-height: 0; position: relative; }
+.world-watch-panel { height: 100%; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--theme-border) transparent; }
+.world-watch-overview { display: flex; flex-direction: column; gap: 7px; overflow: hidden; }
+.world-watch-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(88px, 1fr);
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  align-items: start;
+  padding-bottom: 29px;
+}
+.world-watch-clock { min-width: 0; padding: 2px 0 0; align-self: center; }
+.world-watch-clock .clock-orbit { max-width: 213px; }
+.world-watch-clock .clock-countdown { font-size: 32px; }
+.world-watch-clock .clock-label { font-size: 14px; }
+.world-watch-clock .clock-region { font-size: 12px; letter-spacing: .14em; }
+.world-watch-weather { position: static; container-type: normal; min-width: 0; padding: 0 0 0 5px; }
+.world-watch-weather .weather-current { flex-direction: column-reverse; min-height: 0; gap: 0; text-align: center; }
+.world-watch-weather .weather-current-copy { flex: none; width: 100%; padding: 0; }
+.world-watch-weather .weather-now-label { display: none; }
+.world-watch-weather .weather-current-name { margin-top: 0; font-size: 15px; line-height: 1.2; }
+.world-watch-weather .weather-chance { margin-top: 2px; font-size: 9px; line-height: 1.2; }
+.world-watch-weather .weather-scene { width: 91px; max-width: 100%; height: 77px; }
+.world-watch-weather .weather-later, .world-watch-weather .weather-local-time { display: none; }
+.world-watch-weather .weather-footer { justify-content: center; text-align: center; margin-top: 3px; font-size: 8px; line-height: 1.2; }
+.world-watch-weather .weather-forecast[data-status="loading"] .weather-current-name,
+.world-watch-weather .weather-forecast[data-status="unavailable"] .weather-current-name { font-size: 11px; }
+.world-watch-weather .weather-next {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 1px;
+  border: 0;
+  border-top: 1px solid var(--theme-border);
+  border-radius: 0;
+  background: transparent;
+}
+.world-watch-weather .weather-next-heading { display: contents; }
+.world-watch-weather .weather-next-label { grid-column: 1; grid-row: 1; font-size: 8px; }
+.world-watch-weather .weather-countdown { grid-column: 3; grid-row: 1; font-size: 12px; }
+.world-watch-weather .weather-next-name { grid-column: 2; grid-row: 1; margin: 0; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.world-watch-weather .weather-progress { position: absolute; bottom: 0; left: 0; right: 0; margin: 0; height: 1px; }
+.world-watch-today {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: block;
+  width: 100%;
+  flex: none;
+  min-height: 62px;
+  padding: 6px 8px;
+  text-align: left;
+  color: var(--text-primary);
+  border: 1px solid var(--theme-border);
+  border-radius: 5px;
+  background: var(--theme-accent-soft);
+  cursor: pointer;
+  font: inherit;
+}
+.world-watch-meeting-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--theme-accent);
+  opacity: .17;
+  pointer-events: none;
+  z-index: -1;
+}
+.world-watch-today:hover { border-color: var(--theme-accent); }
+.world-watch-date-line { display: flex; gap: 6px; align-items: center; line-height: 12px; }
+.world-watch-today-label { text-transform: uppercase; letter-spacing: .09em; color: var(--theme-accent); font-size: 8px; }
+.world-watch-date { margin-left: auto; color: var(--text-secondary); font-size: 9px; }
+.world-watch-calendar-arrow { font-size: 17px; line-height: 10px; color: var(--theme-accent); }
+.world-watch-ancestor-line { display: flex; align-items: baseline; gap: 6px; margin-top: 3px; min-width: 0; }
+.world-watch-ancestor { flex: 1; min-width: 0; display: block; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.world-watch-meeting { display: inline-flex; align-items: baseline; flex: none; gap: 5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.world-watch-meeting-percent { color: var(--text-secondary); font-size: 9px; }
+.world-watch-meeting-countdown { color: var(--theme-accent); font-size: 11px; font-weight: 600; }
+.world-watch-offerings { display: block; margin-top: 3px; color: var(--text-secondary); font-size: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.world-watch-today[data-status="unavailable"] .world-watch-ancestor { color: var(--text-secondary); }
+.world-watch-calendar .calendar-content { padding: 2px 4px 8px 0; }
+.world-watch-calendar .calendar-day { margin-top: 9px; }
+.world-watch-calendar .calendar-encounter { padding: 7px 9px; margin-bottom: 7px; }
+.world-watch-calendar .calendar-ancestor { font-size: 16px; }
+.world-watch-calendar .calendar-source { font-size: 9px; }
+.world-watch-calendar .calendar-offer { padding: 5px 7px; font-size: 11px; }
+.world-watch-calendar .calendar-footer { margin-top: 9px; }
+.world-watch-forecast .weather-content { padding: 0 4px 8px 0; }
+.world-watch-forecast .weather-current { min-height: 86px; }
+.world-watch-forecast .weather-scene { width: 94px; height: 81px; }
+.world-watch-forecast .weather-current-name { font-size: 20px; }
+.world-watch-forecast .weather-next { padding: 7px 9px; }
+.world-watch-forecast .weather-later { margin-top: 8px; }
+.world-watch-forecast .weather-step { min-height: 34px; }

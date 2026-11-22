@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
+  <title>Wiki Search · Overkot</title>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="wiki-window.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body>
+  <header class="wiki-titlebar">
+    <div class="wiki-drag-region">
+      <img class="brand-icon" src="../../assets/overkot.png" alt="" draggable="false">
+      <span class="brand">Overkot <span class="brand-divider">/</span> <strong>Wiki Search</strong></span>
+      <span class="titlebar-spacer"></span>
+    </div>
+    <nav class="wiki-controls" aria-label="Wiki window controls">
+      <button id="wiki-back" class="icon-button" title="Back" aria-label="Back" disabled>‹</button>
+      <button id="wiki-forward" class="icon-button" title="Forward" aria-label="Forward" disabled>›</button>
+      <button id="wiki-external" class="icon-button" title="Open this wiki page in your browser" aria-label="Open this wiki page in your browser">↗</button>
+      <button id="wiki-reload" class="icon-button" title="Refresh wiki page" aria-label="Refresh wiki page">↻</button>
+      <button id="wiki-close" class="icon-button close-button" title="Close wiki" aria-label="Close wiki">×</button>
+    </nav>
+  </header>
+  <main id="wiki-placeholder" role="status" aria-live="polite">
+    <span class="placeholder-symbol" aria-hidden="true">◇</span>
+    <h1 id="wiki-status-title">Opening the wiki…</h1>
+    <p id="wiki-status-message">Loading your search from Soulframe Wiki.</p>
+    <div id="wiki-error-actions" hidden><button id="wiki-retry">Try again</button><button id="wiki-error-external">Open in browser ↗</button></div>
+  </main>
+  <script src="wiki-window.js"></script>
+</body>
+</html>

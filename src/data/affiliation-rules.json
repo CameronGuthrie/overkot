@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "base": 30000,
+  "perRank": 1000,
+  "source": {
+    "buildLabel": "2026.11.18.14.58",
+    "sha256": "c5c13c226a213c1b77c68724ec9d419eab0bb4b808f0f97fe2faee46073f4a53",
+    "method": "gGameConfig daily standing cap",
+    "bindingAtom": "0x2c7ac218",
+    "registrationRva": "0x220a280",
+    "wrapperRva": "0x1ac5630",
+    "formulaRva": "0xc9070",
+    "defaultsRva": "0x7900b1",
+    "classVtableRva": "0x23576b0",
+    "baseFieldOffset": "0x530",
+    "perRankFieldOffset": "0x534"
+  }
+}

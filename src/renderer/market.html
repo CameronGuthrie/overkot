@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https: overkot-game-data: overkot-map-tiles://data/temper-icons/; style-src 'self' 'unsafe-inline'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
+  <title>Avakot Market · Overkot</title>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="market.css">
+  <script src="../modules/gameDataImages.js"></script>
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body>
+  <header class="market-titlebar">
+    <img class="brand-icon" src="../../assets/overkot.png" alt="" draggable="false">
+    <span class="brand">Overkot <span class="brand-divider">/</span> <strong>Avakot Market</strong></span>
+    <span class="titlebar-spacer"></span>
+    <button id="market-website" class="icon-button" title="Open Avakot Market website" aria-label="Open Avakot Market website" data-i18n-title="marketUiOpenAvakotMarketWebsite" data-i18n-aria-label="marketUiOpenAvakotMarketWebsite">↗</button>
+    <button id="market-refresh" class="icon-button" title="Refresh market and inventory" aria-label="Refresh market and inventory" data-i18n-title="marketUiRefreshMarketAndInventory" data-i18n-aria-label="marketUiRefreshMarketAndInventory">↻</button>
+    <button id="market-close" class="icon-button close-button" title="Close market" aria-label="Close market" data-i18n-title="marketUiCloseMarket" data-i18n-aria-label="marketUiCloseMarket">×</button>
+  </header>
+  <nav class="market-nav" aria-label="Market sections" data-i18n-aria-label="marketUiMarketSections">
+    <div class="tabs" role="tablist" aria-label="Market" data-i18n-aria-label="marketUiMarket">
+      <button id="tab-browse" role="tab" aria-controls="panel-browse" aria-selected="true" data-tab="browse" data-i18n="marketUiBrowse">Browse</button>
+      <button id="tab-inventory" role="tab" aria-controls="panel-inventory" aria-selected="false" tabindex="-1" data-tab="inventory"><span data-i18n="marketUiSellFromInventory">Sell from inventory</span> <span id="inventory-count" class="count">0</span></button>
+      <button id="tab-mine" role="tab" aria-controls="panel-mine" aria-selected="false" tabindex="-1" data-tab="mine"><span data-i18n="marketUiMyListings">My listings</span> <span id="mine-count" class="count">0</span></button>
+    </div>
+    <button id="account-button" class="account-button"><span class="status-dot"></span><span id="account-name" data-i18n="marketUiSignIn">Sign in</span></button>
+  </nav>
+  <div id="market-notice" class="notice" role="status" hidden></div>
+  <main>
+    <section id="panel-browse" role="tabpanel" aria-labelledby="tab-browse" class="panel browse-panel">
+      <div class="listing-pane">
+        <div class="browse-filters">
+          <label><span data-i18n="marketUiListingType">Listing type</span><select id="browse-view"><option value="offers" data-i18n="marketUiSellers">Sellers</option><option value="requests" data-i18n="marketUiBuyers">Buyers</option></select></label>
+          <label><span data-i18n="marketUiAvailability">Availability</span><select id="browse-availability"><option value="any" data-i18n="marketUiAnyone">Anyone</option><option value="in-game" data-i18n="marketUiInGame">In game</option><option value="available" data-i18n="marketUiAvailable">Available</option></select></label>
+          <label><span data-i18n="marketUiSortBy">Sort by</span><select id="browse-sort"><option value="recent" data-i18n="marketUiMostRecent">Most recent</option><option value="lowest" data-i18n="marketUiLowestPrice">Lowest price</option><option value="highest" data-i18n="marketUiHighestPrice">Highest price</option></select></label>
+        </div>
+        <section class="browse-advanced" aria-label="Advanced listing filters" data-i18n-aria-label="marketUiAdvancedListingFilters">
+          <div class="browse-advanced-heading"><span class="eyebrow" data-i18n="marketUiAdvancedFilters">ADVANCED FILTERS</span><div class="browse-kind-switch" role="group" aria-label="Listing category" data-i18n-aria-label="marketUiListingCategory"><button type="button" data-browse-kind="any" aria-pressed="true" data-i18n="marketUiAny">Any</button><button type="button" data-browse-kind="weapons" aria-pressed="false" data-i18n="marketUiWeapons">Weapons</button><button type="button" data-browse-kind="tempers" aria-pressed="false" data-i18n="marketUiTempers">Tempers</button></div></div>
+          <form id="browse-advanced-form" hidden>
+            <p id="browse-advanced-hint" class="field-hint" data-i18n="marketUiFilterWeaponListingsByTheirTraits">Filter weapon listings by their traits.</p>
+            <div class="browse-trait-grid">
+              <label class="browse-query"><span data-i18n="marketUiSearchListings">Search listings</span><input id="browse-query" type="search" maxlength="256" placeholder="Item or trader name" data-i18n-placeholder="marketUiItemOrTraderName"></label>
+              <label><span data-i18n="marketUiMinimumQuality">Minimum quality</span><select id="browse-quality-min"><option value="" data-i18n="marketUiAnyQuality">Any quality</option></select></label>
+              <label><span data-i18n="marketUiMaximumQuality">Maximum quality</span><select id="browse-quality-max"><option value="" data-i18n="marketUiAnyQuality">Any quality</option></select></label>
+              <label><span data-i18n="marketUiMoonsteel">Moonsteel</span><select id="browse-moonsteel"><option value="" data-i18n="marketUiEither">Either</option><option value="true" data-i18n="marketUiYes">Yes</option><option value="false" data-i18n="marketUiNo">No</option></select></label>
+              <label><span data-i18n="marketUiWeaponGrip">Weapon grip</span><select id="browse-grip"><option value="" data-i18n="marketUiAnyGrip">Any grip</option></select></label>
+            </div>
+            <div id="browse-temper-controls" hidden>
+              <div class="browse-temper-tools"><label><span data-i18n="marketUiFindATemper">Find a temper</span><input id="browse-temper-search" type="search" placeholder="Search temper names" data-i18n-placeholder="marketUiSearchTemperNames"></label><label><span data-i18n="marketUiMatchTempers">Match tempers</span><select id="browse-temper-match"><option value="all" data-i18n="marketUiAllSelected">All selected</option><option value="any" data-i18n="marketUiAnySelected">Any selected</option></select></label></div>
+              <div id="browse-temper-options" class="browse-temper-options" role="group" aria-label="Weapon tempers" data-i18n-aria-label="marketUiWeaponTempers"></div>
+              <p id="browse-temper-count" class="field-hint" data-i18n="marketUiChooseUpTo8Tempers">Choose up to 8 tempers.</p>
+            </div>
+            <div class="browse-search-actions"><button type="submit" class="primary-button small-button" data-i18n="marketUiApplyFilters">Apply filters</button><button id="browse-clear-filters" type="button" class="text-button" data-i18n="marketUiBackToRecentListings">Back to recent listings</button></div>
+          </form>
+        </section>
+        <div class="section-heading"><div><span class="eyebrow" data-i18n="marketUiTheMarket">THE MARKET</span><h2 id="browse-title" data-i18n="marketUiRecentListings">Recent listings</h2></div><span id="browse-count" class="muted"></span></div>
+        <div id="browse-results" class="listing-results" aria-live="polite"></div>
+        <p id="browse-limit" class="field-hint" hidden data-i18n="marketUiShowingTheFirst50MatchingListings">Showing the first 50 matching listings. Add a filter to narrow the results.</p>
+        <div class="pagination"><button id="browse-more" class="secondary-button" hidden data-i18n="marketUiLoadMoreListings">Load more listings</button></div>
+      </div>
+    </section>
+    <section id="panel-inventory" role="tabpanel" aria-labelledby="tab-inventory" class="panel inventory-panel" hidden>
+      <div class="section-heading"><div><h1 class="eyebrow" data-i18n="marketUiSellFromInventory">Sell from inventory</h1><p id="inventory-status" class="muted" data-i18n="marketUiWaitingForInventory">Waiting for inventory…</p></div><span class="inventory-badge"><span class="status-dot" id="inventory-dot"></span> <span data-i18n="marketUiSoulframeInventory">Soulframe inventory</span></span></div>
+      <div id="inventory-gate" class="notice inline-notice" hidden></div>
+      <div class="inventory-toolbar">
+        <label class="search-field"><svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><input id="inventory-search" type="search" aria-label="Search your inventory" placeholder="Search your items…" autocomplete="off" data-i18n-placeholder="marketUiSearchYourItems" data-i18n-aria-label="marketUiSearchYourInventory"></label>
+        <label class="sr-only" for="inventory-category" data-i18n="marketUiInventoryCategory">Inventory category</label><select id="inventory-category"><option value="" data-i18n="marketUiAllCategories">All categories</option></select>
+        <label class="sr-only" for="inventory-sort" data-i18n="marketUiSortInventory">Sort inventory</label><select id="inventory-sort"><option value="name" data-i18n="marketUiNameAZ">Name A–Z</option><option value="quantity" data-i18n="marketUiMostOwned">Most owned</option><option value="available" data-i18n="marketUiMostAvailable">Most available</option></select>
+        <div class="view-switch" role="group" aria-label="Inventory layout" data-i18n-aria-label="marketUiInventoryLayout"><button id="inventory-grid" aria-label="Grid view" aria-pressed="true" data-i18n-aria-label="marketUiGridView">▦</button><button id="inventory-list" aria-label="List view" aria-pressed="false" data-i18n-aria-label="marketUiListView">☰</button></div>
+      </div>
+      <div class="inventory-caption"><span id="inventory-summary" class="muted"></span><div class="inventory-toggles"><label class="checkbox-label"><input id="inventory-grouped" type="checkbox"> <span data-i18n="marketUiGroupByItem">Group by item</span></label><label class="checkbox-label"><input id="inventory-available" type="checkbox"> <span data-i18n="marketUiAvailableToListOnly">Available to list only</span></label></div></div>
+      <div id="inventory-results" class="inventory-results"></div>
+    </section>
+    <section id="panel-mine" role="tabpanel" aria-labelledby="tab-mine" class="panel mine-panel" hidden>
+      <div class="section-heading"><div><span class="eyebrow" data-i18n="marketUiYourTrades">YOUR TRADES</span><h1 data-i18n="marketUiMyListings">My listings</h1><p class="muted" data-i18n="marketUiManagePricesPauseOffersOrClose">Manage prices, pause offers, or close a completed trade.</p></div><button id="sell-item" class="primary-button" data-i18n="marketUiSellAnItem">+ Sell an item</button></div>
+      <div class="mine-toolbar"><label class="search-field"><svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><input id="mine-search" type="search" aria-label="Search your listings" placeholder="Search your listings…" data-i18n-placeholder="marketUiSearchYourListings" data-i18n-aria-label="marketUiSearchYourListingsLabel"></label><label class="sr-only" for="mine-status" data-i18n="marketUiListingStatus">Listing status</label><select id="mine-status"><option value="open" data-i18n="marketUiActivePaused">Active &amp; paused</option><option value="ACTIVE" data-i18n="marketUiActive">Active</option><option value="PAUSED" data-i18n="marketUiPaused">Paused</option><option value="CLOSED" data-i18n="marketUiClosed">Closed</option><option value="" data-i18n="marketUiAllStatuses">All statuses</option></select></div>
+      <div id="mine-results" class="listing-results" aria-live="polite"></div>
+    </section>
+  </main>
+  <footer class="market-footer"><span id="connection-status" data-i18n="marketUiConnectingToAvakotMarket">Connecting to Avakot Market…</span><span data-i18n="marketUiRefreshForTheLatestMarketListings">Refresh for the latest market listings</span></footer>
+
+  <dialog id="account-dialog" aria-labelledby="account-title">
+    <div class="dialog-heading"><div><span class="eyebrow" data-i18n="marketUiAvakotAccount">AVAKOT ACCOUNT</span><h2 id="account-title" data-i18n="marketUiSignInToTheMarket">Sign in to the market</h2></div><button class="icon-button" data-close-dialog="account-dialog" aria-label="Close account" data-i18n-aria-label="marketUiCloseAccount">×</button></div>
+    <form id="login-form">
+      <p class="muted" data-i18n="marketUiBrowseListingsWithoutSigningInUse">Browse listings without signing in. Use your Avakot Market account to publish and manage your trades.</p>
+      <label class="checkbox-label"><input id="login-remember" type="checkbox" checked> <span data-i18n="marketUiKeepMeSignedInOnThis">Keep me signed in on this computer</span></label>
+      <button id="avakot-login" class="primary-button full-width" type="button" data-i18n="marketUiSignInWithAvakotDev">Sign in with avakot.dev</button>
+      <div id="avakot-pending" class="signin-pending" role="status" hidden>
+        <p data-i18n="marketUiFinishSigningInInYourBrowser">Finish signing in in your browser. Check that the codes match before approving.</p>
+        <strong id="avakot-code" class="signin-code"></strong>
+        <button id="avakot-cancel" class="secondary-button" type="button" data-i18n="marketUiCancelSignIn">Cancel sign-in</button>
+      </div>
+      <p id="avakot-error" class="form-error" role="alert" hidden></p>
+      <details id="email-login" class="email-login"><summary data-i18n="marketUiUseMarketEmailAndPassword">Use Market email and password</summary>
+      <label><span data-i18n="marketUiEmail">Email</span><input id="login-email" type="email" autocomplete="username" required maxlength="254" placeholder="envoy@example.com"></label>
+      <label><span data-i18n="marketUiPassword">Password</span><input id="login-password" type="password" autocomplete="current-password" required maxlength="256"></label>
+      <p id="login-error" class="form-error" role="alert" hidden></p>
+      <button id="login-submit" class="secondary-button full-width" type="submit" data-i18n="marketUiSignIn">Sign in</button>
+      <div class="account-links"><button type="button" id="register-link" class="text-button" data-i18n="marketUiCreateAccount">Create account ↗</button><button type="button" id="reset-link" class="text-button" data-i18n="marketUiForgotPassword">Forgot password? ↗</button></div>
+      </details>
+    </form>
+    <div id="account-details" hidden><p id="account-summary"></p><p id="account-verification" class="muted"></p><p id="account-storage" class="muted"></p><div class="dialog-actions"><button id="manage-account" class="secondary-button" data-i18n="marketUiManageAccount">Manage account ↗</button><button id="logout" class="secondary-button" data-i18n="marketUiSignOut">Sign out</button></div></div>
+  </dialog>
+  <dialog id="composer-dialog" aria-labelledby="composer-title">
+    <form id="composer-form">
+      <div class="dialog-heading"><div><span id="composer-eyebrow" class="eyebrow" data-i18n="marketUiFromYourInventory">FROM YOUR INVENTORY</span><h2 id="composer-title" data-i18n="marketUiCreateListing">Create listing</h2></div><button class="icon-button" type="button" data-close-dialog="composer-dialog" aria-label="Close listing editor" data-i18n-aria-label="marketUiCloseListingEditor">×</button></div>
+      <div id="composer-item" class="composer-item"></div>
+      <p id="composer-description" class="muted"></p>
+      <div class="composer-fields"><label><span data-i18n="marketUiQuantityYouAreListing">Quantity you are listing</span><input id="composer-quantity" type="number" min="1" step="1" required></label></div>
+      <fieldset class="trade-builder">
+        <legend><span id="trade-terms-label" data-i18n="marketUiAcceptedInReturn">Accepted in return</span><span id="trade-slot-count" class="muted" data-i18n="marketUi06Slots">0 / 6 slots</span></legend>
+        <p id="trade-builder-hint" class="field-hint" data-i18n="marketUiAddItemsOrArcsToBuild">Add items or Arcs to build your trade. Leave all six slots empty for open offers.</p>
+        <div id="trade-slots" class="trade-slots" role="group" aria-label="Accepted trade slots" data-i18n-aria-label="marketUiAcceptedTradeSlots"></div>
+        <p id="trade-disabled-note" class="field-hint" hidden data-i18n="marketUiArcsTradingIsCurrentlyDisabledYou">Arcs trading is currently disabled. You can still accept items.</p>
+        <section id="trade-slot-editor" class="trade-slot-editor" aria-labelledby="trade-editor-title" hidden>
+          <div class="trade-editor-heading"><strong id="trade-editor-title" data-i18n="marketUiEditSlot">Edit slot</strong><button id="trade-editor-done" type="button" class="text-button" data-i18n="marketUiDone">Done</button></div>
+          <div class="trade-mode-buttons" role="group" aria-label="Trade slot type" data-i18n-aria-label="marketUiTradeSlotType"><button id="trade-mode-item" type="button" class="secondary-button small-button" data-i18n="marketUiItem">Item</button><button id="trade-mode-arcs" type="button" class="secondary-button small-button" data-i18n="marketUiArcs">Arcs</button><button id="trade-mode-clear" type="button" class="text-button" data-i18n="marketUiRemove">Remove</button></div>
+          <div id="trade-editor-content"></div>
+        </section>
+      </fieldset>
+      <p id="composer-error" class="form-error" role="alert" hidden></p>
+      <div class="composer-preview" id="composer-preview"></div>
+      <div class="dialog-actions"><button class="secondary-button" type="button" data-close-dialog="composer-dialog" data-i18n="marketUiCancel">Cancel</button><button id="composer-submit" class="primary-button" type="submit" data-i18n="marketUiPublishListing">Publish listing</button></div>
+    </form>
+  </dialog>
+  <dialog id="close-dialog" aria-labelledby="close-title"><div class="dialog-heading"><h2 id="close-title" data-i18n="marketUiCloseThisListing">Close this listing?</h2><button class="icon-button" data-close-dialog="close-dialog" aria-label="Cancel closing listing" data-i18n-aria-label="marketUiCancelClosingListing">×</button></div><p id="close-description"></p><p class="muted" data-i18n="marketUiItWillNoLongerAppearIn">It will no longer appear in the market. Your inventory is not changed.</p><p id="close-error" class="form-error" role="alert" hidden></p><div class="dialog-actions"><button class="secondary-button" data-close-dialog="close-dialog" data-i18n="marketUiKeepListing">Keep listing</button><button id="confirm-close" class="primary-button" data-i18n="marketUiCloseListing">Close listing</button></div></dialog>
+  <div id="toast" class="market-toast" role="status" hidden></div>
+  <script src="market.js"></script>
+</body>
+</html>

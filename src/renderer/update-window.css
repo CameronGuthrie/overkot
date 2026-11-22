@@ -1,0 +1,34 @@
+body { background: var(--bg-panel, #1b211c) !important; color: var(--text-primary, #e6eee4); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+main { flex: 1; min-height: 0; padding: 25px 26px 18px; overflow: auto; }
+.update-hero { display: flex; gap: 20px; align-items: center; margin-bottom: 22px; }
+.update-logo { display: grid; place-items: center; flex: none; width: 94px; height: 94px; border: 1px solid var(--theme-border, #3a4938); border-radius: 20px; background: radial-gradient(ellipse at 50% 25%, var(--theme-accent-soft, #384d31), transparent 85%); }
+.update-logo img { display: block; width: 76px; height: 76px; object-fit: contain; }
+.update-identity { min-width: 0; }
+.update-eyebrow { color: var(--theme-accent, #badf9c); font-size: 11px; font-weight: 700; letter-spacing: .15em; margin: 0 0 6px; }
+h1 { font-size: 26px; font-weight: 650; line-height: 1.2; letter-spacing: -.025em; margin: 0; overflow-wrap: anywhere; }
+#update-version-path { margin: 9px 0 0; font-size: 12px; color: var(--text-muted, #9ba99a); line-height: 1.5; }
+#update-status { min-height: 38px; margin: 0 0 18px; font-size: 14px; line-height: 1.6; color: var(--text-primary, #e6eee4); }
+#update-progress-card { border: 1px solid var(--theme-border, #3a4938); border-radius: 12px; padding: 16px; background: var(--theme-control, #202b21); margin: 0 0 20px; }
+.update-progress-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; }
+.update-progress-heading strong { font-weight: 600; }
+#update-percent { color: var(--theme-accent, #badf9c); font-variant-numeric: tabular-nums; font-weight: 700; }
+#update-progress { display: block; appearance: none; -webkit-appearance: none; width: 100%; height: 13px; border: 0; border-radius: 20px; overflow: hidden; margin-top: 13px; accent-color: var(--theme-accent, #badf9c); }
+#update-progress::-webkit-progress-bar { background: rgba(0, 0, 0, .28); border-radius: 20px; }
+#update-progress::-webkit-progress-value { border-radius: 20px; background: linear-gradient(90deg, color-mix(in srgb, var(--theme-accent, #badf9c) 65%, #448042), var(--theme-accent, #badf9c)); box-shadow: 0 0 12px color-mix(in srgb, var(--theme-accent, #badf9c) 40%, transparent); transition: width .2s ease; }
+#update-progress:indeterminate::-webkit-progress-bar { background: linear-gradient(90deg, rgba(0, 0, 0, .25) 10%, var(--theme-accent, #badf9c) 50%, rgba(0, 0, 0, .25) 90%); background-size: 200% 100%; animation: update-working 1.7s ease-in-out infinite; }
+.update-transfer { min-height: 16px; margin: 9px 0 0; font-size: 12px; line-height: 1.4; color: var(--text-muted, #9ba99a); font-variant-numeric: tabular-nums; }
+.update-release h2 { font-size: 13px; font-weight: 650; margin: 0 0 8px; }
+#update-notes { padding-left: 17px; margin: 0; color: var(--text-secondary, var(--text-muted, #9ba99a)); }
+#update-notes li { font-size: 13px; line-height: 1.55; padding: 3px 0 3px 2px; overflow-wrap: anywhere; }
+#update-policy { color: var(--text-muted, #9ba99a); font-size: 12px; line-height: 1.6; margin: 19px 0 0; }
+footer { flex: none; padding: 15px 26px; border-top: 1px solid var(--theme-border, #3a4938); display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; background: var(--bg-base, #171c16); }
+footer button { border: 1px solid var(--theme-border, #3a4938); border-radius: 7px; padding: 10px 13px; background: var(--theme-control, #202b21); color: var(--text-primary, #e6eee4); font: 600 12px var(--font-ui, 'Segoe UI', sans-serif); cursor: pointer; }
+footer .update-secondary { margin-right: auto; background: transparent; }
+footer .update-primary { background: var(--theme-accent, #badf9c); border-color: transparent; color: #14200f; }
+footer button:hover:not(:disabled) { filter: brightness(1.08); }
+footer button:disabled, #close-btn:disabled { opacity: .5; cursor: wait; }
+footer button:focus-visible { outline: 2px solid var(--theme-accent, #badf9c); outline-offset: 3px; }
+[hidden] { display: none !important; }
+@keyframes update-working { 0%, 100% { background-position: 100% 0; } 50% { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { #update-progress::-webkit-progress-value { transition: none; } #update-progress:indeterminate::-webkit-progress-bar { animation: none; } }
+@media (max-width: 400px) { main { padding: 20px 18px 16px; } .update-hero { gap: 14px; } .update-logo { width: 76px; height: 76px; border-radius: 15px; } .update-logo img { width: 62px; height: 62px; } h1 { font-size: 23px; } footer { padding: 13px 18px; } }

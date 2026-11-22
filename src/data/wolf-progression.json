@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "source": {
+    "buildLabel": "2026.11.18.14.58",
+    "sha256": "e15b0ca80aeaec4828ba40dc11607d4c274ccef18fd2bf9db62ef303ddcfe13e",
+    "package": "/SF/Types/Game/Pets/OmenWolfs/WolfCubPetPowerSuit"
+  },
+  "maxEnergy": 150,
+  "maxMaturity": 15
+}

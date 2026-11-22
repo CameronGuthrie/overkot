@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <title>Group Finder</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="group-finder.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body class="gf-body">
+  <!-- ─── Custom Titlebar ──────────────────────────────── -->
+  <div id="titlebar" class="drag-region">
+    <span class="title-text" style="font-size:14px;">Group Finder</span>
+    <div class="titlebar-spacer"></div>
+    <button id="gf-refresh-btn" class="titlebar-btn no-drag" title="Refresh"><span class="icon-refresh"></span></button>
+    <button id="gf-close-btn" class="titlebar-btn no-drag" title="Close"><span class="icon-close"></span></button>
+  </div>
+
+  <!-- ─── Main Container ──────────────────────────────── -->
+  <div class="gf-container" id="gf-container">
+
+    <!-- Unconfigured state (shown when Firebase is not set up) -->
+    <div id="gf-unconfigured" class="gf-unconfigured hidden">
+      <h3>Firebase Not Configured</h3>
+      <p>
+        <span id="gf-firebase-instructions">The Group Finder requires a Firebase backend to function.</span>
+        <br><br>
+        <span id="gf-firebase-setup">Set groupFirebase in your build’s service configuration to connect your Firebase project.</span>
+        <br><br>
+        <span id="gf-firebase-services">Required services:</span> <strong>Realtime Database</strong> + <strong>Firestore</strong> + <strong>Anonymous Auth</strong>
+      </p>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="gf-tabs" id="gf-tabs">
+      <button class="gf-tab active" data-tab="home">Home</button>
+      <button class="gf-tab" data-tab="browse">Browse</button>
+      <button class="gf-tab" data-tab="my-listing">My Listing</button>
+      <button class="gf-tab" data-tab="profile">Profile</button>
+    </div>
+    <p class="gf-status-detail" id="gf-invite-name-note">Invite names are player-reported. Check the name in Soulframe before inviting someone.</p>
+
+    <!-- ═══ HOME TAB ═══ -->
+    <div class="gf-panel active" id="tab-home">
+      <!-- Player status -->
+      <div class="gf-status-bar" id="gf-player-status">
+        <span class="gf-status-dot online" id="gf-home-dot"></span>
+        <span class="gf-status-name" id="gf-home-name">Player</span>
+        <span class="gf-status-detail" id="gf-home-group">Solo (1/4)</span>
+      </div>
+
+      <!-- Quick create -->
+      <div class="gf-quick-create" id="gf-quick-create">
+        <span>+</span> Create a Group Listing
+      </div>
+
+      <!-- My active listing summary (if exists) -->
+      <div id="gf-home-my-listing" class="hidden">
+        <div class="gf-section-header">Your Active Listing</div>
+        <div class="gf-card" id="gf-home-my-listing-card"></div>
+      </div>
+
+      <!-- Suggestions -->
+      <div id="gf-home-suggestions">
+        <div class="gf-section-header">Suggested Groups</div>
+        <div class="gf-suggestion-list" id="gf-suggestions-list">
+          <div class="gf-empty">
+            <div class="gf-empty-icon"><span class="icon-search"></span></div>
+            Loading suggestions...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BROWSE TAB ═══ -->
+    <div class="gf-panel" id="tab-browse">
+      <!-- Filters -->
+      <div class="gf-filters">
+        <select class="gf-select" id="gf-filter-activity">
+          <option value="">All Activities</option>
+        </select>
+        <select class="gf-select" id="gf-filter-lang">
+          <option value="">Any Language</option>
+        </select>
+        <select class="gf-select" id="gf-filter-region">
+          <option value="">Any Region</option>
+        </select>
+      </div>
+
+      <!-- Listing count -->
+      <div class="gf-section-header" id="gf-browse-header">Open Listings (0)</div>
+
+      <!-- Listings -->
+      <div id="gf-browse-list">
+        <div class="gf-empty">
+          <div class="gf-empty-icon"><span class="icon-clipboard"></span></div>
+          No open listings found.
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MY LISTING TAB ═══ -->
+    <div class="gf-panel" id="tab-my-listing">
+      <!-- No active listing -->
+      <div id="gf-no-listing">
+        <div class="gf-empty">
+          <div class="gf-empty-icon"><span class="icon-notepad"></span></div>
+          You don't have an active listing.
+        </div>
+        <div style="text-align:center; margin-top: 8px;">
+          <button class="gf-btn primary" id="gf-create-from-tab">Create a Listing</button>
+        </div>
+      </div>
+
+      <!-- Active listing detail -->
+      <div id="gf-my-listing-detail" class="gf-my-listing-detail hidden">
+        <div class="gf-section-header">Your Listing</div>
+        <div class="gf-card" id="gf-my-listing-info"></div>
+
+        <!-- Incoming requests -->
+        <div class="gf-section-header" id="gf-incoming-header">
+          Requests <span class="gf-tab-badge hidden" id="gf-incoming-badge">0</span>
+        </div>
+        <div id="gf-incoming-requests">
+          <div class="gf-empty" style="font-size:11px;">No incoming requests yet.</div>
+        </div>
+
+        <!-- Accepted players / Invite workflow -->
+        <div class="gf-section-header">Accepted Players</div>
+        <div id="gf-accepted-players">
+          <div class="gf-empty" style="font-size:11px;">No accepted players yet.</div>
+        </div>
+
+        <!-- Listing actions -->
+        <div class="gf-btn-group" style="margin-top: 4px;">
+          <button class="gf-btn" id="gf-edit-listing">Edit Listing</button>
+          <button class="gf-btn danger" id="gf-close-listing">Close Listing</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ PROFILE TAB ═══ -->
+    <div class="gf-panel" id="tab-profile">
+      <div class="gf-section-header">Player Profile</div>
+
+      <div class="gf-form" id="gf-profile-form">
+        <!-- Display name (read-only) -->
+        <div class="gf-form-row">
+          <label class="gf-label">Display Name</label>
+          <input class="gf-input" id="gf-profile-name" readonly
+            style="opacity:0.6; cursor:not-allowed;" placeholder="(detected from game)">
+        </div>
+
+        <!-- Primary language -->
+        <div class="gf-form-row">
+          <label class="gf-label">Primary Language</label>
+          <select class="gf-select" id="gf-profile-lang1">
+          </select>
+        </div>
+
+        <!-- Secondary language -->
+        <div class="gf-form-row">
+          <label class="gf-label">Secondary Language (optional)</label>
+          <select class="gf-select" id="gf-profile-lang2">
+            <option value="">None</option>
+          </select>
+        </div>
+
+        <!-- Region -->
+        <div class="gf-form-row">
+          <label class="gf-label">Region Preference</label>
+          <select class="gf-select" id="gf-profile-region">
+            <option value="No preference">No Preference</option>
+            <option value="EU">EU</option>
+            <option value="NA">NA</option>
+            <option value="APAC">APAC</option>
+          </select>
+        </div>
+
+        <div class="gf-form-row horizontal" style="justify-content: space-between;">
+          <button class="gf-btn primary" id="gf-save-profile">Save Preferences</button>
+          <span class="gf-profile-saved" id="gf-profile-saved"><span class="icon-check"></span> <span id="gf-profile-saved-label">Saved</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ CREATE LISTING MODAL ═══ -->
+  <div class="gf-modal-overlay hidden" id="gf-create-modal">
+    <div class="gf-modal">
+      <div class="gf-modal-header">
+        <span>Create Group Listing</span>
+        <button class="gf-modal-close" id="gf-create-modal-close"><span class="icon-close"></span></button>
+      </div>
+      <div class="gf-modal-body">
+        <div class="gf-form">
+          <!-- Activity type -->
+          <div class="gf-form-row">
+            <label class="gf-label">Activity Type</label>
+            <select class="gf-select" id="gf-create-activity">
+              <option value="Boss / Encounter">Boss / Encounter</option>
+              <option value="Farming / Repeats">Farming / Repeats</option>
+              <option value="Quest / Progression">Quest / Progression</option>
+              <option value="Exploration">Exploration</option>
+              <option value="Help / Teaching">Help / Teaching</option>
+              <option value="General Grouping">General Grouping</option>
+            </select>
+          </div>
+
+          <!-- Goal type -->
+          <div class="gf-form-row">
+            <label class="gf-label">Goal</label>
+            <select class="gf-select" id="gf-create-goal">
+              <option value="Kill / Clear">Kill / Clear</option>
+              <option value="Farm / Grind">Farm / Grind</option>
+              <option value="Complete Quest">Complete Quest</option>
+              <option value="Explore / Discover">Explore / Discover</option>
+              <option value="Learn / Teach">Learn / Teach</option>
+              <option value="Just Hanging Out">Just Hanging Out</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Slots needed -->
+          <div class="gf-form-row">
+            <label class="gf-label">Slots Needed (excluding you)</label>
+            <select class="gf-select" id="gf-create-slots">
+              <option value="1">1 player</option>
+              <option value="2">2 players</option>
+              <option value="3" selected>3 players</option>
+            </select>
+          </div>
+
+          <!-- Language preference -->
+          <div class="gf-form-row">
+            <label class="gf-label">Language</label>
+            <div class="gf-form-row horizontal" style="gap: 6px;">
+              <select class="gf-select" id="gf-create-lang-req" style="width: auto;">
+                <option value="none">No preference</option>
+                <option value="preferred">Preferred</option>
+                <option value="required">Required</option>
+              </select>
+              <select class="gf-select" id="gf-create-lang-val" style="width: auto;" disabled>
+              </select>
+            </div>
+          </div>
+
+          <!-- Region preference -->
+          <div class="gf-form-row">
+            <label class="gf-label">Region</label>
+            <div class="gf-form-row horizontal" style="gap: 6px;">
+              <select class="gf-select" id="gf-create-region-req" style="width: auto;">
+                <option value="none">No preference</option>
+                <option value="preferred">Preferred</option>
+                <option value="required">Required</option>
+              </select>
+              <select class="gf-select" id="gf-create-region-val" style="width: auto;" disabled>
+                <option value="EU">EU</option>
+                <option value="NA">NA</option>
+                <option value="APAC">APAC</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="gf-modal-footer">
+        <button class="gf-btn" id="gf-create-cancel">Cancel</button>
+        <button class="gf-btn primary" id="gf-create-submit">Create Listing</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ EDIT LISTING MODAL ═══ -->
+  <div class="gf-modal-overlay hidden" id="gf-edit-modal">
+    <div class="gf-modal">
+      <div class="gf-modal-header">
+        <span>Edit Listing</span>
+        <button class="gf-modal-close" id="gf-edit-modal-close"><span class="icon-close"></span></button>
+      </div>
+      <div class="gf-modal-body">
+        <div class="gf-form">
+          <div class="gf-form-row">
+            <label class="gf-label">Activity Type</label>
+            <select class="gf-select" id="gf-edit-activity"></select>
+          </div>
+          <div class="gf-form-row">
+            <label class="gf-label">Goal</label>
+            <select class="gf-select" id="gf-edit-goal"></select>
+          </div>
+
+        </div>
+      </div>
+      <div class="gf-modal-footer">
+        <button class="gf-btn" id="gf-edit-cancel">Cancel</button>
+        <button class="gf-btn primary" id="gf-edit-submit">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="shared-constants.js"></script>
+  <script src="group-finder.js"></script>
+</body>
+</html>

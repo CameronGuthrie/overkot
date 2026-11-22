@@ -1,0 +1,22 @@
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
+body { color: #ede9df; font: 13px/1.4 "Segoe UI", sans-serif; pointer-events: none; }
+#focus-reminder { width: 100%; height: 100%; padding: 5px 5px 12px; --arrow-offset: 28px; }
+.reminder-bubble { display: flex; align-items: flex-start; gap: 10px; position: relative;
+  min-height: 84px; height: 100%; padding: 12px; border: 1px solid #b59b6580;
+  border-radius: 12px; background: #171c24f5; box-shadow: 0 3px 10px #0006; }
+.reminder-bubble::after { content: ""; position: absolute; width: 12px; height: 12px;
+  background: #171c24; transform: rotate(45deg); border-right: 1px solid #b59b6580;
+  border-bottom: 1px solid #b59b6580; left: calc(var(--arrow-offset) - 11px); bottom: -7px; }
+.reminder-bubble img { margin-top: 3px; object-fit: contain; }
+.reminder-copy { flex: 1; min-width: 0; }
+strong { color: #dfc589; font-size: 13px; font-weight: 600; }
+p { margin: 5px 0 4px; font-size: 14px; }
+kbd { font: inherit; font-weight: 600; color: #fff4d8; overflow-wrap: anywhere; }
+small { display: block; font-size: 11px; color: #b1b6c1; }
+#focus-reminder[data-edge="top"] { padding: 12px 5px 5px; }
+#focus-reminder[data-edge="top"] .reminder-bubble::after { top: -7px; bottom: auto; transform: rotate(225deg); }
+#focus-reminder[data-edge="left"] { padding: 5px 5px 5px 12px; }
+#focus-reminder[data-edge="left"] .reminder-bubble::after { left: -7px; bottom: auto; top: calc(var(--arrow-offset) - 11px); transform: rotate(135deg); }
+#focus-reminder[data-edge="right"] { padding: 5px 12px 5px 5px; }
+#focus-reminder[data-edge="right"] .reminder-bubble::after { left: auto; right: -7px; bottom: auto; top: calc(var(--arrow-offset) - 11px); transform: rotate(-45deg); }

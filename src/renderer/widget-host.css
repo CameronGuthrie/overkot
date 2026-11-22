@@ -1,0 +1,97 @@
+/* The dock identifies cards; the widget window contains only useful content. */
+.widget-host-body .widget-body {
+  padding: var(--widget-padding, 8px) var(--widget-padding-x, 12px);
+}
+
+.widget-host-body .timer-widget {
+  border-radius: var(--radius-panel, 10px);
+  /* Keep the preference scoped to cards, including the high contrast theme. */
+  border-color: var(--widget-outline-color, var(--theme-border)) !important;
+}
+
+/* Pinned titles remain their own cards, without a second enclosing window box. */
+.widget-host-body .timer-widget[data-widget="title-tracker"]:has(.title-content[data-pinned-only=true]) {
+  background: transparent;
+  border-color: transparent !important;
+  border-width: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.widget-host-body .timer-widget[data-widget="title-tracker"]:has(.title-content[data-pinned-only=true]) .widget-body {
+  padding: 0;
+}
+
+.widget-host-body .widget-resize-handle {
+  display: none;
+  pointer-events: none;
+}
+
+.widget-host-body.layout-editing .timer-widget {
+  outline: 1px solid var(--theme-accent, #a7c4a8);
+  outline-offset: -2px;
+}
+
+.widget-host-body.layout-editing .timer-widget,
+.widget-host-body.layout-editing .timer-widget * {
+  cursor: move !important;
+  user-select: none !important;
+  -webkit-app-region: no-drag;
+}
+
+.widget-host-body.layout-editing .timer-widget {
+  touch-action: none;
+}
+
+.widget-host-body.layout-dragging .timer-widget,
+.widget-host-body.layout-dragging .timer-widget * {
+  cursor: grabbing !important;
+}
+
+.widget-host-body.layout-editing .widget-resize-handle {
+  display: block;
+  width: 20px;
+  height: 20px;
+  opacity: 0.85;
+  pointer-events: auto;
+  cursor: nwse-resize !important;
+  touch-action: none;
+}
+
+/* A chosen height is a viewport, never a request to clip the widget's data. */
+.widget-host-body.widget-manual-height { overflow: hidden; }
+.widget-host-body.widget-manual-height .timer-widget {
+  height: 100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.widget-host-body.widget-manual-height .timer-widget > .widget-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* A larger chosen viewport should reveal more data instead of retaining an
+   old compact-list cap and leaving unused space below an inner scrollbar. */
+.widget-host-body.widget-manual-height :is(.inventory-widget-body, .player-overview, .temper-scroll, .title-scroll, .wolf-scroll) {
+  max-height: none;
+  overflow: visible;
+}
+.widget-host-body.layout-editing .widget-resize-handle::after { cursor: nwse-resize !important; }
+.widget-size-readout {
+  position: fixed;
+  right: 25px;
+  bottom: 6px;
+  z-index: 9999;
+  padding: 3px 7px;
+  border: 1px solid var(--theme-border);
+  border-radius: 5px;
+  background: var(--bg-panel, #1b1b1b);
+  color: var(--text-primary, #c8c8c8);
+  font: 11px/1.5 var(--font-mono, monospace);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.widget-size-readout[hidden] { display: none; }

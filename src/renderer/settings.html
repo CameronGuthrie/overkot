@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <title>Settings</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="settings.css">
+  <link rel="stylesheet" href="appearance-editor.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body>
+  <div id="titlebar" class="drag-region">
+    <span class="icon-settings" aria-hidden="true"></span>
+    <span id="settings-title" class="title-text" data-i18n="settingsTitle">Settings</span>
+    <div class="titlebar-spacer"></div>
+    <button id="close-btn" class="titlebar-btn no-drag" title="Close" aria-label="Close"><span class="icon-close" aria-hidden="true"></span></button>
+  </div>
+
+  <div class="settings-layout">
+    <nav class="settings-sidebar" aria-label="Settings categories">
+      <div id="settings-tabs" role="tablist" aria-orientation="vertical">
+        <button id="tab-appearance" class="settings-tab" type="button" role="tab" aria-selected="true" aria-controls="panel-appearance" data-tab="appearance"><span class="icon-palette" aria-hidden="true"></span><span data-i18n="settingsAppearance">Appearance</span></button>
+        <button id="tab-overlay" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-overlay" tabindex="-1" data-tab="overlay"><span class="icon-eye" aria-hidden="true"></span><span data-i18n="settingsOverlay">Overlay</span></button>
+        <button id="tab-moonsteel-alert" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-moonsteel-alert" tabindex="-1" data-tab="moonsteel-alert"><span class="moonsteel-alert-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16"><path d="m12 2 3 6.3 7 .9-5.1 4.9 1.3 6.9-6.2-3.3-6.2 3.3 1.3-6.9L2 9.2l7-.9Z" fill="currentColor"/></svg></span><span data-i18n="settingsMoonsteel">Moonsteel alert</span></button>
+        <button id="tab-widgets" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-widgets" tabindex="-1" data-tab="widgets"><span class="icon-widgets" aria-hidden="true"></span><span data-i18n="widgetsTitle">Widgets</span></button>
+        <button id="tab-connections" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-connections" tabindex="-1" data-tab="connections"><span class="icon-link" aria-hidden="true"></span><span data-i18n="settingsConnections">Connections</span></button>
+        <button id="tab-files" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-files" tabindex="-1" data-tab="files"><span class="icon-folder" aria-hidden="true"></span><span data-i18n="settingsGameFiles">Game files</span></button>
+        <button id="tab-tutorials" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-tutorials" tabindex="-1" data-tab="tutorials"><span class="icon-book-open" aria-hidden="true"></span><span data-i18n="settingsTutorials">Tutorials</span></button>
+        <button id="tab-updates" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-updates" tabindex="-1" data-tab="updates"><span class="icon-refresh" aria-hidden="true"></span><span data-i18n="settingsUpdates">Updates</span></button>
+        <button id="tab-about" class="settings-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-about" tabindex="-1" data-tab="about"><span class="icon-info" aria-hidden="true"></span><span data-i18n="settingsAbout">About</span></button>
+      </div>
+      <div class="settings-brand">Overkot<span id="settings-version"></span></div>
+    </nav>
+
+    <main id="settings-content" inert>
+      <section id="panel-appearance" class="settings-panel" role="tabpanel" aria-labelledby="tab-appearance" tabindex="0">
+        <header class="settings-panel-header"><h1 data-i18n="settingsAppearance">Appearance</h1><p data-i18n="settingsAppearanceHint">Make Overkot feel at home in your game.</p></header>
+        <div class="settings-section">
+          <div class="option-row">
+            <label id="lang-label" for="lang-dropdown-selected" data-i18n="language">Language</label>
+            <div class="custom-lang-dropdown" id="lang-dropdown">
+              <button type="button" class="lang-dropdown-selected" id="lang-dropdown-selected" aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-dropdown-options">
+                <img class="lang-flag" id="lang-selected-flag" src="../../langs/flags/gb.png" alt=""><span id="lang-selected-text">English</span><span class="lang-dropdown-arrow icon-chevron-down" aria-hidden="true"></span>
+              </button>
+              <div class="lang-dropdown-options hidden" id="lang-dropdown-options" role="listbox" aria-labelledby="lang-label"></div>
+            </div>
+          </div>
+        </div>
+        <div id="appearance-editor" aria-label="Appearance editor"></div>
+      </section>
+
+      <section id="panel-overlay" class="settings-panel" role="tabpanel" aria-labelledby="tab-overlay" tabindex="0" hidden>
+        <header class="settings-panel-header"><h1 data-i18n="settingsOverlay">Overlay</h1><p data-i18n="settingsOverlayHint">Choose when the overlay appears and how you interact with it.</p></header>
+        <p id="platform-support-note" class="settings-hint" role="status" hidden></p>
+        <div class="settings-section">
+          <h2 data-i18n="settingsDock">Screen edge bar</h2>
+          <div class="option-row dock-display-row"><label for="dock-display-select" data-i18n="settingsMonitor">Monitor</label><select id="dock-display-select" class="custom-select" disabled aria-describedby="dock-display-hint"><option value="" data-i18n="settingsLoadingMonitors">Loading monitors…</option></select></div>
+          <p id="dock-display-hint" class="settings-hint" role="status" data-i18n="settingsMonitorHint">Move the bar and attached widgets to another monitor. If it disconnects, Overkot uses an available monitor.</p>
+          <div class="option-row"><label for="dock-edge-select" data-i18n="settingsDockEdge">Screen edge</label><select id="dock-edge-select" class="custom-select"><option value="bottom" data-i18n="settingsDockBottom">Bottom</option><option value="top" data-i18n="settingsDockTop">Top</option><option value="left" data-i18n="settingsDockLeft">Left</option><option value="right" data-i18n="settingsDockRight">Right</option></select></div>
+          <label class="settings-check"><input type="checkbox" id="chk-dock-auto-hide"><span data-i18n="settingsDockAutoHide">Automatically hide the bar</span></label>
+          <p class="settings-hint" data-i18n="settingsDockHint">The slim bar spans the screen edge. With auto-hide enabled, move your pointer to that edge to reveal it.</p>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="settingsPlayerLocation">Player location</h2>
+          <label class="settings-check"><input type="checkbox" id="chk-live-player-tracking" aria-describedby="player-tracking-status player-tracking-hint"><span data-i18n="settingsTrackPlayerPosition">Track player position and facing</span></label>
+          <p id="player-tracking-status" class="settings-hint" role="status" aria-live="polite" data-i18n="settingsWaitingForTracking">Waiting for player tracking…</p>
+          <!-- Legacy screenshot positioning: Use Find position with F6 on the minimap when live tracking is unavailable. -->
+          <p id="player-tracking-hint" class="settings-hint" data-i18n="settingsCenterOnPlayerHint">Use Center on player on either map to return to your live position.</p>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="settingsVisibility">Visibility & startup</h2>
+          <label class="settings-check"><input type="checkbox" id="chk-launch-to-tray"><span id="lbl-launch-to-tray" data-i18n="launchToTray">Launch to tray</span></label>
+          <label class="settings-check"><input type="checkbox" id="chk-hide-when-game-closed"><span id="lbl-hide-when-game-closed" data-i18n="hideWhenGameClosed">Hide widgets when the game is closed</span></label>
+          <label class="settings-check"><input type="checkbox" id="chk-show-only-when-game-focused"><span id="lbl-show-only-when-game-focused" data-i18n="showOnlyWhenGameFocused">Show overlay only when Soulframe is focused</span></label>
+          <div class="option-row hotkey-capture-row"><label id="lbl-overlay-hotkey" for="overlay-hotkey-capture" data-i18n="settingsOverlayHotkey">Show / hide overlay</label><button id="overlay-hotkey-capture" class="settings-button hotkey-capture" type="button" aria-describedby="overlay-hotkey-hint" aria-pressed="false">Shift + F2</button><button id="overlay-hotkey-reset" class="settings-button" type="button" data-i18n="settingsHotkeyReset">Reset</button></div>
+          <p id="overlay-hotkey-hint" class="settings-hint" role="status" aria-live="polite">Click the shortcut, then press a modifier and a key. Escape cancels.</p>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="settingsInteraction">Interaction</h2>
+          <label class="settings-check"><input type="checkbox" id="chk-click-through"><span id="lbl-click-through" data-i18n="settingsWidgetClickThrough">Click through widget panels</span></label>
+          <p class="settings-hint" data-i18n="settingsWidgetClickThroughHint">Keep playing through attached and floating widgets. Use the interact hotkey to click them. Returning focus to the game restores click-through. The screen edge bar also requires interaction mode.</p>
+          <div class="option-row" id="hotkey-row"><label id="lbl-hotkey" for="hotkey-select" data-i18n="interactHotkey">Interact hotkey</label><select id="hotkey-select" class="custom-select"><option value="Shift+F1">Shift + F1</option><option value="Shift+F2">Shift + F2</option><option value="Alt+F1">Alt + F1</option><option value="Ctrl+F1">Ctrl + F1</option></select></div>
+        </div>
+      </section>
+
+      <section id="panel-moonsteel-alert" class="settings-panel" role="tabpanel" aria-labelledby="tab-moonsteel-alert" tabindex="0" hidden>
+        <header class="settings-panel-header"><h1 data-i18n="settingsMoonsteel">Moonsteel alert</h1><p data-i18n="settingsMoonsteelHint">Get a screen-edge flash and sound when a nearby Moonsteel weapon is confirmed.</p></header>
+        <div class="settings-section">
+          <label class="settings-check"><input type="checkbox" id="chk-moonsteel-enabled"><span data-i18n="settingsMoonsteelEnabled">Enable Moonsteel alerts</span></label>
+          <p id="moonsteel-detection-hint" class="settings-hint" data-i18n="settingsMoonsteelDetection">Detection runs in the background even with the minimap closed. Requires live player tracking on Windows or Linux.</p>
+          <div class="option-row"><label for="moonsteel-monitor-select" data-i18n="settingsAlertMonitor">Alert monitor</label><select id="moonsteel-monitor-select" class="custom-select"><option value="primary" data-i18n="settingsPrimaryMonitor">Primary monitor</option><option value="cursor" data-i18n="settingsPointerMonitor">Monitor with the pointer</option><option value="all" data-i18n="settingsAllMonitors">All monitors</option></select></div>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="settingsScreenEdgeFlash">Screen-edge flash</h2>
+          <label class="settings-check"><input type="checkbox" id="chk-moonsteel-flash"><span data-i18n="settingsFlashEdges">Flash the monitor edges</span></label>
+          <p class="settings-hint" data-i18n="settingsFlashHint">A soft glow fades inward from all four screen edges. The centre stays clear and your game keeps mouse and keyboard input.</p>
+          <div class="option-row map-color-row moonsteel-flash-control"><label for="color-moonsteel-alert" data-i18n="settingsFlashColour">Flash colour</label><input id="color-moonsteel-alert" type="color" value="#da75ff" aria-describedby="moonsteel-color-value"><output id="moonsteel-color-value" for="color-moonsteel-alert">#DA75FF</output></div>
+          <div class="option-row slider-row moonsteel-flash-control"><label for="slider-moonsteel-opacity" data-i18n="settingsIntensity">Intensity</label><input id="slider-moonsteel-opacity" type="range" min="0" max="1" step="0.05" aria-describedby="moonsteel-opacity-value"><output id="moonsteel-opacity-value" for="slider-moonsteel-opacity">65%</output></div>
+          <div class="option-row slider-row moonsteel-flash-control"><label for="slider-moonsteel-border-width" data-i18n="settingsEdgeWidth">Edge width</label><input id="slider-moonsteel-border-width" type="range" min="4" max="160" step="1" aria-describedby="moonsteel-border-width-value"><output id="moonsteel-border-width-value" for="slider-moonsteel-border-width">48 px</output></div>
+          <div class="option-row slider-row moonsteel-flash-control"><label for="slider-moonsteel-blur" data-i18n="settingsSoftness">Inward softness</label><input id="slider-moonsteel-blur" type="range" min="0" max="120" step="1" aria-describedby="moonsteel-blur-value"><output id="moonsteel-blur-value" for="slider-moonsteel-blur">32 px</output></div>
+          <div class="option-row slider-row"><label for="slider-moonsteel-duration" data-i18n="settingsAlertDuration">Alert duration</label><input id="slider-moonsteel-duration" type="range" min="1" max="12" step="0.5" aria-describedby="moonsteel-duration-value"><output id="moonsteel-duration-value" for="slider-moonsteel-duration">4 s</output></div>
+          <div class="option-row slider-row moonsteel-flash-control"><label for="slider-moonsteel-pulse-speed" data-i18n="settingsPulseSpeed">Pulse speed</label><input id="slider-moonsteel-pulse-speed" type="range" min="0.25" max="2" step="0.25" aria-describedby="moonsteel-pulse-speed-value"><output id="moonsteel-pulse-speed-value" for="slider-moonsteel-pulse-speed">1×</output></div>
+          <p class="settings-hint" data-i18n="settingsReducedMotionHint">Reduced motion replaces the pulsing flash with a gentle fade.</p>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="settingsSound">Sound</h2>
+          <label class="settings-check"><input type="checkbox" id="chk-moonsteel-sound"><span data-i18n="settingsMoonsteelSound">Play a Moonsteel alert sound</span></label>
+          <div class="option-row moonsteel-sound-control"><label for="moonsteel-sound-select" data-i18n="settingsSound">Sound</label><select id="moonsteel-sound-select" class="custom-select"><option value="chime" data-i18n="settingsMoonsteelChime">Moonsteel chime</option><option value="soft" data-i18n="settingsSoftTones">Soft tones</option><option value="beacon" data-i18n="settingsBeacon">Beacon</option></select></div>
+          <div class="option-row slider-row moonsteel-sound-control"><label for="slider-moonsteel-volume" data-i18n="settingsVolume">Volume</label><input id="slider-moonsteel-volume" type="range" min="0" max="1" step="0.05" aria-describedby="moonsteel-volume-value"><output id="moonsteel-volume-value" for="slider-moonsteel-volume">50%</output></div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-actions"><button id="btn-test-moonsteel-alert" type="button" class="settings-button" data-i18n="settingsTestAlert">Test alert</button></div>
+          <p class="settings-hint" data-i18n="settingsTestAlertHint">Try the current flash and sound settings, including while automatic Moonsteel alerts are switched off.</p>
+          <p id="moonsteel-alert-status" class="settings-message" role="status" aria-live="polite" hidden></p>
+        </div>
+      </section>
+
+      <section id="panel-widgets" class="settings-panel" role="tabpanel" aria-labelledby="tab-widgets" tabindex="0" hidden>
+        <header class="settings-panel-header"><h1 data-i18n="widgetsTitle">Widgets</h1><p data-i18n="settingsWidgetsHint">Arrange your overlay and configure individual widgets.</p></header>
+        <div class="settings-section">
+          <div class="section-heading"><h2 data-i18n="settingsWidgetLayout">Layout</h2><button id="btn-open-widgets" class="settings-button" type="button" data-i18n="settingsChooseWidgets">Choose widgets</button></div>
+          <p class="settings-hint" data-i18n="settingsDockWidgetsHint">Add widgets to put their icons on the bar. Click an icon to open or hide its panel.</p>
+          <p class="settings-hint" data-i18n="settingsArrangeWidgetsHint">Hold Shift to arrange widgets on the alignment grid. Drag a panel away from the bar to float it, or onto the highlighted bar to dock it again. Release Shift to snap floating panels to the grid.</p>
+          <div class="settings-actions"><button id="btn-reset-positions" class="settings-button" type="button"><span id="lbl-reset-positions" data-i18n="resetWidgetPositions">Reset Widget Positions</span></button><button id="btn-reset-sizes" class="settings-button" type="button"><span id="lbl-reset-sizes" data-i18n="resetWidgetSizes">Reset Widget Sizes</span></button></div>
+        </div>
+        <div class="settings-section" id="widget-sizing" aria-labelledby="widget-sizing-heading" aria-busy="false">
+          <h2 id="widget-sizing-heading" data-i18n="settingsWidgetSizes">Widget sizes</h2>
+          <p class="settings-hint" data-i18n="settingsResizeHint">Hold Shift and drag a widget’s lower-right corner to resize its width and height. Hold Alt as well for 1 px precision.</p>
+          <div class="option-row"><label for="widget-resize-mode" data-i18n="settingsCornerResizing">Corner resizing</label><select id="widget-resize-mode" class="custom-select" disabled><option value="grid" data-i18n="settingsResizeGrid">Alignment grid · 24 px</option><option value="free" data-i18n="settingsResizePrecise">Precise · 1 px</option></select></div>
+          <form id="widget-size-form">
+            <div class="option-row"><label for="widget-size-select" data-i18n="settingsWidget">Widget</label><select id="widget-size-select" class="custom-select" disabled aria-describedby="widget-size-current"><option value="" data-i18n="widgetsLoading">Loading widgets…</option></select></div>
+            <p id="widget-size-current" class="settings-hint widget-size-current"></p>
+            <div class="widget-size-axes">
+              <div class="widget-size-axis"><label for="widget-size-width"><span data-i18n="settingsWidth">Width</span> <span>px</span></label><input id="widget-size-width" class="settings-input" type="number" step="1" min="1" max="32768" aria-describedby="widget-size-limits" disabled required><label class="settings-check"><input id="widget-size-auto-width" type="checkbox" checked disabled><span data-i18n="settingsDefaultWidth">Default width</span></label></div>
+              <div class="widget-size-axis"><label for="widget-size-height"><span data-i18n="settingsHeight">Height</span> <span>px</span></label><input id="widget-size-height" class="settings-input" type="number" step="1" min="1" max="32768" aria-describedby="widget-size-limits" disabled required><label class="settings-check"><input id="widget-size-auto-height" type="checkbox" checked disabled><span id="widget-size-height-label" data-i18n="settingsFitContent">Fit content</span></label></div>
+            </div>
+            <p id="widget-size-limits" class="settings-hint"></p>
+            <div class="settings-actions"><button id="widget-size-apply" class="settings-button" type="submit" disabled data-i18n="settingsApplySize">Apply size</button><button id="widget-size-reset" class="settings-button" type="button" disabled data-i18n="settingsResetSize">Reset this widget</button></div>
+          </form>
+          <p class="settings-hint" data-i18n="settingsSizeHint">Sizes are saved for closed widgets too. Panels are kept inside the current screen. A fixed height keeps the content scrollable. Daily Brief and Market resize in their own windows. Text, spacing and icon sizes are in Appearance.</p>
+          <p id="widget-size-status" class="settings-message" role="status" aria-live="polite"></p><button id="widget-size-retry" class="settings-button" type="button" hidden data-i18n="settingsRetrySizes">Retry sizes</button>
+        </div>
+        <div class="settings-section" id="saved-layouts" aria-labelledby="layouts-heading" aria-busy="false">
+          <h2 id="layouts-heading" data-i18n="layoutsTitle">Saved layouts</h2>
+          <p class="settings-hint" data-i18n="layoutsHint">Name and save your bar position, widget choices, open panels, docking, positions and sizes. Apply a layout whenever you want to switch arrangements.</p>
+          <div class="option-row"><label for="layout-startup" data-i18n="settingsStartupLayout">Startup layout</label><select id="layout-startup" class="custom-select" aria-describedby="layout-startup-hint" disabled><option value="" data-i18n="layoutsStartupLastUsed">Last used arrangement</option></select></div>
+          <p id="layout-startup-hint" class="settings-hint" data-i18n="settingsStartupLayoutHint">Choose a saved layout to restore when Overkot starts, or keep your last used arrangement. Changing this choice does not apply a layout now.</p>
+          <div class="option-row layout-select-row"><label for="layout-select" data-i18n="layoutsSavedLabel">Saved layout</label><select id="layout-select" class="custom-select" aria-describedby="layout-summary layout-empty" disabled><option value="" data-i18n="layoutsChoose">Choose a saved layout…</option></select><button id="layout-apply" class="settings-button layout-apply-button" type="button" disabled data-i18n="layoutsApply">Apply</button></div>
+          <p id="layout-empty" class="settings-hint" data-i18n="layoutsEmpty">No layouts saved yet. Arrange your widgets, enter a name, then save your current layout.</p>
+          <p id="layout-summary" class="settings-hint" hidden></p>
+          <div class="option-row layout-name-row"><label for="layout-name" data-i18n="layoutsNameLabel">Layout name</label><input id="layout-name" class="settings-input" type="text" maxlength="80" autocomplete="off" spellcheck="false" disabled><button id="layout-save" class="settings-button" type="button" disabled data-i18n="layoutsSaveNew">Save current as new</button></div>
+          <div class="settings-actions"><button id="layout-update" class="settings-button" type="button" disabled data-i18n="layoutsUpdate">Update selected</button><button id="layout-rename" class="settings-button" type="button" disabled data-i18n="layoutsRename">Rename</button><button id="layout-delete" class="settings-button" type="button" disabled data-i18n="layoutsDelete">Delete</button></div>
+          <div id="layout-delete-prompt" class="layout-delete-prompt" hidden><p id="layout-delete-question" class="settings-hint"></p><div class="settings-actions"><button id="layout-delete-confirm" class="settings-button" type="button" data-i18n="layoutsDeleteConfirm">Delete saved layout</button><button id="layout-delete-cancel" class="settings-button" type="button" data-i18n="layoutsDeleteCancel">Keep layout</button></div></div>
+          <div class="settings-actions layout-file-actions"><button id="layout-import" class="settings-button" type="button" disabled data-i18n="layoutsImport">Import…</button><button id="layout-export" class="settings-button" type="button" disabled data-i18n="layoutsExport">Export selected…</button></div>
+          <p class="settings-hint" data-i18n="layoutsShareHint">Export a layout to share it or keep a backup. Import adds a saved layout; choose Apply when you are ready. Account details, game paths and appearance presets stay separate.</p>
+          <p id="layout-status" class="settings-message" role="status" aria-live="polite"></p><button id="layout-retry" class="settings-button" type="button" hidden data-i18n="layoutsRetry">Retry layouts</button>
+        </div>
+        <div class="settings-section" id="minimap-widget-settings">
+          <h2 data-i18n="minimapWidget">Mini-Map</h2>
+          <div class="option-row map-color-row"><label for="color-player-marker" data-i18n="playerMarkerColor">Player marker fill colour</label><input type="color" id="color-player-marker" value="#f4b642" aria-describedby="player-marker-color-hint"><output id="player-marker-color-value" for="color-player-marker">#F4B642</output><button id="reset-player-marker-color" class="settings-button" type="button" data-i18n="settingsHotkeyReset">Reset</button></div>
+          <div class="option-row map-color-row"><label for="color-player-marker-outline" data-i18n="playerMarkerOutlineColor">Player marker outline colour</label><input type="color" id="color-player-marker-outline" value="#241708" aria-describedby="player-marker-color-hint"><output id="player-marker-outline-color-value" for="color-player-marker-outline">#241708</output><button id="reset-player-marker-outline-color" class="settings-button" type="button" data-i18n="settingsHotkeyReset">Reset</button></div>
+          <div class="option-row map-color-row"><label for="color-dungeon-outline" data-i18n="dungeonMapOutlineColor">Room outline colour</label><input type="color" id="color-dungeon-outline" value="#d8d8d8"><output id="dungeon-outline-color-value" for="color-dungeon-outline">#D8D8D8</output><button id="reset-dungeon-outline-color" class="settings-button" type="button" data-i18n="settingsHotkeyReset">Reset</button></div>
+          <p id="player-marker-color-hint" class="settings-hint" data-i18n="playerMarkerColorHint">Used for your player marker on the overworld and dungeon maps.</p>
+          <label class="settings-check"><input type="checkbox" id="chk-dungeon-auto-switch"><span data-i18n="dungeonMapAutoSwitch">Show dungeon rooms in the minimap automatically</span></label>
+          <label class="settings-check"><input type="checkbox" id="chk-dungeon-progressive-reveal" aria-describedby="dungeon-progressive-reveal-hint"><span data-i18n="dungeonMapProgressiveReveal">Reveal dungeon as you explore</span></label>
+          <p id="dungeon-progressive-reveal-hint" class="settings-hint" data-i18n="dungeonMapProgressiveRevealHint">Turn this off to show the whole dungeon when its layout is available. Applies to the Mini-Map and expanded dungeon map.</p>
+          <label class="settings-check"><input type="checkbox" id="chk-dungeon-see-through"><span data-i18n="dungeonMapSeeThrough">Use a see-through dungeon map</span></label>
+          <label class="settings-check"><input type="checkbox" id="chk-world-drops" aria-describedby="world-drops-hint"><span data-i18n="settingsNearbyWeapons">Show nearby dropped weapons</span></label>
+          <p id="world-drops-hint" class="settings-hint" data-i18n="settingsNearbyWeaponsHint">A dot and weapon name mark live ground drops. A sparkle marks confirmed Moonsteel weapons. Requires live player tracking on Windows or Linux.</p>
+          <div class="option-row slider-row"><label for="slider-dungeon-opacity" data-i18n="dungeonMapOpacity">Dungeon background opacity</label><input type="range" id="slider-dungeon-opacity" min="0" max="100" step="1" value="45"><output id="dungeon-opacity-value" for="slider-dungeon-opacity">45%</output></div>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="timers">Timers</h2>
+          <div class="settings-check-grid"><label class="settings-check"><input type="checkbox" id="chk-hide-bars"><span id="lbl-hide-bars" data-i18n="hideBars">Hide bars</span></label><label class="settings-check"><input type="checkbox" id="chk-hide-countdown"><span id="lbl-hide-countdown" data-i18n="hideCountdown">Hide countdown</span></label><label class="settings-check"><input type="checkbox" id="chk-alert-popup"><span id="lbl-alert-popup" data-i18n="alertPopup">Timer alert popup</span></label><label class="settings-check"><input type="checkbox" id="chk-alert-sound"><span id="lbl-alert-sound" data-i18n="alertSound">Timer alert sound</span></label></div>
+          <label class="settings-check"><input type="checkbox" id="chk-alerts-when-hidden" aria-describedby="alerts-when-hidden-hint"><span data-i18n="showAlertsWhenHidden">Show alerts while Overkot is hidden</span></label>
+          <p id="alerts-when-hidden-hint" class="settings-hint" data-i18n="showAlertsWhenHiddenHint">Allow alert popups while Overkot is hidden, minimised or in the tray. Overkot must still be running.</p>
+        </div>
+        <div class="settings-section">
+          <div class="section-heading"><h2 data-i18n="calendarWidget">Calendar</h2><button id="btn-calendar-settings" class="settings-button" type="button" data-i18n="calendarAncestors">Ancestors…</button></div>
+          <p class="settings-hint" data-i18n="settingsCalendarHint">Review the ancestor unlocks used for your daily encounters.</p>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="dailyWidget">Daily Brief</h2>
+          <p class="settings-hint" data-i18n="settingsDailyHint">Open daily allowances, encounters, offerings, Avakot’s Gots and faction weapons in a resizable floating window. Close it when finished or reopen it from the dock.</p>
+          <label class="settings-check"><input type="checkbox" id="chk-daily-login"><span data-i18n="settingsDailyLogin">Show when I log in to Soulframe</span></label>
+          <label class="settings-check"><input type="checkbox" id="chk-daily-reset"><span data-i18n="settingsDailyReset">Show at the daily reset · 00:00 UTC</span></label>
+        </div>
+      </section>
+
+      <section id="panel-connections" class="settings-panel" role="tabpanel" aria-labelledby="tab-connections" tabindex="0" hidden>
+        <header class="settings-panel-header"><h1 data-i18n="settingsConnections">Connections</h1><p data-i18n="settingsConnectionsHint">Connect your account to share your Soulframe identity and game status.</p></header>
+        <div class="settings-section" id="avakot-account-settings">
+          <div class="section-heading"><h2 data-i18n="settingsAvakotAccount">avakot.dev account</h2><span id="avakot-account-badge" class="settings-badge"></span></div>
+          <p class="settings-hint" data-i18n="settingsAvakotSharedAccountHint">Connect your avakot.dev account through your browser to use Market and share your resolved Soulframe name and game status. You can create an account there.</p>
+          <p id="avakot-account-status" class="settings-hint" role="status" aria-live="polite"></p>
+          <dl id="avakot-account-details" class="settings-account-details" hidden>
+            <div><dt data-i18n="settingsAvakotAccountName">Account</dt><dd id="avakot-account-name"></dd></div>
+            <div id="avakot-account-email-row"><dt data-i18n="settingsAvakotAccountEmail">Email</dt><dd id="avakot-account-email"></dd></div>
+            <div><dt data-i18n="settingsAvakotSoulframeName">Resolved Soulframe name</dt><dd id="avakot-account-game-name"></dd></div>
+            <div><dt data-i18n="settingsAvakotGameStatus">Soulframe status</dt><dd id="avakot-account-game-status"></dd></div>
+          </dl>
+          <p class="settings-hint" data-i18n="settingsAvakotPresenceHint">Online means you are logged in to Soulframe. Signing in to avakot.dev alone does not mark you online.</p>
+          <p id="avakot-account-session-hint" class="settings-hint" hidden></p>
+          <div class="settings-actions">
+            <button id="btn-avakot-account-login" class="settings-button" type="button" data-i18n="settingsAvakotSignIn">Sign in with avakot.dev</button>
+            <button id="btn-avakot-account-reconnect" class="settings-button" type="button" hidden data-i18n="settingsAvakotReconnectMarket">Reconnect for Market</button>
+            <button id="btn-avakot-account-cancel" class="settings-button" type="button" hidden data-i18n="settingsAvakotCancelSignIn">Cancel sign-in</button>
+            <button id="btn-avakot-account-logout" class="settings-button" type="button" hidden data-i18n="settingsAvakotSignOut">Sign out</button>
+            <button id="btn-avakot-account-open" class="settings-button" type="button" data-i18n="settingsAvakotManageAccount">Manage account</button>
+          </div>
+          <p id="avakot-account-error" class="settings-message" role="status" aria-live="polite" hidden></p>
+        </div>
+        <div class="settings-section" id="market-settings">
+          <div class="section-heading"><h2 data-i18n="marketWidget">Avakot Market</h2><span id="market-account-badge" class="settings-badge"></span></div>
+          <p id="market-account-status" class="settings-hint" role="status" aria-live="polite"></p>
+          <label class="settings-check" hidden><input type="checkbox" id="chk-market-remember"><span data-i18n="settingsMarketRemember">Remember my market sign-in</span></label>
+          <p id="market-session-hint" class="settings-hint"></p>
+          <div class="settings-actions"><button id="btn-open-market" class="settings-button" type="button" data-i18n="marketOpen">Open Market</button><button id="btn-market-connection-retry" class="settings-button" type="button" data-i18n="settingsMarketRetryConnection">Retry Market connection</button><button id="btn-market-logout" class="settings-button" type="button" hidden data-i18n="settingsMarketSignOut">Sign out</button></div>
+          <p id="market-settings-status" class="settings-message" role="status" hidden></p>
+        </div>
+      </section>
+
+      <section id="panel-files" class="settings-panel" role="tabpanel" aria-labelledby="tab-files" tabindex="0" hidden>
+        <header class="settings-panel-header"><h1 data-i18n="settingsGameFiles">Game files</h1><p data-i18n="settingsGameFilesHint">Overkot finds these automatically. Choose a location if your installation uses a different folder.</p></header>
+        <form class="settings-section" id="form-game-log">
+          <div class="section-heading"><h2 data-i18n="settingsLogFile">Game log · EE.log</h2><span id="log-path-badge" class="settings-badge"></span></div>
+          <p class="settings-hint" data-i18n="settingsLogHint">Used for arena detection and live world markers.</p>
+          <label class="path-label" for="ee-log-path" data-i18n="settingsOverridePath">Custom location</label>
+          <div class="path-input-row"><input id="ee-log-path" class="settings-input" type="text" spellcheck="false" autocomplete="off"><button class="settings-button" type="button" id="btn-browse-log" data-i18n="settingsBrowse">Browse…</button></div>
+          <div class="path-effective"><span data-i18n="settingsUsingPath">Using</span><code id="log-effective-path"></code></div>
+          <div class="settings-actions"><button class="settings-button" id="btn-save-log" type="submit" data-i18n="settingsApplyPath">Apply location</button><button class="settings-button" id="btn-reset-log" type="button" data-i18n="settingsUseAutomatic">Use automatic</button></div>
+          <p id="log-path-status" class="settings-message" role="status" hidden></p>
+        </form>
+        <form class="settings-section" id="form-game-screenshots">
+          <div class="section-heading"><h2 data-i18n="settingsScreenshots">Screenshot folder</h2><span id="screenshots-path-badge" class="settings-badge"></span></div>
+          <p class="settings-hint" data-i18n="settingsScreenshotsHint">Choose the Soulframe folder where the game saves F6 screenshots for map location.</p>
+          <label class="path-label" for="screenshot-dir" data-i18n="settingsOverridePath">Custom location</label>
+          <div class="path-input-row"><input id="screenshot-dir" class="settings-input" type="text" spellcheck="false" autocomplete="off"><button class="settings-button" type="button" id="btn-browse-screenshots" data-i18n="settingsBrowse">Browse…</button></div>
+          <div class="path-effective"><span data-i18n="settingsUsingPath">Using</span><code id="screenshots-effective-path"></code></div>
+          <div class="settings-actions"><button class="settings-button" id="btn-save-screenshots" type="submit" data-i18n="settingsApplyPath">Apply location</button><button class="settings-button" id="btn-reset-screenshots" type="button" data-i18n="settingsUseAutomatic">Use automatic</button></div>
+          <p id="screenshots-path-status" class="settings-message" role="status" hidden></p>
+        </form>
+        <div class="settings-section" id="game-data-settings">
+          <div class="section-heading"><h2 id="lbl-game-data" data-i18n="gameData">Game data</h2><button id="btn-check-data" class="settings-button" type="button" aria-describedby="data-check-status" data-i18n="checkForNewData">Check for new data</button></div>
+          <p class="settings-hint" data-i18n="dataAccessHint">Connect your avakot.dev account in Connections to download game data and artwork. Verified saved game data remains available offline.</p>
+          <p id="data-check-status" class="settings-message" role="status" aria-live="polite" aria-atomic="true"></p>
+        </div>
+      </section>
+
+      <section id="panel-tutorials" class="settings-panel" role="tabpanel" aria-labelledby="tab-tutorials" tabindex="0" hidden>
+        <header class="settings-panel-header"><h1 data-i18n="settingsTutorials">Tutorials</h1><p data-i18n="settingsTutorialsIntro">Take a quick tour of Overkot or revisit a widget’s features.</p></header>
+        <div class="settings-section">
+          <label class="settings-check"><input type="checkbox" id="chk-tutorials-enabled"><span data-i18n="settingsEnableTutorials">Enable all tutorials</span></label>
+          <p class="settings-hint" data-i18n="settingsTutorialsHint">Show app and widget tours automatically. You can still replay any tour below when tutorials are off.</p>
+          <p id="tutorial-toggle-status" class="settings-message" role="status" aria-live="polite" hidden></p>
+        </div>
+        <div class="settings-section">
+          <div class="section-heading"><h2 data-i18n="settingsGettingStarted">Getting started</h2><button id="btn-replay-tutorial" class="settings-button" type="button" data-i18n="settingsReplayAppTour">Replay app tour</button></div>
+          <p class="settings-hint" data-i18n="settingsAppTourHint">Learn how to focus the overlay, choose widgets, arrange panels, and find the settings you need.</p>
+        </div>
+        <div class="settings-section">
+          <h2 data-i18n="settingsWidgetTutorials">Widget tutorials</h2>
+          <p class="settings-hint" data-i18n="settingsWidgetTutorialsHint">A short tour appears the first time you open each widget. You can replay any of them here.</p>
+          <div class="option-row"><label for="widget-tutorial-select" data-i18n="settingsWidget">Widget</label><select id="widget-tutorial-select" class="custom-select"></select></div>
+          <div class="settings-actions"><button id="btn-replay-widget-tutorial" class="settings-button" type="button" data-i18n="settingsReplayWidgetTour">Replay widget tour</button></div>
+        </div>
+        <p id="tutorial-replay-status" class="settings-message" role="status" aria-live="polite" hidden></p>
+      </section>
+
+      <section id="panel-updates" class="settings-panel" role="tabpanel" aria-labelledby="tab-updates" tabindex="0" hidden>
+        <header class="settings-panel-header"><h1 data-i18n="settingsUpdates">Updates</h1><p data-i18n="settingsUpdatesHint">Keep Overkot up to date and see what has changed.</p></header>
+        <div class="settings-section">
+          <h2 data-i18n="appUpdates">Overkot updates</h2>
+          <p id="app-update-policy" class="settings-hint" data-i18n="settingsUpdatePolicy">Overkot checks for updates on startup. Download and install when you choose.</p>
+          <p id="settings-update-status" class="settings-hint"></p>
+          <div class="settings-actions"><button id="btn-check-app-updates" class="settings-button" type="button" data-i18n="checkAppUpdates">Check for app updates</button><button id="btn-changelog" class="settings-button" type="button" data-i18n="settingsChangelog">What's new</button></div>
+        </div>
+      </section>
+      <section id="panel-about" class="settings-panel" role="tabpanel" aria-labelledby="tab-about" tabindex="0" hidden>
+        <header class="settings-panel-header"><h1 data-i18n="settingsAboutTitle">About Overkot</h1><p data-i18n="settingsAboutHint">Your Soulframe companion, with your widgets, layouts and style.</p></header>
+        <div class="settings-section settings-about-app"><img src="../../assets/overkot.png" width="44" height="44" alt=""><div><h2>Overkot <span id="about-version"></span></h2><p class="settings-hint" data-i18n="settingsAboutLocal">Your layouts and appearance are saved on this computer.</p></div></div>
+        <div class="settings-section" id="icon-credits">
+          <h2 data-i18n="settingsIconCredits">Icon credits</h2>
+          <p class="settings-hint">Interface icons by <strong>Lucide Icons and Contributors</strong> (ISC), with Feather-derived icons by <strong>Cole Bemis</strong> (MIT). These licences allow free personal and commercial use, modification and distribution with the included notices.</p>
+          <p class="settings-hint">Lucide: <code>lucide.dev</code> · Feather: <code>feathericons.com</code></p>
+          <p class="settings-hint" data-i18n="settingsIconBundling">Icons are bundled locally. Their animation and three colour channels are controlled in Appearance → Animated icons. Overkot and Soulframe artwork retain their existing ownership.</p>
+          <details class="settings-license-details"><summary data-i18n="settingsIconLicences">Full icon licence notices</summary><pre id="icon-license-notices">ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+---
+
+The following Lucide icons are derived from the Feather project:
+
+airplay, alert-circle, alert-octagon, alert-triangle, aperture, arrow-down-circle, arrow-down-left, arrow-down-right, arrow-down, arrow-left-circle, arrow-left, arrow-right-circle, arrow-right, arrow-up-circle, arrow-up-left, arrow-up-right, arrow-up, at-sign, calendar, cast, check, chevron-down, chevron-left, chevron-right, chevron-up, chevrons-down, chevrons-left, chevrons-right, chevrons-up, circle, clipboard, clock, code, columns, command, compass, corner-down-left, corner-down-right, corner-left-down, corner-left-up, corner-right-down, corner-right-up, corner-up-left, corner-up-right, crosshair, database, divide-circle, divide-square, dollar-sign, download, external-link, feather, frown, hash, headphones, help-circle, info, italic, key, layout, life-buoy, link-2, link, loader, lock, log-in, log-out, maximize, meh, minimize, minimize-2, minus-circle, minus-square, minus, monitor, moon, more-horizontal, more-vertical, move, music, navigation-2, navigation, octagon, pause-circle, percent, plus-circle, plus-square, plus, power, radio, rss, search, server, share, shopping-bag, sidebar, smartphone, smile, square, table-2, tablet, target, terminal, trash-2, trash, triangle, tv, type, upload, x-circle, x-octagon, x-square, x, zoom-in, zoom-out
+
+The MIT License (MIT) (for the icons listed above)
+
+Copyright (c) 2013-present Cole Bemis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</pre></details>
+        </div>
+      </section>
+    </main>
+  </div>
+  <footer class="settings-footer"><span id="settings-status" role="status" aria-live="polite" data-i18n="settingsAutoSave">Changes save automatically.</span><button id="btn-retry-settings" class="settings-button" type="button" hidden data-i18n="widgetsRetry">Retry</button><span class="settings-resize-grip" aria-hidden="true"></span></footer>
+  <script src="shared-constants.js"></script>
+  <script src="../modules/tutorials.js"></script>
+  <script src="../modules/moonsteelAlertSettings.js"></script>
+  <script src="widget-icons.js"></script>
+  <script src="appearance-editor.js"></script>
+  <script src="layouts-settings.js"></script>
+  <script src="widget-sizing-settings.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

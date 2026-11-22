@@ -1,0 +1,1701 @@
+/* ═══════════════════════════════════════════════════════════
+   Overkot – Electron Renderer Stylesheet
+   Faithful port of the Rust egui dark theme
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── CSS Custom Properties (mirrors Rust color constants) ── */
+:root {
+  /* Base dark theme */
+  --bg-base: rgba(0, 0, 0, 1);  /* Classic background opacity defaults to 100%. */
+  --bg-panel: rgba(27, 27, 27, 1);
+  --widget-bg: rgba(27, 27, 27, 1);
+  --widget-header-bg: rgba(40, 40, 40, 1);
+  --bg-widget: rgb(37, 37, 37);
+  --bg-widget-inactive: rgb(60, 60, 60);
+  --bg-widget-hover: rgb(70, 70, 70);
+  --bg-widget-active: rgb(55, 55, 55);
+  --bg-bar-track: rgb(40, 40, 40);
+  --bar-text-color: white;
+
+  /* Text colors */
+  --text-primary: rgb(200, 200, 200);
+  --text-muted: rgb(140, 140, 140);
+
+  /* Bar color default */
+  --bar-color: rgb(34, 139, 34);
+
+  /* Accent */
+  --accent-green: rgb(0, 255, 0);
+  --accent-yellow: rgb(255, 255, 0);
+  --accent-blue: rgb(135, 206, 250);
+
+  /* Font */
+  --font-mono: 'Consolas', 'Courier New', monospace;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ─── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  overflow: hidden;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-primary);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body {
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Utility classes ────────────────────────────────────── */
+.hidden { display: none !important; }
+.clickable { cursor: pointer; }
+.drag-region { -webkit-app-region: drag; }
+.no-drag { -webkit-app-region: no-drag; }
+
+/* ─── Collapsed view ─────────────────────────────────────── */
+#collapsed-view {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  /* No native drag — JS handles drag + click on the icon */
+}
+
+#collapsed-view .app-icon {
+  width: 32px;
+  height: 32px;
+  cursor: grab;
+}
+
+#collapsed-view .app-icon:active {
+  cursor: grabbing;
+}
+
+/* ─── Expanded view ──────────────────────────────────────── */
+#expanded-view {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Title bar ──────────────────────────────────────────── */
+#titlebar {
+  display: flex;
+  align-items: center;
+  padding: 4px 6px;
+  gap: 6px;
+  flex-shrink: 0;
+  background: var(--bg-base);
+  border-radius: 5px 5px 0 0;
+  min-width: 0;
+  overflow: visible;
+}
+
+.app-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.title-text {
+  font-size: 18px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.version-link {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 2px;
+  margin-left: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.version-link:hover {
+  opacity: 1;
+}
+
+.status-badge {
+  font-size: 12px;
+  color: var(--accent-green);
+  margin-left: 8px;
+  white-space: nowrap;
+}
+
+.titlebar-spacer {
+  flex: 1;
+}
+
+.titlebar-btn {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.titlebar-btn:hover {
+  background: var(--bg-widget-hover);
+}
+
+/* Close button hover turns red */
+#close-btn:hover {
+  background: rgba(232, 17, 35, 0.9);
+  color: white;
+}
+
+/* ─── Main content ───────────────────────────────────────── */
+#main-content {
+  padding: 0 0 4px;
+}
+
+.section {
+  margin-bottom: 4px;
+}
+
+/* ─── Status section ─────────────────────────────────────── */
+#status-section {
+  padding: 4px 8px;
+  background: var(--bg-base);
+  border-radius: 0 0 5px 5px;
+}
+
+.status-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-text.waiting { color: var(--accent-yellow); }
+.status-text.connecting { color: var(--accent-blue); }
+
+.status-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ─── Divider ────────────────────────────────────────────── */
+.divider {
+  border: none;
+  border-top: 1px solid rgba(100, 100, 100, 0.3);
+  margin: 4px 0;
+}
+
+/* ─── Options ────────────────────────────────────────────── */
+.option-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  flex-wrap: wrap;
+}
+
+.option-row label:first-child {
+  min-width: 120px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.checkboxes {
+  gap: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--accent-green);
+  cursor: pointer;
+}
+
+/* ─── Selects ────────────────────────────────────────────── */
+.custom-select {
+  background: var(--bg-widget-inactive);
+  color: var(--text-primary);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  border-radius: 3px;
+  padding: 3px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  min-width: 120px;
+}
+.custom-select:focus {
+  outline: 1px solid rgba(150, 150, 150, 0.6);
+}
+
+/* ─── Custom language dropdown (with flags) ──────────────── */
+.custom-lang-dropdown {
+  position: relative;
+  min-width: 160px;
+}
+.lang-dropdown-selected {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  background: var(--bg-widget-inactive);
+  color: var(--text-primary);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.lang-dropdown-selected:hover {
+  background: var(--bg-widget-hover);
+}
+.lang-dropdown-arrow {
+  margin-left: auto;
+  font-size: 10px;
+  opacity: 0.6;
+}
+.lang-dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg-panel);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  border-radius: 0 0 3px 3px;
+  z-index: 100;
+  margin-top: -1px;
+}
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+.lang-option:hover {
+  background: var(--bg-widget-hover);
+}
+.lang-option.selected {
+  background: var(--bg-widget-active);
+}
+.lang-flag {
+  width: 18px;
+  height: 13px;
+  object-fit: cover;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* ─── Sliders ────────────────────────────────────────────── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 4px;
+  background: var(--bg-widget-inactive);
+  border-radius: 2px;
+  cursor: pointer;
+  max-width: 160px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  cursor: pointer;
+}
+
+/* ─── Color swatches ─────────────────────────────────────── */
+.color-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ─── Timer Widgets (multi-column layout) ────────────────── */
+
+/* [DEAD CSS] Old multi-column layout & drag-and-drop styles.
+   Widgets are now standalone BrowserWindows. None of these selectors
+   match any live DOM element or are toggled by any live JS.
+
+#widgets-container {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  padding: 6px 5px 5px;
+  align-items: flex-start;
+  transform-origin: top left;
+}
+
+.widget-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 300px;
+  flex: 1 1 0;
+  padding: 0 3px;
+  position: relative;
+}
+
+.widget-column + .widget-column {
+  border-left: 1px solid rgba(100, 100, 100, 0.2);
+}
+
+.new-column-zone {
+  min-width: 60px;
+  flex: 0 0 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(135, 206, 250, 0.25);
+  border-radius: 5px;
+  margin: 0 3px;
+  color: var(--text-muted);
+  font-size: 20px;
+  opacity: 0;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+  pointer-events: none;
+  align-self: stretch;
+}
+
+.new-column-zone.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.new-column-zone.drag-hover {
+  border-color: var(--accent-blue);
+  background: rgba(135, 206, 250, 0.06);
+}
+
+.widget-column.column-drag-hover {
+  background: rgba(135, 206, 250, 0.04);
+  border-radius: 5px;
+}
+
+   END DEAD CSS — multi-column layout */
+
+.timer-widget {
+  background: var(--widget-bg);
+  border: 1px solid rgba(100, 100, 100, 0.3);
+  border-radius: 5px;
+  overflow: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.timer-widget:hover {
+  border-color: rgba(140, 140, 140, 0.4);
+}
+
+/* [DEAD CSS] DnD-specific widget states — drag reordering removed.
+
+.timer-widget.drag-over {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 6px rgba(135, 206, 250, 0.3);
+}
+
+.timer-widget.dragging {
+  display: none;
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0.85;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--accent-blue);
+  border-radius: 5px;
+  transform: scale(1.02);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.drag-ghost.snapping {
+  transition: left 0.1s ease, top 0.1s ease, width 0.1s ease;
+}
+
+.drag-placeholder {
+  background: rgba(135, 206, 250, 0.08);
+  border: 2px dashed rgba(135, 206, 250, 0.35);
+  border-radius: 5px;
+  transition: height 0.15s ease;
+  box-sizing: border-box;
+  min-height: 8px;
+}
+
+   END DEAD CSS — DnD widget states */
+
+/* Widget header (mini title bar) */
+.widget-header {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  gap: 6px;
+  background: var(--widget-header-bg);
+  border-bottom: 1px solid rgba(80, 80, 80, 0.3);
+  cursor: default;
+  user-select: none;
+}
+
+.widget-drag-handle {
+  cursor: grab;
+  font-size: 14px;
+  color: var(--text-muted);
+  opacity: 0.5;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.widget-drag-handle:hover {
+  opacity: 1;
+  color: var(--text-primary);
+}
+
+.widget-drag-handle:active {
+  cursor: grabbing;
+}
+
+.widget-title {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.widget-count {
+  font-size: 10px;
+  background: rgba(80, 80, 80, 0.6);
+  color: var(--text-muted);
+  padding: 1px 5px;
+  border-radius: 8px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.widget-header-spacer {
+  flex: 1;
+}
+
+.widget-collapse-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.widget-collapse-btn:hover {
+  background: var(--bg-widget-hover);
+  color: var(--text-primary);
+}
+
+/* Collapsed widget */
+.timer-widget.collapsed .widget-body {
+  display: none;
+}
+
+.timer-widget.collapsed .widget-header {
+  border-bottom: none;
+}
+
+.timer-widget.collapsed .widget-collapse-btn {
+  transform: rotate(-90deg);
+}
+
+/* Hidden widget (no timers in category) */
+.timer-widget.widget-hidden {
+  display: none;
+}
+
+/* User-hidden widget (toggled off via add-widgets menu) */
+.timer-widget.widget-user-hidden {
+  display: none;
+}
+
+/* Widget body */
+.widget-body {
+  padding: 4px 8px 6px;
+}
+
+.widget-timers {
+  padding-right: 2px;
+}
+
+.widget-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 2px 0;
+  font-style: italic;
+}
+
+/* Drag placeholder line */
+.widget-drop-indicator {
+  height: 2px;
+  background: var(--accent-blue);
+  border-radius: 1px;
+  margin: 2px 0;
+  transition: opacity 0.15s;
+}
+
+/* ─── Add Widgets button & menu (titlebar) ──────────────── */
+#add-widgets-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+#add-widgets-btn {
+  font-size: 15px;
+}
+
+#add-widgets-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--bg-panel);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  border-radius: 5px;
+  padding: 6px 10px;
+  z-index: 100;
+  min-width: 150px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.widget-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 0;
+  color: var(--text-primary);
+}
+
+.widget-checkbox-label:hover {
+  color: white;
+}
+
+.widget-checkbox-label input[type="checkbox"] {
+  accent-color: var(--accent-green);
+  cursor: pointer;
+}
+
+/* ─── Timers ─────────────────────────────────────────────── */
+/* (timer containers are now inside .widget-timers) */
+
+.no-timers {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 4px 0;
+}
+
+/* Timer entry – normal mode */
+.timer-entry {
+  margin-bottom: 4px;
+}
+
+.timer-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.timer-name {
+  font-weight: 400;
+}
+
+.timer-countdown {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.timer-ready {
+  color: var(--accent-green);
+  font-weight: 500;
+}
+
+/* Progress bar – normal mode */
+.timer-bar {
+  position: relative;
+  height: 16px;
+  background: var(--bg-bar-track);
+  margin-top: 2px;
+  overflow: hidden;
+}
+
+.timer-bar-fill {
+  height: 100%;
+  transition: width 0.3s linear;
+}
+
+.timer-bar-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: var(--bar-text-color);
+}
+
+/* Timer entry – compact mode */
+.timer-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 0;
+}
+
+.timer-compact .timer-bar {
+  width: 120px;
+  height: 14px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* Hide all bars globally when body has .bars-hidden */
+body.bars-hidden .timer-bar {
+  display: none;
+}
+
+/* Timer entry – text-only mode (bars hidden) */
+.timer-text-only {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 1px 0;
+}
+
+/* ─── Affiliation widget ─────────────────────────────────── */
+.affiliation-content {
+  padding: 2px 0;
+}
+
+.affiliation-entry {
+  margin-bottom: 2px;
+}
+
+.affiliation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.affiliation-label {
+  font-weight: 400;
+}
+
+.affiliation-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.affiliation-bar {
+  height: 18px;
+  margin-right: 0;
+}
+
+.affiliation-remaining {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 2px;
+  margin-right: 0;
+}
+
+/* ─── Factions widget ────────────────────────────────────── */
+.factions-content {
+  padding: 2px 0;
+}
+
+.faction-entry {
+  margin-bottom: 6px;
+}
+
+.faction-entry:last-child {
+  margin-bottom: 2px;
+}
+
+.faction-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.faction-name {
+  font-weight: 500;
+}
+
+.faction-rank {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.faction-standing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+
+.faction-standing-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.faction-bar {
+  height: 16px;
+  margin-right: 0;
+}
+
+/* ─── Wiki search widget ──────────────────────────────────── */
+.wiki-search-content {
+  padding: 4px 0;
+}
+
+.wiki-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  transition: border-color 0.15s ease;
+}
+
+.wiki-search-bar:focus-within {
+  border-color: var(--accent-green);
+}
+
+.wiki-search-icon {
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.wiki-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  min-width: 0;
+}
+
+.wiki-search-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* ─── Toast alerts ───────────────────────────────────────── */
+#toast-container {
+  position: fixed;
+  top: 8px;
+  right: 8px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.toast {
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid var(--accent-green);
+  border-radius: 4px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toast-in 0.3s ease-out, toast-out 0.5s ease-in 4.5s forwards;
+}
+
+.toast-icon {
+  color: var(--accent-green);
+  font-size: 16px;
+}
+
+.toast-name {
+  font-weight: 600;
+  color: white;
+}
+
+.toast-label {
+  font-size: 11px;
+  color: var(--accent-green);
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes toast-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ─── Changelog modal ────────────────────────────────────── */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: var(--bg-panel);
+  border: 1px solid rgba(100, 100, 100, 0.3);
+  border-radius: 6px;
+  width: 420px;
+  max-height: 480px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(100, 100, 100, 0.3);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.modal-body {
+  padding: 12px;
+  overflow-y: auto;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.modal-body h3 {
+  font-size: 14px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+.modal-body h3:first-child {
+  margin-top: 0;
+}
+
+.modal-body ul {
+  list-style: none;
+  padding-left: 8px;
+}
+.modal-body ul li::before {
+  content: '•';
+  margin-right: 6px;
+  color: var(--text-muted);
+}
+
+/* ─── Scrollbar styling ──────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.4);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(140, 140, 140, 0.5);
+}
+
+/* ─── Language flag in dropdown ──────────────────────────── */
+.lang-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lang-flag {
+  width: 16px;
+  height: 12px;
+  object-fit: cover;
+}
+
+/* ─── Group Finder Widget (compact status card) ──────────── */
+.gf-widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.gf-widget-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.gf-widget-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.gf-widget-dot.online  { background: #0f0; box-shadow: 0 0 4px #0f0; }
+.gf-widget-dot.offline { background: #666; }
+
+/* Arena Checker widget */
+.arena-content {
+  padding: 8px 10px 10px;
+}
+.arena-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.arena-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #666;
+}
+.arena-status-dot.unknown      { background: #666; }
+.arena-status-dot.not-in-glades { background: #888; }
+.arena-status-dot.no-arena     { background: #d4a017; box-shadow: 0 0 4px #d4a017; }
+.arena-status-dot.arena        { background: #0f0; box-shadow: 0 0 6px #0f0; }
+.arena-status-text {
+  flex: 1;
+  color: var(--text-primary);
+}
+
+/* Wave counter row \u2014 only visible when an active arena run is being tracked. */
+.arena-wave-row {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.arena-wave-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+.arena-wave-label {
+  font-weight: 400;
+}
+.arena-wave-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.arena-wave-bar {
+  height: 16px;
+  margin-right: 0;
+}
+.arena-wave-tier {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 2px;
+}
+
+.gf-widget-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gf-widget-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.gf-widget-label {
+  opacity: 0.7;
+}
+
+.gf-widget-value {
+  color: var(--text-primary);
+}
+
+.gf-widget-badge {
+  background: rgba(255, 170, 0, 0.25);
+  color: #fa0;
+  padding: 0 5px;
+  border-radius: 8px;
+  font-weight: 600;
+  min-width: 14px;
+  text-align: center;
+}
+
+.gf-widget-open-btn {
+  margin-top: 4px;
+  padding: 5px 0;
+  border: none;
+  border-radius: 4px;
+  background: rgba(135, 206, 250, 0.15);
+  color: var(--accent-blue);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.gf-widget-open-btn:hover {
+  background: rgba(135, 206, 250, 0.3);
+}
+
+/* ─── Mini-Map widget ──────────────────────────────────── */
+.minimap-content {
+  position: relative;
+  padding: 2px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.minimap-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #0f0f1a;
+  cursor: grab;
+}
+
+.minimap-viewport:active {
+  cursor: grabbing;
+}
+
+.minimap-viewport canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: auto;
+}
+
+.minimap-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 30, 0.85);
+  color: var(--text-muted);
+  font-size: 11px;
+  z-index: 2;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+
+.minimap-loading.loaded {
+  opacity: 0;
+}
+
+.minimap-controls {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.minimap-ctrl-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(100, 100, 100, 0.3);
+  border-radius: 4px;
+  background: rgba(40, 40, 40, 0.85);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  user-select: none;
+  line-height: 1;
+  padding: 0;
+}
+
+.minimap-ctrl-btn:hover {
+  background: var(--bg-widget-hover);
+}
+
+.minimap-ctrl-btn:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.minimap-legend-btn {
+  margin-left: auto;
+}
+
+.minimap-expand-btn {
+  width: auto;
+  padding: 0 8px;
+  font-size: 12px;
+  gap: 4px;
+}
+
+/* "Where am I?" button (minimap widget — inline control button) */
+.minimap-locate-btn {
+  color: #00e5ff;
+  font-size: 14px;
+}
+
+.minimap-locate-btn.watching {
+  border-color: #00e5ff;
+  animation: locatePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes locatePulse {
+  0%, 100% { border-color: #00e5ff; }
+  50% { border-color: rgba(0, 229, 255, 0.3); }
+}
+
+/* Minimap F6 locate overlay */
+.minimap-locate-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: hintFadeIn 0.3s ease;
+  pointer-events: none;
+  border-radius: 4px;
+}
+.minimap-locate-overlay.hidden {
+  display: none;
+}
+.minimap-locate-overlay.hiding {
+  animation: hintFadeOut 0.4s ease forwards;
+}
+.minimap-locate-hint {
+  background: rgba(20, 20, 20, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 14px 22px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+.minimap-locate-hint kbd {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin: 0 2px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Minimap Legend Panel ───────────────────────────────── */
+.minimap-legend-panel {
+  position: absolute;
+  bottom: 32px;
+  right: 0;
+  width: 195px;
+  max-height: calc(100% - 44px);
+  overflow-y: auto;
+  background: rgba(20, 20, 30, 0.95);
+  border: 1px solid rgba(100, 100, 100, 0.35);
+  border-radius: 6px;
+  padding: 8px 10px;
+  z-index: 40;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.minimap-legend-panel.hidden {
+  display: none;
+}
+.minimap-legend-title {
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(100, 100, 100, 0.25);
+}
+.minimap-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 3px;
+  border-radius: 3px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.minimap-legend-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.minimap-legend-row.hidden-cat {
+  opacity: 0.4;
+}
+.minimap-legend-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.minimap-legend-label {
+  color: var(--text-secondary);
+  font-size: 11px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.minimap-legend-eye {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.12s;
+}
+.minimap-legend-row:hover .minimap-legend-eye {
+  opacity: 1;
+}
+.minimap-legend-row.hidden-cat .minimap-legend-eye {
+  opacity: 0.3;
+}
+
+/* ─── Hotkey hint inline banner ────────────────────────── */
+.hotkey-hint-banner {
+  padding: 5px 8px;
+  background: rgba(20, 20, 20, 0.85);
+  border-radius: 0 0 5px 5px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.3px;
+  animation: hintFadeIn 0.3s ease;
+}
+.hotkey-hint-banner.hiding {
+  animation: hintFadeOut 0.4s ease forwards;
+}
+.hotkey-hint-banner kbd {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin: 0 2px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+@keyframes hintFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes hintFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Widget Host — standalone widget window styles
+   ═══════════════════════════════════════════════════════════ */
+.widget-host-body {
+  background: transparent !important;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  overflow-y: visible;
+}
+
+.widget-host-body .timer-widget {
+  margin: 0;
+  border-radius: 5px;
+}
+
+/* Minimap: fill the square window with flex layout */
+.widget-host-body .timer-widget[data-widget="minimap"] {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+/* In collapsed mode, remove the forced viewport height so auto-fit can shrink
+   the minimap widget window down to just the header bar. */
+.widget-host-body .timer-widget[data-widget="minimap"].collapsed {
+  height: auto;
+}
+
+.widget-host-body .timer-widget[data-widget="minimap"].collapsed .widget-body {
+  display: none;
+}
+
+.widget-host-body .timer-widget[data-widget="minimap"] .widget-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.widget-host-body .timer-widget[data-widget="minimap"] .minimap-content {
+  flex: 1;
+  min-height: 0;
+}
+.widget-host-body .timer-widget[data-widget="minimap"] .minimap-viewport {
+  aspect-ratio: unset;
+  flex: 1;
+  min-height: 0;
+}
+
+/* A dock cell reports its content height to the parent. Basing that height on
+   the iframe's initial 80px viewport would permanently squash the map. */
+.widget-host-body[data-embedded="true"] .timer-widget[data-widget="minimap"] {
+  height: auto;
+}
+.widget-host-body[data-embedded="true"] .timer-widget[data-widget="minimap"] .minimap-viewport {
+  flex: none;
+  aspect-ratio: 1 / 1;
+}
+
+/* Make widget header draggable as a window drag region */
+.widget-drag-region {
+  cursor: grab;
+  -webkit-app-region: no-drag; /* We handle drag manually via JS */
+}
+.widget-drag-region:active {
+  cursor: grabbing;
+}
+
+/* Widget resize handle — bottom-right corner grip */
+.widget-resize-handle {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  cursor: ew-resize;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.widget-resize-handle.ratio-locked {
+  cursor: nwse-resize;
+}
+.widget-host-body:hover .widget-resize-handle {
+  opacity: 0.6;
+}
+.widget-resize-handle::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid rgba(200, 200, 200, 0.7);
+  border-bottom: 2px solid rgba(200, 200, 200, 0.7);
+}
+
+/* Edge dock. Scoped to the rail so widget and settings styles stay independent. */
+body.edge-dock {
+  --dock-gold: var(--theme-secondary, #d9bc7b);
+  width: 100vw;
+  height: 100vh;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+.edge-dock #dock-bar {
+  display: flex;
+  /* The rail owns the entire native viewport. Temporary drag decorations
+     must never compete for height in the body's column flex layout. */
+  flex: 0 0 auto;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 8px;
+  padding: 4px 8px;
+  background: linear-gradient(120deg, rgba(255,255,255,.025), transparent 45%), var(--bg-base);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.045);
+  border: 0 solid var(--theme-border, rgba(217,188,123,.3));
+  overflow: hidden;
+  -webkit-app-region: no-drag;
+  transition: background-color .15s, box-shadow .15s;
+}
+.edge-dock[data-dock-edge='bottom'] #dock-bar { border-top-width: 1px; }
+.edge-dock[data-dock-edge='top'] #dock-bar { border-bottom-width: 1px; }
+.edge-dock[data-dock-edge='left'] #dock-bar { border-right-width: 1px; }
+.edge-dock[data-dock-edge='right'] #dock-bar { border-left-width: 1px; }
+.edge-dock .dock-brand-group,
+.edge-dock .dock-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.edge-dock .dock-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-primary);
+  background: transparent;
+  cursor: pointer;
+  transition: color .12s, background-color .12s, border-color .12s;
+}
+.edge-dock .dock-button:hover,
+.edge-dock .dock-status:hover,
+.edge-dock .dock-empty:hover {
+  background: var(--bg-widget-hover);
+  color: var(--dock-gold);
+}
+.edge-dock button:focus-visible {
+  outline: 2px solid var(--dock-gold);
+  outline-offset: -2px;
+}
+.edge-dock .dock-button:active { background: var(--bg-widget-active); }
+.edge-dock .dock-button:disabled { opacity: .6; cursor: wait; }
+.edge-dock .dock-brand img { width: 28px; height: 28px; object-fit: contain; }
+.edge-dock .dock-tools .icon-settings::before,
+.edge-dock .dock-tools .icon-widgets::before { width: 18px; height: 18px; }
+.edge-dock #close-btn:hover { color: #fff; background: rgba(184,58,65,.8); }
+.edge-dock .dock-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 8px;
+  min-width: 0;
+  max-width: 180px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.edge-dock #dock-status-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.edge-dock .dock-status-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--dock-gold);
+  box-shadow: 0 0 0 3px var(--theme-secondary-soft, rgba(217,188,123,.1));
+}
+.edge-dock .dock-status[data-status='connected'] .dock-status-dot { background: var(--accent-green); }
+.edge-dock .dock-status[data-status='companion'] .dock-status-dot { background: var(--accent-blue); }
+.edge-dock .dock-status[data-status='connecting'] .dock-status-dot { animation: dock-connecting 1.6s ease-in-out infinite; }
+.edge-dock .dock-status[data-status='warning'] .dock-status-dot,
+.edge-dock .dock-status[data-status='permission-denied'] .dock-status-dot,
+.edge-dock .dock-status[data-status='scan-failed'] .dock-status-dot { background: #eaa067; }
+.edge-dock .dock-divider {
+  width: 1px;
+  height: 20px;
+  flex: 0 0 1px;
+  background: var(--theme-border, rgba(217,188,123,.2));
+}
+.edge-dock #widget-launchers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+.edge-dock #widget-launchers::-webkit-scrollbar { display: none; }
+.edge-dock #widget-launchers:empty { display: none; }
+.edge-dock .dock-widget-icon,
+.edge-dock .dock-widget-icon svg { display: block; width: 21px; height: 21px; }
+.edge-dock .dock-widget-icon::before { width: 21px; height: 21px; }
+.edge-dock .dock-widget-button { color: var(--text-muted); }
+.edge-dock .dock-widget-button { touch-action: none; }
+.edge-dock.dock-icons-dragging #widget-launchers { scroll-behavior: auto; }
+.edge-dock.dock-icons-dragging #dock-bar,
+.edge-dock.dock-icons-dragging .dock-widget-button { cursor: grabbing; }
+.edge-dock .dock-widget-button.is-icon-dragging { opacity: .3; border: 1px dashed var(--dock-gold); }
+/* Stronger than theme.css's generic positioned event surfaces: this cloned
+   .dock-widget-button must stay out of the rail's flex layout. */
+.edge-dock > .dock-button.dock-icon-ghost {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  background: var(--bg-panel);
+  color: var(--dock-gold);
+  border-color: var(--dock-gold);
+  box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  cursor: grabbing;
+}
+.edge-dock.dock-auto-hidden #dock-bar {
+  visibility: hidden;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.edge-dock.dock-auto-hidden .dock-icon-ghost { visibility: hidden; }
+.edge-dock .dock-widget-button.is-open {
+  color: var(--dock-gold);
+  background: var(--theme-secondary-soft, rgba(217,188,123,.1));
+  border-color: var(--theme-border);
+}
+.edge-dock .dock-widget-button.is-open::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 2px;
+  top: 1px;
+  left: 11px;
+  border-radius: 2px;
+  background: var(--dock-gold);
+}
+.edge-dock[data-dock-edge='top'] .dock-widget-button.is-open::after { top: auto; bottom: 1px; }
+.edge-dock .dock-floating-indicator {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  width: 5px;
+  height: 5px;
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  background: var(--bg-panel);
+}
+.edge-dock .is-floating .dock-floating-indicator { display: block; }
+.edge-dock .dock-spacer { flex: 1 1 0; min-width: 0; min-height: 0; }
+.edge-dock .dock-empty {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px dashed var(--theme-border);
+  border-radius: 6px;
+  color: var(--text-muted);
+  background: transparent;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.edge-dock [hidden] { display: none !important; }
+.edge-dock #redock-hint {
+  flex: 0 0 auto;
+  color: var(--dock-gold);
+  padding: 6px 10px;
+  border: 1px dashed currentColor;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.edge-dock.dock-editing #dock-bar { box-shadow: inset 0 0 0 1px var(--dock-gold); }
+.edge-dock.dock-editing .dock-empty { display: none; }
+.edge-dock.dock-redock-target #dock-bar {
+  background-color: var(--theme-secondary-soft, rgba(217,188,123,.16));
+  box-shadow: inset 0 0 0 2px var(--dock-gold);
+}
+.edge-dock.dock-redock-target #redock-hint { background: var(--dock-gold); color: var(--bg-panel); border-style: solid; }
+.edge-dock.dock-vertical #dock-bar { flex-direction: column; padding: 6px 4px; gap: 8px; }
+.edge-dock.dock-vertical .dock-brand-group,
+.edge-dock.dock-vertical .dock-tools { flex-direction: column; }
+.edge-dock.dock-vertical .dock-status { width: 32px; height: 20px; padding: 0; justify-content: center; }
+.edge-dock.dock-vertical #dock-status-text { display: none; }
+.edge-dock.dock-vertical .dock-divider { width: 20px; height: 1px; }
+.edge-dock.dock-vertical #widget-launchers { flex-direction: column; overflow-x: hidden; overflow-y: auto; width: 40px; }
+.edge-dock.dock-vertical .dock-empty { writing-mode: vertical-rl; padding: 12px 8px; }
+.edge-dock.dock-vertical #redock-hint { writing-mode: vertical-rl; padding: 10px 6px; }
+.edge-dock[data-dock-edge='left'] .dock-widget-button.is-open::after { width: 2px; height: 12px; left: auto; right: 1px; top: 11px; }
+.edge-dock[data-dock-edge='right'] .dock-widget-button.is-open::after { width: 2px; height: 12px; left: 1px; top: 11px; }
+.edge-dock .dock-screen-reader {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@keyframes dock-connecting { 50% { opacity: .35; } }
+@media (max-width: 800px) {
+  .edge-dock:not(.dock-vertical) #dock-status-text { display: none; }
+  .edge-dock:not(.dock-vertical) .dock-status { padding: 0 5px; }
+}
+/* Motion and system preferences are coordinated by theme.css and motion.js. */

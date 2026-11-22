@@ -1,0 +1,27 @@
+html, body { width: 100%; height: 100%; min-width: 0; overflow: hidden; }
+body.daily-brief-window { display: flex; flex-direction: column; background: var(--bg-panel); color: var(--text-primary); }
+.daily-brief-window #titlebar { flex: 0 0 38px; min-height: 38px; padding: 5px 7px 5px 14px; border-radius: 0; border-bottom: 1px solid var(--theme-border); }
+.daily-popout-label { margin-left: 9px; color: var(--text-secondary); font-size: 11px; white-space: nowrap; }
+#daily-brief-content { flex: 1; min-height: 0; min-width: 0; padding: 16px; overflow: hidden; }
+.daily-brief-window .daily-brief { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.daily-brief-window .daily-header, .daily-brief-window .daily-tabs,
+.daily-brief-window .daily-footer, .daily-brief-window .daily-error { flex: 0 0 auto; }
+.daily-brief-window .daily-date { font-size: 14px; }
+.daily-brief-window .daily-stage { flex: 1; min-height: 0; overflow: hidden; }
+.daily-brief-window .daily-panel { height: 100%; min-height: 0; }
+.daily-brief-window .daily-today, .daily-brief-window .daily-vendors { display: flex; flex-direction: column; }
+.daily-brief-window .daily-scroll { flex: 1; min-height: 0; max-height: none; scrollbar-gutter: stable; }
+.daily-brief-window .daily-vendor-controls { flex: 0 0 auto; }
+.daily-brief-window .daily-calendar { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--theme-border) transparent; overscroll-behavior: contain; }
+.daily-brief-window .daily-ancestor { font-size: clamp(26px, 6vw, 34px); }
+.daily-brief-window .daily-footer { max-height: 40%; overflow: auto; }
+.daily-brief-window .daily-budget { padding: 11px; }
+.daily-brief-window .daily-budget strong { font-size: 19px; }
+.daily-brief-window .daily-vendor-item { padding: 11px; }
+@media (max-width: 440px) {
+  .daily-popout-label { display: none; }
+  #daily-brief-content { padding: 12px; }
+  .daily-brief-window .daily-item-heading { flex-wrap: wrap; }
+  .daily-brief-window .daily-budget { padding: 8px; }
+  .daily-brief-window .daily-budget strong { font-size: 17px; }
+}

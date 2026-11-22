@@ -1,0 +1,94 @@
+/* Use the current shared Market theme, not the overlay's separate theme. The
+   parent supplies its computed variables and grows the frame to this content. */
+:root {
+  color-scheme: var(--inventory-color-scheme, dark);
+  --bg-panel: var(--bg-primary);
+  --bg-widget: var(--bg-secondary);
+  --bg-widget-inactive: var(--bg-tertiary);
+  --bg-widget-hover: var(--bg-tertiary);
+  --bg-widget-active: var(--accent-bg);
+  --theme-border: var(--border-light);
+  --theme-accent: var(--accent-primary);
+  --theme-secondary: var(--text-secondary);
+  --theme-accent-soft: var(--accent-bg);
+  --theme-secondary-soft: var(--warning-bg);
+}
+html { min-width: 0; overflow: hidden; scrollbar-gutter: auto; scroll-behavior: auto; background: transparent; }
+body.inventory-embedded {
+  display: flow-root;
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--inventory-font-family, var(--font-ui, system-ui));
+  font-size: var(--inventory-font-size, 16px);
+  -webkit-font-smoothing: antialiased;
+}
+.inventory-embedded .market-titlebar,
+.inventory-embedded .market-nav,
+.inventory-embedded .market-footer,
+.inventory-embedded #market-notice { display: none !important; }
+.inventory-embedded main { display: block; height: auto; min-height: 0; overflow: visible; }
+.inventory-embedded .inventory-panel,
+.inventory-embedded .mine-panel { padding: 0; overflow: visible; }
+.inventory-embedded .section-heading { align-items: flex-start; margin: 0 0 1.25rem; }
+.inventory-embedded .section-heading h1 { color: var(--text-primary); font-family: var(--font-display, inherit); font-size: clamp(1.55rem, 3vw, 2.1rem); font-weight: 650; line-height: 1.2; letter-spacing: 0; }
+.inventory-embedded .section-heading .eyebrow { margin: 0 0 .5rem; }
+.inventory-embedded .muted { color: var(--text-muted); }
+.inventory-embedded #inventory-status { font-size: .875rem; }
+.inventory-embedded .inventory-badge { font-size: .75rem; margin-top: .4rem; }
+.inventory-embedded :is(button, input, select, textarea, dialog, .inventory-card, .inventory-group, .listing-card, .tag, .item-image, .market-temper-icon, .view-switch, .inline-notice, .composer-item, .trade-slot, .trade-slot-editor, .trade-search-result, .market-toast) { border-radius: 0; }
+.inventory-embedded :is(input:not([type='checkbox']), select, textarea) { min-height: 2.75rem; padding: .6rem .75rem; background: var(--bg-secondary); border-color: var(--border-light); font-size: .875rem; }
+.inventory-embedded .search-field input { padding-left: 2.25rem; }
+.inventory-embedded .inventory-toolbar { flex-wrap: wrap; gap: .75rem; margin-bottom: 1rem; }
+.inventory-embedded .inventory-toolbar .search-field { flex: 1 1 15rem; }
+.inventory-embedded .inventory-toolbar select { flex: 1 1 8rem; max-width: 12rem; }
+.inventory-embedded .view-switch { padding: 0; border-color: var(--border-light); }
+.inventory-embedded .view-switch button { width: 2.75rem; height: 2.625rem; font-size: 1.1rem; }
+.inventory-embedded .inventory-caption { gap: .75rem; margin-bottom: 1rem; font-size: .8rem; }
+.inventory-embedded .checkbox-label { font-size: .8rem; }
+.inventory-embedded .inventory-results,
+.inventory-embedded .inventory-group-items { grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: .75rem; }
+.inventory-embedded .inventory-card { gap: .75rem; padding: 1rem; border-color: var(--border-color); background: var(--bg-secondary); }
+.inventory-embedded .inventory-card .listing-name { font-size: .875rem; font-weight: 600; }
+.inventory-embedded .inventory-card .inventory-amount { color: var(--text-secondary); font-size: .8rem; }
+.inventory-embedded .inventory-card :is(.inventory-category, .inventory-warning, .inventory-actions span) { font-size: .75rem; }
+.inventory-embedded .inventory-card .inventory-actions { border-top: 1px solid var(--border-color); padding-top: .75rem; }
+.inventory-embedded .inventory-results.list-view .inventory-card { grid-template-columns: 40px minmax(0, 1fr) auto minmax(6rem, 9rem); }
+.inventory-embedded :is(.primary-button, .secondary-button) { min-height: 2.75rem; padding: .55rem .875rem; border: 1px solid var(--border-light); font-size: .8125rem; font-weight: 600; }
+.inventory-embedded .primary-button { color: var(--text-primary); border-color: var(--accent-primary); background: transparent; }
+.inventory-embedded .primary-button:hover:not(:disabled) { background: var(--accent-primary); color: var(--on-accent, var(--bg-primary)); filter: none; }
+.inventory-embedded .secondary-button:hover:not(:disabled) { background: var(--bg-tertiary); }
+.inventory-embedded .text-button { color: var(--accent-primary); font-size: .8125rem; }
+.inventory-embedded .tag { font-size: .7rem; }
+.inventory-embedded .inventory-group-heading { padding: 1rem; }
+.inventory-embedded .inventory-group-items { padding: 0 1rem 1rem; }
+.inventory-embedded .inventory-group-items .inventory-card { background: var(--bg-primary); }
+.inventory-embedded .empty-state { text-align: left; padding: 2rem 0; border-top: 1px solid var(--border-color); }
+.inventory-embedded .empty-state .empty-symbol { display: none; }
+.inventory-embedded .empty-state h3 { font-size: 1rem; font-weight: 600; }
+.inventory-embedded .empty-state p { margin: .65rem 0 1rem; max-width: 34rem; font-size: .875rem; }
+.inventory-embedded .inline-notice { padding: .85rem 1rem; font-size: .875rem; border-color: var(--warning-border); }
+.inventory-embedded dialog {
+  position: fixed;
+  inset: var(--inventory-dialog-top, 1rem) 0 auto;
+  margin: 0 auto;
+  max-height: var(--inventory-dialog-height, calc(100vh - 2rem));
+  background: var(--bg-primary);
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+.inventory-embedded dialog .muted { font-size: .875rem; }
+.inventory-embedded :is(.trade-slot-name, .trade-slot-quantity, .trade-slot-editor, .trade-search-result, .trade-selected-item, .composer-preview) { font-size: .8125rem; }
+.inventory-embedded .form-error { color: var(--error); background: var(--error-bg); border-color: var(--error-border); }
+.inventory-embedded .market-toast { top: calc(var(--inventory-dialog-top, 1rem) + 1rem); bottom: auto; font-size: .875rem; }
+@media (max-width: 620px) {
+  .inventory-embedded .inventory-toolbar select { max-width: none; }
+  .inventory-embedded .inventory-results.list-view .inventory-card { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .inventory-embedded .list-view .inventory-card .inventory-actions { grid-column: 1 / -1; grid-row: auto; }
+  .inventory-embedded .section-heading { gap: .75rem; }
+  .inventory-embedded .inventory-badge { display: none; }
+}

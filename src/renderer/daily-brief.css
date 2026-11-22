@@ -1,0 +1,25 @@
+.daily-brief{font:12px var(--font-ui,system-ui),sans-serif;color:var(--text-primary);min-width:0}
+.daily-brief [hidden]{display:none!important}
+.daily-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.daily-heading{display:flex;flex-direction:column;gap:5px;min-width:0}.daily-date{font-size:13px}.daily-reset{font-size:11px;color:var(--text-secondary)}
+.daily-brief button,.daily-brief input{font:inherit;color:inherit;-webkit-app-region:no-drag}
+.daily-brief button,.daily-brief input[type=search]{background:var(--theme-control);border:1px solid var(--theme-border);border-radius:5px;padding:6px 8px;box-sizing:border-box}
+.daily-brief button{cursor:pointer}.daily-brief button:disabled{opacity:.5}.daily-brief :focus-visible{outline:2px solid var(--theme-accent);outline-offset:2px}
+.daily-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px}.daily-tab[aria-selected=true]{border-color:var(--theme-accent);background:var(--theme-accent-soft)}
+.daily-scroll{max-height:430px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--theme-border) transparent;overscroll-behavior:contain;padding-right:3px}
+.daily-section-title{font-size:12px;margin:12px 0 7px;color:var(--theme-accent)}.daily-section-title:first-child{margin-top:2px}
+.daily-note{font-size:11px;color:var(--text-secondary);line-height:1.5;margin:7px 0;overflow-wrap:anywhere}
+.daily-budgets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.daily-budget{display:flex;flex-direction:column;gap:9px;padding:9px;border:1px solid var(--theme-border);border-radius:6px;background:var(--theme-control)}
+.daily-budget span{font-size:10px;color:var(--text-secondary);line-height:1.4}.daily-budget strong{font-size:17px;font-variant-numeric:tabular-nums}
+.daily-ancestor{display:block;font-size:26px;font-weight:700;line-height:1.2;color:var(--text-primary);overflow-wrap:anywhere;margin:8px 0 10px}
+.daily-upcoming{display:flex;flex-direction:column;gap:6px;padding:8px 0 10px}.daily-next-encounter{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:var(--text-secondary);line-height:1.5}.daily-next-encounter strong{font-weight:500;text-align:right}
+.daily-offer,.daily-item-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;line-height:1.5}.daily-offer{border-bottom:1px solid var(--theme-border);padding:8px 0}.daily-offer>span,.daily-price{flex-shrink:0;font-size:11px;color:var(--text-secondary)}
+.daily-vendor-controls{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}.daily-search{width:100%;min-width:0}
+.daily-check{display:flex;align-items:center;gap:7px;font-size:11px;line-height:1.5}.daily-check input{accent-color:var(--theme-accent);margin:0}
+.daily-vendor-group{border:1px solid var(--theme-border);border-radius:6px;margin-bottom:8px;padding:8px}.daily-vendor-group>summary{cursor:pointer;font-weight:600;line-height:1.5}
+.daily-vendor-item{margin-top:8px;padding:9px;background:var(--theme-control);border-radius:5px;overflow-wrap:anywhere}.daily-item-meta{color:var(--text-secondary);font-size:10px;line-height:1.5;margin:5px 0 0}
+.daily-tempers{list-style:none;padding:0;margin:7px 0 0;font-size:11px;line-height:1.6;color:var(--text-secondary)}
+.daily-item-identity{display:flex;align-items:center;gap:8px;min-width:0}.daily-item-identity>strong{min-width:0}.daily-item-icon{flex:0 0 34px;width:34px;height:34px}
+.daily-temper{display:flex;align-items:center;gap:6px;margin:4px 0}.daily-temper-icon{display:grid;place-items:center;position:relative;flex:0 0 22px;width:22px;height:22px;background:var(--theme-accent-soft);border:1px solid var(--theme-border);border-radius:4px}.daily-temper-icon img{position:absolute;width:20px;height:20px;object-fit:contain}.daily-temper-fallback{font-size:15px;color:var(--theme-accent)}
+.daily-footer{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;border-top:1px solid var(--theme-border);padding-top:9px;margin-top:10px}.daily-preferences{font-size:11px;line-height:1.6}.daily-preferences summary{cursor:pointer}.daily-preferences label{margin-top:7px}.daily-error{font-size:11px;color:#e6b68f;line-height:1.5;margin:8px 0}
+@media(max-width:330px){.daily-item-heading{flex-direction:column;gap:3px}.daily-budgets{gap:4px}.daily-budget{padding:7px}.daily-budget strong{font-size:15px}}

@@ -1,0 +1,178 @@
+'use strict';
+
+// Rebuild offline icons from pinned SVGs and authored semantics. Never join
+// independent paths: a relative move then inherits the wrong current point.
+const fs = require('node:fs');
+const path = require('node:path');
+const semantics = require('./icon-semantics');
+const root = path.resolve(__dirname, '..');
+const directory = path.join(root, 'assets/icons/lucide');
+const read = filename => fs.readFileSync(filename, 'utf8').replace(/\r\n/g, '\n');
+
+function parseSvg(source) {
+  const nodes = [...source.matchAll(/<(path|circle|rect|line|polyline|polygon|ellipse)\b([^>]*)\/?\s*>/g)].map(([, tag, text]) => ({
+    tag, attributes: Object.fromEntries([...text.matchAll(/([\w-]+)="([^"]*)"/g)].map(match => [match[1], match[2]])),
+  }));
+  if (!nodes.length) throw new Error('An icon must contain vector geometry');
+  return nodes;
+}
+
+function buildCatalogue(mapping, authored) {
+  return Object.fromEntries(Object.entries({ ...mapping, market: 'overkot-market-sack' }).map(([id, source]) => {
+    const nodes = parseSvg(read(source === 'overkot-market-sack'
+      ? path.join(root, 'assets/icons/market-sack.svg') : path.join(directory, `${source}.svg`)));
+    const spec = authored[id];
+    if (!spec?.description || !spec.parts?.length) throw new Error(`Missing authored semantics for ${id}`);
+    const used = [];
+    const parts = spec.parts.map(part => {
+      if (!part.name || !['primary', 'secondary', 'detail'].includes(part.channel) || !part.motion
+        || !/^-?\d+(?:\.\d+)?px -?\d+(?:\.\d+)?px$/.test(part.origin)) throw new Error(`Invalid semantic part for ${id}`);
+      return { name: part.name, channel: part.channel, motion: part.motion, origin: part.origin,
+        nodes: part.indices.map(index => {
+          if (!Number.isInteger(index) || !nodes[index] || used.includes(index)) throw new Error(`Repeated or invalid shape in ${id}`);
+          used.push(index); return nodes[index];
+        }) };
+    });
+    if (used.length !== nodes.length) throw new Error(`Every upstream shape must appear exactly once in ${id}`);
+    if (!parts.some(part => part.motion !== 'none')) throw new Error(`Missing purposeful motion for ${id}`);
+    return [id, { source, description: spec.description, fit: spec.fit, filled: source === 'overkot-market-sack', parts }];
+  }));
+}
+
+function factory(catalogue, identity) {
+  return `
+  const freeze = value => {
+    if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }
+    return value;
+  };
+  const catalogue = freeze(${JSON.stringify(catalogue, null, 2)});
+  const ids = Object.freeze(Object.keys(catalogue));
+  const sources = Object.freeze(Object.fromEntries(ids.map(id => [id, catalogue[id].source])));
+  function create(id, document = globalThis.document) {
+    if (!Object.hasOwn(catalogue, id)) throw new Error('Unknown ${identity} icon: ' + String(id));
+    if (!document || typeof document.createElementNS !== 'function') throw new TypeError('Icons need a DOM document');
+    const value = catalogue[id];
+    const node = tag => document.createElementNS('http://www.w3.org/2000/svg', tag);
+    const svg = node('svg');
+    const attributes = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', class: 'overkot-icon',
+      'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+      'aria-hidden': 'true', focusable: 'false', 'data-${identity}-icon': id, 'data-icon-source': value.source,
+      'data-icon-fit': String(value.fit), 'data-icon-motion-kind': value.parts.find(part => part.motion !== 'none').motion };
+    for (const [name, attribute] of Object.entries(attributes)) svg.setAttribute(name, attribute);
+    let canvas = svg;
+    if (value.fit !== 1) {
+      canvas = node('g'); canvas.setAttribute('data-icon-canvas', '');
+      canvas.setAttribute('transform', 'translate(12 12) scale(' + value.fit + ') translate(-12 -12)');
+      svg.appendChild(canvas);
+    }
+    for (const part of value.parts) {
+      const group = node('g');
+      group.setAttribute('data-icon-part', part.name);
+      group.setAttribute('data-icon-layer', part.channel);
+      group.setAttribute('data-icon-animation', part.motion);
+      group.setAttribute('style', 'transform-origin:' + part.origin);
+      if (value.filled) group.setAttribute('data-icon-filled', 'true');
+      for (const shape of part.nodes) {
+        const primitive = node(shape.tag);
+        for (const [name, attribute] of Object.entries(shape.attributes)) primitive.setAttribute(name, attribute);
+        group.appendChild(primitive);
+      }
+      canvas.appendChild(group);
+    }
+    return svg;
+  }
+`;
+}
+
+function generate() {
+  const manifest = JSON.parse(read(path.join(directory, 'manifest.json')));
+  const widgets = buildCatalogue(manifest.widgets, semantics.widgets);
+  const actions = buildCatalogue(manifest.actions, semantics.actions);
+  const widget = `/* Generated by scripts/build-ui-icons.js. Lucide ISC / Feather MIT; see assets/icons/lucide/LICENSE. */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.WidgetIcons = api;
+})(typeof globalThis === 'object' ? globalThis : this, function () {
+  'use strict';
+${factory(widgets, 'widget')}
+  return Object.freeze({ catalogue, sources, ids, create });
+});
+`;
+  const ui = `/* Generated offline Lucide UI icons. ISC / Feather MIT; see assets/icons/lucide/LICENSE. */
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else { root.UIIcons = api; api.mount(root.document); }
+})(typeof globalThis === 'object' ? globalThis : this, function () {
+  'use strict';
+${factory(actions, 'ui')}
+  function mount(document) {
+    if (!document || typeof document.querySelectorAll !== 'function') return;
+    const selector = ids.map(id => '.icon-' + id).join(',');
+    const hydrate = root => {
+      const candidates = [...(root.querySelectorAll?.(selector) || [])];
+      if (root.matches?.(selector)) candidates.unshift(root);
+      for (const element of candidates) {
+        const id = ids.find(name => element.classList.contains('icon-' + name));
+        if (!id || element.querySelector('[data-ui-icon]')) continue;
+        element.appendChild(create(id, document));
+        element.classList.add('icon-hydrated');
+      }
+    };
+    const start = () => {
+      hydrate(document);
+      document.defaultView?.OverkotTheme?.refreshIcons?.(document);
+      const Observer = document.defaultView?.MutationObserver;
+      if (!Observer) return;
+      const observer = new Observer(records => {
+        for (const record of records) {
+          if (record.type === 'attributes') hydrate(record.target);
+          else for (const node of record.addedNodes) if (node.nodeType === 1) {
+            hydrate(node); document.defaultView?.OverkotTheme?.refreshIcons?.(node);
+          }
+        }
+      });
+      observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+      document.defaultView.addEventListener('unload', () => observer.disconnect(), { once: true });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+    else start();
+  }
+  return Object.freeze({ catalogue, sources, ids, create, mount });
+});
+`;
+  const masks = Object.entries(manifest.actions).map(([id, name]) => `.icon-${id}::before {
+  -webkit-mask-image: url('../../assets/icons/lucide/${name}.svg');
+  mask-image: url('../../assets/icons/lucide/${name}.svg');
+}`).join('\n\n');
+  const motionCss = read(path.join(__dirname, 'icon-motion.css')).trimEnd();
+  const animations = [...new Set([...Object.values(widgets), ...Object.values(actions)].flatMap(icon => icon.parts.map(part => part.motion)))].filter(name => name !== 'none').sort();
+  for (const name of animations) if (!motionCss.includes(`@keyframes icon-${name} `)) throw new Error(`Missing semantic animation ${name}`);
+  const animationBindings = animations.map(name => `.overkot-icon [data-icon-animation='${name}'] { --icon-part-motion: icon-${name}; }`).join('\n');
+  const css = `/* Generated offline Lucide UI icons. ISC / Feather MIT; exact notices ship beside the SVGs. */
+[class^="icon-"], [class*=" icon-"] { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+[class^="icon-"]::before, [class*=" icon-"]::before {
+  content: ''; display: block; width: var(--ui-icon-size,16px); height: var(--ui-icon-size,16px); background: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain;
+}
+.icon-close, .icon-minimize { --ui-icon-size: 12px; }
+.icon-hydrated::before { display: none !important; }
+.icon-hydrated > svg { display: block; width: var(--ui-icon-size,16px); height: var(--ui-icon-size,16px); }
+.edge-dock .dock-tools .icon-widgets { --ui-icon-size: 18px; }
+.icon-market::before { -webkit-mask-image: url('../../assets/icons/market-sack.svg'); mask-image: url('../../assets/icons/market-sack.svg'); }
+${masks}
+${animationBindings}
+${motionCss}
+`;
+  return { widget, ui, css };
+}
+
+if (require.main === module) {
+  const output = generate();
+  fs.writeFileSync(path.join(root, 'src/renderer/widget-icons.js'), output.widget);
+  fs.writeFileSync(path.join(root, 'src/renderer/ui-icons.js'), output.ui);
+  fs.writeFileSync(path.join(root, 'src/renderer/icons.css'), output.css);
+  console.log('Rebuilt icons with independent native SVG shapes and authored semantic motion.');
+}
+module.exports = { generate, parseSvg, buildCatalogue };

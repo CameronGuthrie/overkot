@@ -1,0 +1,764 @@
+/* ═══════════════════════════════════════════════════════════
+   Group Finder Widget – Stylesheet
+   Extends the Overkot dark theme
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Layout ─────────────────────────────────────────────── */
+body.gf-body {
+  background: var(--bg-panel) !important;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gf-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Tab Bar ────────────────────────────────────────────── */
+.gf-tabs {
+  display: flex;
+  gap: 0;
+  background: rgba(20, 20, 20, 0.95);
+  border-bottom: 1px solid rgba(100, 100, 100, 0.3);
+  flex-shrink: 0;
+}
+
+.gf-tab {
+  flex: 1;
+  padding: 8px 4px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.gf-tab:hover {
+  color: var(--text-primary);
+  background: rgba(50, 50, 50, 0.5);
+}
+
+.gf-tab.active {
+  color: var(--accent-blue);
+  border-bottom-color: var(--accent-blue);
+}
+
+.gf-tab-badge {
+  display: inline-block;
+  background: rgba(255, 80, 80, 0.85);
+  color: #fff;
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+  min-width: 14px;
+  text-align: center;
+}
+
+/* ─── Tab Panels ─────────────────────────────────────────── */
+.gf-panel {
+  display: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+
+.gf-panel.active {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Status Bar ─────────────────────────────────────────── */
+.gf-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(30, 30, 30, 0.9);
+  border-radius: 6px;
+  border: 1px solid rgba(80, 80, 80, 0.3);
+}
+
+.gf-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.gf-status-dot.online { background: var(--accent-green); box-shadow: 0 0 4px rgba(0, 255, 0, 0.4); }
+.gf-status-dot.offline { background: rgba(120, 120, 120, 0.6); }
+
+.gf-status-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.gf-status-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ─── Section Headers ────────────────────────────────────── */
+.gf-section-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(80, 80, 80, 0.3);
+}
+
+/* ─── Cards ──────────────────────────────────────────────── */
+.gf-card {
+  background: rgba(35, 35, 35, 0.95);
+  border: 1px solid rgba(80, 80, 80, 0.3);
+  border-radius: 6px;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+}
+
+.gf-card:hover {
+  border-color: rgba(120, 120, 120, 0.5);
+}
+
+.gf-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.gf-card-activity {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-blue);
+}
+
+.gf-card-goal {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: rgba(80, 80, 80, 0.4);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.gf-card-status {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
+.gf-card-status.open { background: rgba(0, 180, 0, 0.2); color: rgb(100, 255, 100); }
+.gf-card-status.pending { background: rgba(255, 200, 0, 0.2); color: rgb(255, 220, 100); }
+.gf-card-status.full { background: rgba(200, 100, 0, 0.2); color: rgb(255, 180, 100); }
+.gf-card-status.in_progress { background: rgba(0, 150, 255, 0.2); color: rgb(100, 200, 255); }
+.gf-card-status.stale { background: rgba(120, 120, 120, 0.2); color: rgb(160, 160, 160); }
+.gf-card-status.closed { background: rgba(80, 80, 80, 0.2); color: rgb(120, 120, 120); }
+
+.gf-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gf-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.gf-card-host {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-primary);
+}
+
+.gf-card-host .gf-status-dot {
+  width: 6px;
+  height: 6px;
+}
+
+.gf-card-notes {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 4px 0;
+  border-top: 1px solid rgba(80, 80, 80, 0.2);
+  margin-top: 2px;
+}
+
+.gf-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.gf-card-slots {
+  font-family: var(--font-mono);
+}
+
+.gf-card-slots .filled { color: var(--accent-green); }
+.gf-card-slots .empty { color: var(--text-muted); }
+
+.gf-card-tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.gf-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(70, 70, 70, 0.5);
+  color: var(--text-muted);
+}
+
+.gf-tag.lang { background: rgba(100, 180, 255, 0.15); color: rgb(140, 200, 255); }
+.gf-tag.region { background: rgba(180, 140, 255, 0.15); color: rgb(200, 170, 255); }
+
+.gf-card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(80, 80, 80, 0.2);
+}
+
+/* ─── Buttons ────────────────────────────────────────────── */
+.gf-btn {
+  background: rgba(60, 60, 60, 0.8);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  color: var(--text-primary);
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+
+.gf-btn:hover {
+  background: rgba(80, 80, 80, 0.9);
+  border-color: rgba(140, 140, 140, 0.5);
+}
+
+.gf-btn:active {
+  background: rgba(50, 50, 50, 0.9);
+}
+
+.gf-btn.primary {
+  background: rgba(30, 100, 220, 0.7);
+  border-color: rgba(60, 130, 255, 0.5);
+  color: #fff;
+}
+
+.gf-btn.primary:hover {
+  background: rgba(40, 120, 240, 0.85);
+}
+
+.gf-btn.success {
+  background: rgba(30, 150, 30, 0.6);
+  border-color: rgba(60, 200, 60, 0.4);
+  color: rgb(180, 255, 180);
+}
+
+.gf-btn.success:hover {
+  background: rgba(40, 170, 40, 0.75);
+}
+
+.gf-btn.danger {
+  background: rgba(180, 40, 40, 0.5);
+  border-color: rgba(220, 60, 60, 0.4);
+  color: rgb(255, 180, 180);
+}
+
+.gf-btn.danger:hover {
+  background: rgba(200, 50, 50, 0.7);
+}
+
+.gf-btn.small {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.gf-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.gf-btn-group {
+  display: flex;
+  gap: 6px;
+}
+
+/* ─── Forms ──────────────────────────────────────────────── */
+.gf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gf-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.gf-form-row.horizontal {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.gf-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.gf-select {
+  background: rgba(45, 45, 45, 0.9);
+  color: var(--text-primary);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.gf-select:focus {
+  outline: 1px solid rgba(135, 206, 250, 0.5);
+}
+
+.gf-input {
+  background: rgba(45, 45, 45, 0.9);
+  color: var(--text-primary);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  width: 100%;
+}
+
+.gf-input:focus {
+  outline: 1px solid rgba(135, 206, 250, 0.5);
+}
+
+.gf-textarea {
+  background: rgba(45, 45, 45, 0.9);
+  color: var(--text-primary);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  width: 100%;
+  resize: vertical;
+  min-height: 50px;
+  font-family: inherit;
+}
+
+.gf-textarea:focus {
+  outline: 1px solid rgba(135, 206, 250, 0.5);
+}
+
+/* ─── Filters Bar ────────────────────────────────────────── */
+.gf-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.gf-filters .gf-select {
+  width: auto;
+  min-width: 120px;
+}
+
+/* ─── Request Cards (in My Listing tab) ──────────────────── */
+.gf-request-card {
+  background: rgba(40, 40, 40, 0.9);
+  border: 1px solid rgba(80, 80, 80, 0.3);
+  border-radius: 5px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+
+.gf-request-card:hover {
+  border-color: rgba(120, 120, 120, 0.5);
+}
+
+.gf-request-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.gf-request-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gf-request-detail {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.gf-request-status {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.gf-request-status.pending { background: rgba(255, 200, 0, 0.2); color: rgb(255, 220, 100); }
+.gf-request-status.accepted { background: rgba(0, 180, 0, 0.2); color: rgb(100, 255, 100); }
+.gf-request-status.declined { background: rgba(180, 40, 40, 0.2); color: rgb(255, 140, 140); }
+.gf-request-status.invited { background: rgba(100, 180, 255, 0.2); color: rgb(140, 200, 255); }
+.gf-request-status.joined { background: rgba(0, 220, 0, 0.25); color: rgb(120, 255, 120); }
+
+.gf-request-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ─── Invite Workflow ────────────────────────────────────── */
+.gf-invite-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.gf-copy-btn {
+  background: rgba(50, 50, 50, 0.8);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  color: var(--text-primary);
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.12s;
+}
+
+.gf-copy-btn:hover {
+  background: rgba(70, 70, 70, 0.9);
+}
+
+.gf-copy-btn.copied {
+  background: rgba(0, 150, 0, 0.3);
+  border-color: rgba(0, 200, 0, 0.3);
+  color: rgb(120, 255, 120);
+}
+
+/* ─── Slot Indicators ────────────────────────────────────── */
+.gf-slots-visual {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.gf-slot-pip {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid rgba(100, 100, 100, 0.5);
+}
+
+.gf-slot-pip.filled {
+  background: var(--accent-green);
+  border-color: rgba(0, 200, 0, 0.4);
+}
+
+.gf-slot-pip.empty {
+  background: rgba(60, 60, 60, 0.6);
+}
+
+.gf-slot-pip.host {
+  background: var(--accent-blue);
+  border-color: rgba(100, 180, 255, 0.4);
+}
+
+/* ─── Empty State ────────────────────────────────────────── */
+.gf-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.gf-empty-icon {
+  font-size: 28px;
+  opacity: 0.3;
+  margin-bottom: 8px;
+}
+
+/* ─── Unconfigured / Disabled State ──────────────────────── */
+.gf-unconfigured {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--text-muted);
+}
+
+.gf-unconfigured h3 {
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.gf-unconfigured p {
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+.gf-unconfigured code {
+  background: rgba(60, 60, 60, 0.6);
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: 11px;
+}
+
+/* ─── Quick Create Button ────────────────────────────────── */
+.gf-quick-create {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(30, 100, 220, 0.15);
+  border: 1px dashed rgba(60, 130, 255, 0.4);
+  border-radius: 6px;
+  color: var(--accent-blue);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.gf-quick-create:hover {
+  background: rgba(30, 100, 220, 0.25);
+  border-color: rgba(60, 130, 255, 0.6);
+}
+
+/* ─── Modal / Create Form Overlay ────────────────────────── */
+.gf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+.gf-modal-overlay.hidden { display: none; }
+
+.gf-modal {
+  background: var(--bg-panel);
+  border: 1px solid rgba(100, 100, 100, 0.4);
+  border-radius: 8px;
+  width: 400px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.gf-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(100, 100, 100, 0.3);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.gf-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.gf-modal-close:hover {
+  background: rgba(232, 17, 35, 0.9);
+  color: #fff;
+}
+
+.gf-modal-body {
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Allow this flex child to shrink below its intrinsic content size so the
+     footer stays anchored at the modal's bottom edge. Without min-height:0 the
+     body keeps its full content height, pushes the footer below the modal's
+     max-height cap, and the action buttons get clipped (most visible at high
+     DPI scales like 4K \@ 250%, where 80vh is only ~648 DIPs). */
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.gf-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(100, 100, 100, 0.3);
+  flex-shrink: 0;
+}
+
+/* ─── Suggestion cards ───────────────────────────────────── */
+.gf-suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ─── Profile form ───────────────────────────────────────── */
+.gf-profile-saved {
+  font-size: 11px;
+  color: var(--accent-green);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gf-profile-saved.visible {
+  opacity: 1;
+}
+
+/* ─── Listing detail (My Listing tab) ────────────────────── */
+.gf-my-listing-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gf-listing-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.gf-listing-stat-label {
+  color: var(--text-muted);
+  min-width: 80px;
+}
+
+.gf-listing-stat-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ─── Scrollbar (override for gf panels) ─────────────────── */
+.gf-panel::-webkit-scrollbar {
+  width: 5px;
+}
+.gf-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.gf-panel::-webkit-scrollbar-thumb {
+  background: rgba(100, 100, 100, 0.3);
+  border-radius: 3px;
+}
+
+/* ─── Toast / Feedback ───────────────────────────────────── */
+.gf-toast {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 30, 0.95);
+  border: 1px solid var(--accent-green);
+  border-radius: 4px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: var(--accent-green);
+  z-index: 600;
+  animation: gf-toast-in 0.2s ease-out, gf-toast-out 0.3s ease-in 2s forwards;
+  pointer-events: none;
+}
+
+@keyframes gf-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes gf-toast-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* ─── "Your request" inline status on browse cards ───────── */
+.gf-my-request-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.gf-my-request-badge.pending { background: rgba(255, 200, 0, 0.2); color: rgb(255, 220, 100); }
+.gf-my-request-badge.accepted { background: rgba(0, 180, 0, 0.2); color: rgb(100, 255, 100); }
+.gf-my-request-badge.declined { background: rgba(180, 40, 40, 0.2); color: rgb(255, 140, 140); }
+.gf-my-request-badge.invited { background: rgba(100, 180, 255, 0.2); color: rgb(140, 200, 255); }
+
+/* ─── Loading spinner ────────────────────────────────────── */
+.gf-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(100, 100, 100, 0.3);
+  border-top-color: var(--accent-blue);
+  border-radius: 50%;
+  animation: gf-spin 0.6s linear infinite;
+}
+
+@keyframes gf-spin {
+  to { transform: rotate(360deg); }
+}

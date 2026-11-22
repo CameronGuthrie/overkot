@@ -1,0 +1,38 @@
+# Preserve the reviewed allowlist bytes used by collection catalogue validation.
+scripts/data/collection-availability.json text eol=lf
+
+/assets/fonts/OFL.txt -export-ignore text eol=lf
+
+# Omit local CDN fixtures from source archives.
+/assets/map-tiles export-ignore
+/assets/map-icons export-ignore
+/assets/map-json export-ignore
+/assets/tempers export-ignore
+
+# Keep machine-specific configuration and build output out of exports.
+.env export-ignore
+.env.* export-ignore
+/.env.example -export-ignore
+*.log export-ignore
+.build-log.txt export-ignore
+*.pem export-ignore
+*.key export-ignore
+*.pfx export-ignore
+*.tfstate export-ignore
+*.tfstate.* export-ignore
+*.tfvars export-ignore
+*.tfvars.json export-ignore
+*.tfplan export-ignore
+.terraform export-ignore
+terraform.tfstate.d export-ignore
+.build export-ignore
+.local export-ignore
+.firebase export-ignore
+.runtimeconfig.json export-ignore
+*-firebase-adminsdk-*.json export-ignore
+market-source export-ignore
+node_modules export-ignore
+/dist export-ignore
+/dist-beta export-ignore
+/output export-ignore
+/services.community.json export-ignore

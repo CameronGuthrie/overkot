@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: overkot-map-tiles: overkot-game-data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <title>Widget</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="calendar-widget.css">
+  <link rel="stylesheet" href="clock-widget.css">
+  <link rel="stylesheet" href="weather-widget.css">
+  <link rel="stylesheet" href="world-watch.css">
+  <link rel="stylesheet" href="build-exporter.css">
+  <link rel="stylesheet" href="temper-tracker.css">
+  <link rel="stylesheet" href="title-tracker.css">
+  <link rel="stylesheet" href="wolf-training.css">
+  <link rel="stylesheet" href="inventory-widget-ui.css">
+  <link rel="stylesheet" href="item-images.css">
+  <link rel="stylesheet" href="collection-tracker.css">
+  <link rel="stylesheet" href="collection-extras.css">
+  <link rel="stylesheet" href="mastery-sessions.css">
+  <link rel="stylesheet" href="player-widget.css">
+  <link rel="stylesheet" href="daily-brief.css">
+  <link rel="stylesheet" href="session-gains.css">
+  <link rel="stylesheet" href="equipment-progress.css">
+  <link rel="stylesheet" href="active-boons.css">
+  <link rel="stylesheet" href="account-wallet.css">
+  <link rel="stylesheet" href="storage-capacity.css">
+  <link rel="stylesheet" href="data-viewer.css">
+  <link rel="stylesheet" href="dungeon-map.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="widget-host.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="../modules/widgetSizing.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body class="widget-host-body">
+
+  <!-- ── Boss Timers ───────────────────────────────────── -->
+  <div class="timer-widget" data-widget="boss" role="group" aria-label="Boss Timers" style="display:none">
+    <div class="widget-body">
+      <div class="widget-timers"></div>
+      <div class="widget-empty no-timers hidden" data-i18n="noBossTimers">No boss timers.</div>
+    </div>
+  </div>
+
+  <!-- ── Crafting Timers ───────────────────────────────── -->
+  <div class="timer-widget" data-widget="crafting" role="group" aria-label="Crafting Timers" style="display:none">
+    <div class="widget-body">
+      <div class="widget-timers"></div>
+      <div class="widget-empty no-timers hidden" data-i18n="noCraftingTimers">No crafting timers.</div>
+    </div>
+  </div>
+
+  <!-- ── Other Timers ──────────────────────────────────── -->
+  <div class="timer-widget" data-widget="other" role="group" aria-label="Other Timers" style="display:none">
+    <div class="widget-body">
+      <div class="widget-timers"></div>
+      <div class="widget-empty no-timers hidden" data-i18n="noOtherTimers">No other timers.</div>
+    </div>
+  </div>
+
+  <!-- ── Daily Affiliation ─────────────────────────────── -->
+  <div class="timer-widget" data-widget="affiliation" role="group" aria-label="Daily Affiliation" style="display:none">
+    <div class="widget-body">
+      <div class="affiliation-content"></div>
+      <div class="widget-empty no-timers hidden" data-i18n="noAffiliationData">No affiliation data.</div>
+    </div>
+  </div>
+
+  <!-- ── Faction Standing ──────────────────────────────── -->
+  <div class="timer-widget" data-widget="factions" role="group" aria-label="Faction Standing" style="display:none">
+    <div class="widget-body">
+      <div class="factions-content"></div>
+      <div class="widget-empty no-timers hidden" data-i18n="noFactionData">No faction data.</div>
+    </div>
+  </div>
+
+  <!-- ── Ode Infamy ────────────────────────────────────── -->
+  <div class="timer-widget" data-widget="odeinfamy" role="group" aria-label="Ode Infamy" style="display:none">
+    <div class="widget-body">
+      <div class="odeinfamy-content"></div>
+      <div class="widget-empty no-timers hidden" data-i18n="noOdeInfamyData">No Ode Infamy data.</div>
+    </div>
+  </div>
+
+  <!-- ── Wiki Search ───────────────────────────────────── -->
+  <div class="timer-widget" data-widget="wiki" role="group" aria-label="Wiki Search" style="display:none">
+    <div class="widget-body">
+      <div class="wiki-search-content">
+        <div class="wiki-search-bar">
+          <span class="wiki-search-icon icon-search"></span>
+          <input type="text" id="wiki-search-input" class="wiki-search-input" placeholder="Search the wiki..." spellcheck="false">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Group Finder ──────────────────────────────────── -->
+  <div class="timer-widget" data-widget="groupfinder" role="group" aria-label="Group Finder" style="display:none">
+    <div class="widget-body">
+      <div class="gf-widget-content">
+        <div class="gf-widget-status">
+          <span class="gf-widget-dot offline" id="gf-widget-dot"></span>
+          <span id="gf-widget-status-text">Offline</span>
+        </div>
+        <div class="gf-widget-info">
+          <div class="gf-widget-row" id="gf-widget-listing-row">
+            <span class="gf-widget-label">My Listing:</span>
+            <span class="gf-widget-value" id="gf-widget-listing">None</span>
+          </div>
+          <div class="gf-widget-row">
+            <span class="gf-widget-label">Open Listings:</span>
+            <span class="gf-widget-value" id="gf-widget-listings-count">0</span>
+          </div>
+          <div class="gf-widget-row" id="gf-widget-requests-row" style="display:none">
+            <span class="gf-widget-label">Requests:</span>
+            <span class="gf-widget-value gf-widget-badge" id="gf-widget-requests">0</span>
+          </div>
+        </div>
+        <button class="gf-widget-open-btn" id="gf-widget-open-btn">Open Group Finder</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Arena Finder ────────────────────────── -->
+  <div class="timer-widget" data-widget="arena" role="group" aria-label="Arena Finder" style="display:none">
+    <div class="widget-body">
+      <div class="arena-content">
+        <div class="arena-status-row">
+          <span class="arena-status-dot" id="arena-status-dot"></span>
+          <span class="arena-status-text" id="arena-status-text">…</span>
+        </div>
+        <div class="arena-wave-row" id="arena-wave-row" style="display:none">
+          <div class="arena-wave-header">
+            <span class="arena-wave-label" id="arena-wave-label">Wave</span>
+            <span class="arena-wave-value" id="arena-wave-value">—</span>
+          </div>
+          <div class="timer-bar arena-wave-bar">
+            <div class="timer-bar-fill" id="arena-wave-fill" style="width:0%;background:var(--bar-color)"></div>
+            <div class="timer-bar-text" id="arena-wave-pct">0%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Mini-Map ──────────────────────────────────────── -->
+  <div class="timer-widget" data-widget="minimap" role="group" aria-label="Mini-Map" style="display:none">
+    <div class="widget-body">
+      <div class="minimap-content">
+        <div class="minimap-viewport" id="minimap-viewport">
+          <canvas id="minimap-canvas"></canvas>
+          <div class="minimap-loading" id="minimap-loading">Loading…</div>
+        </div>
+        <div class="minimap-controls">
+          <button class="minimap-ctrl-btn" id="minimap-zoom-in" title="Zoom in">+</button>
+          <button class="minimap-ctrl-btn" id="minimap-zoom-out" title="Zoom out">−</button>
+          <button class="minimap-ctrl-btn minimap-locate-btn" id="minimap-locate" title="Waiting for live player position" aria-label="Waiting for live player position" disabled><span class="icon-map-pin"></span></button>
+          <button class="minimap-ctrl-btn minimap-legend-btn" id="minimap-legend-btn" title="Map Legend"><span class="icon-eye"></span></button>
+          <button class="minimap-ctrl-btn minimap-expand-btn" id="minimap-expand" title="Open full map">⛶</button>
+        </div>
+        <div class="minimap-legend-panel hidden" id="minimap-legend-panel">
+          <div class="minimap-legend-title" id="minimap-legend-title">Map Legend</div>
+        </div>
+        <!-- Screenshot locate prompt retained for a future opt-in capture mode.
+        <div class="minimap-locate-overlay hidden" id="minimap-locate-overlay">
+          <div class="minimap-locate-hint">
+            Press <kbd>F6</kbd> in-game
+          </div>
+        </div>
+        -->
+      </div>
+    </div>
+  </div>
+
+  <div class="timer-widget" data-widget="world-watch" role="group" aria-label="World Watch" style="display:none">
+    <div class="widget-body"><div class="world-watch-content"></div></div>
+  </div>
+
+  <!-- Daily calendar -->
+<!-- Live Midrath clock -->
+  <div class="timer-widget" data-widget="clock" role="group" aria-label="Clock" style="display:none">
+    <div class="widget-body"><div class="clock-content"></div></div>
+  </div>
+
+  <div class="timer-widget" data-widget="weather" role="group" aria-label="Weather" style="display:none">
+    <div class="widget-body"><div class="weather-content"></div></div>
+  </div>
+
+  <div class="timer-widget" data-widget="build-exporter" role="group" aria-label="Build Exporter" style="display:none">
+    <div class="widget-body"><div class="build-exporter-content"></div></div>
+  </div>
+
+  <div class="timer-widget" data-widget="temper-tracker" role="group" aria-label="Temper Tracker" style="display:none">
+    <div class="widget-body"><div class="temper-content"></div></div>
+  </div>
+
+<div class="timer-widget" data-widget="player" role="group" aria-label="Player" style="display:none">
+    <div class="widget-body"><div class="player-content"></div></div>
+  </div>
+  <div class="timer-widget" data-widget="daily" role="group" aria-label="Daily Brief" style="display:none">
+    <div class="widget-body"><div class="daily-content"></div></div>
+  </div>
+
+  <div id="resize-handle" class="widget-resize-handle" title="Resize width and height · Hold Alt for 1 px precision" aria-label="Resize width and height"></div>
+  <output id="widget-size-readout" class="widget-size-readout" aria-live="off" hidden></output>
+
+  <div class="timer-widget" data-widget="collection-log" role="group" aria-label="Collection Log" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+  <div class="timer-widget" data-widget="cosmetics" role="group" aria-label="Cosmetics" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+  <div class="timer-widget" data-widget="mastery-tracker" role="group" aria-label="Envoy Rank & Mastery" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+  <div class="timer-widget" data-widget="resources" role="group" aria-label="Resources" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+  <div class="timer-widget" data-widget="enhancements" role="group" aria-label="Enhancements & Joineries" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+  <div class="timer-widget" data-widget="crafting-planner" role="group" aria-label="Crafting Planner" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+  <div class="timer-widget" data-widget="activity" role="group" aria-label="Activity" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+  <div class="timer-widget" data-widget="crafting-log" role="group" aria-label="Crafting Log" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+  <div class="timer-widget" data-widget="session-analysis" role="group" aria-label="Session Analysis" style="display:none"><div class="widget-body"><div class="collection-content"></div></div></div>
+
+  <div class="timer-widget" data-widget="title-tracker" role="group" aria-label="Title Tracker" style="display:none">
+    <div class="widget-body"><div class="title-content"></div></div>
+  </div>
+
+  <div class="timer-widget" data-widget="wolf-training" role="group" aria-label="Wolf Training" style="display:none">
+    <div class="widget-body"><div class="wolf-training-content"></div></div>
+  </div>
+
+  <div class="timer-widget" data-widget="data-inventory" role="group" aria-label="Data - Inventory" style="display:none">
+    <div class="widget-body"><div class="data-content"></div></div>
+  </div>
+  <div class="timer-widget" data-widget="data-ee-log" role="group" aria-label="Data - EE.log" style="display:none">
+    <div class="widget-body"><div class="data-content"></div></div>
+  </div>
+
+  <script src="shared-constants.js"></script>
+  <script src="inventory-format.js"></script>
+  <script src="data-viewer.js"></script>
+  <script src="timer-utils.js"></script>
+  <script src="widget-data.js"></script>
+  <script src="ancestor-markers.js"></script>
+  <script src="world-drop-markers.js"></script>
+  <script src="map-pois.js"></script>
+  <script src="../modules/dungeonExploration.js"></script>
+  <script src="../modules/playerMarkerMotion.js"></script>
+  <script src="../modules/mapAppearance.js"></script>
+  <script src="dungeon-map.js"></script>
+  <script src="minimap.js"></script>
+  <script src="calendar-widget.js"></script>
+  <script src="world-cycle.js"></script>
+  <script src="clock-widget.js"></script>
+  <script src="weather-widget.js"></script>
+  <script src="world-watch.js"></script>
+  <script src="build-exporter.js"></script>
+  <script src="../modules/trackerPreferences.js"></script>
+  <script src="temper-tracker.js"></script>
+  <script src="title-tracker.js"></script>
+  <script src="wolf-training.js"></script>
+  <script src="window-drag.js"></script>
+  <script src="inventory-widget-ui.js"></script>
+  <script src="../modules/gameDataImages.js"></script>
+  <script src="item-images.js"></script>
+  <script src="collection-tracker.js"></script>
+  <script src="collection-extras.js"></script>
+  <script src="mastery-sessions.js"></script>
+  <script src="session-gains.js"></script>
+  <script src="equipment-progress.js"></script>
+  <script src="active-boons.js"></script>
+  <script src="account-wallet.js"></script>
+  <script src="storage-capacity.js"></script>
+  <script src="player-widget.js"></script>
+  <script src="daily-brief.js"></script>
+  <script src="widget-host.js"></script>
+</body>
+</html>

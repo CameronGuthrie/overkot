@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <title>Calendar ancestors</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="calendar-widget.css">
+  <link rel="stylesheet" href="theme.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body class="calendar-settings">
+  <div id="titlebar" class="drag-region">
+    <span id="calendar-settings-title" class="title-text">Calendar ancestors</span>
+    <div class="titlebar-spacer"></div>
+    <button id="close-btn" class="titlebar-btn no-drag" title="Close" aria-label="Close"><span class="icon-close"></span></button>
+  </div>
+  <main>
+    <p id="calendar-settings-intro" class="calendar-settings-intro"></p>
+    <div id="calendar-account-source" class="calendar-account-source"></div>
+    <div id="calendar-ancestor-list"></div>
+    <button id="calendar-reset" class="calendar-reset" type="button"></button>
+    <div id="calendar-settings-error" class="calendar-error" role="status"></div>
+  </main>
+  <script src="shared-constants.js"></script>
+  <script src="calendar-settings.js"></script>
+</body>
+</html>

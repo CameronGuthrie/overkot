@@ -1,0 +1,25 @@
+.player-widget{min-width:0;color:var(--text-primary);font:12px var(--font-ui,system-ui),sans-serif}
+.player-widget [hidden]{display:none!important}
+.player-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-bottom:10px;padding-bottom:9px;border-bottom:1px solid var(--theme-border,rgba(255,255,255,.14))}
+.player-tab{min-width:0;padding:7px 3px;border:1px solid transparent;border-radius:5px;color:var(--text-secondary,inherit);background:transparent;font:inherit;font-size:11px;cursor:pointer;-webkit-app-region:no-drag}
+.player-tab:hover{background:var(--theme-control,rgba(255,255,255,.05))}
+.player-tab[aria-selected=true]{border-color:var(--theme-accent,var(--bar-color,#a7c5aa));color:var(--theme-accent,var(--bar-color,#a7c5aa));background:var(--theme-accent-soft,rgba(167,197,170,.09))}
+.player-widget :focus-visible{outline:2px solid var(--theme-accent,var(--bar-color,#a7c5aa));outline-offset:2px}
+.player-panel{min-width:0}
+.player-panel:focus{outline:none}
+.player-panel:focus-visible{outline:2px solid var(--theme-accent,var(--bar-color,#a7c5aa));outline-offset:2px}
+.player-overview{max-height:430px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--theme-border) transparent;overscroll-behavior:contain}
+.player-overview-section+.player-overview-section{border-top:1px solid var(--theme-border,rgba(255,255,255,.14));margin-top:12px;padding-top:12px}
+.player-section-heading{font-size:12px;font-weight:600;margin:0 0 4px;color:var(--text-primary)}
+.player-overview .inventory-widget-body{max-height:none;overflow:visible}
+.player-overview .inventory-widget-footer{font-size:10px}
+.player-wallet .inventory-widget-body{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.player-wallet .account-wallet-card{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:8px;margin:0;padding:9px 7px;min-width:0}
+.player-wallet .account-wallet-label{font-size:10px}.player-wallet .account-wallet-value{font-size:18px}
+.player-wallet .inventory-widget-body>.inventory-widget-muted{display:none}
+.player-wallet .inventory-widget-empty{grid-column:1/-1}
+.player-panel-session .session-gains-content{padding:0}
+.player-panel .inventory-widget-status:first-child{padding-top:0}
+.player-panel .inventory-widget-body{max-height:380px}
+.player-panel .player-overview .inventory-widget-body{max-height:none}
+@media(max-width:310px){.player-tab{font-size:10px}.player-tabs{gap:1px}}

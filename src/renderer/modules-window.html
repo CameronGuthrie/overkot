@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <title>Modules</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <style>
+    body {
+      background: var(--bg-panel) !important;
+      overflow-y: auto;
+      margin: 0;
+      padding: 0;
+    }
+    #modules-body {
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .module-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+      color: var(--text-primary);
+      transition: background 0.12s ease;
+    }
+    .module-toggle-row:hover {
+      background: rgba(60, 60, 60, 0.5);
+    }
+    .module-toggle-row input[type="checkbox"] {
+      accent-color: var(--accent-green);
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+    .module-toggle-name {
+      flex: 1;
+    }
+    .module-toggle-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+  </style>
+  <link rel="stylesheet" href="theme.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body>
+  <!-- Custom titlebar -->
+  <div id="titlebar" class="drag-region">
+    <span id="modules-title" class="title-text" style="font-size:14px;">Modules</span>
+    <div class="titlebar-spacer"></div>
+    <button id="close-btn" class="titlebar-btn no-drag" title="Close"><span class="icon-close"></span></button>
+  </div>
+
+  <div id="modules-body"></div>
+
+  <script src="shared-constants.js"></script>
+  <script src="modules-window.js"></script>
+</body>
+</html>

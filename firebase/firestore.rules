@@ -1,0 +1,116 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents/groupFinder/v2 {
+    function owns(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function boundedQuery() {
+      return request.query.limit >= 1 && request.query.limit <= 50
+          && request.query.get('offset', 0) == 0;
+    }
+    function safeAlias(s) {
+      return s is string && s.matches('[A-Za-z0-9.,_\\-]{4,32}');
+    }
+    function shortValue(s) {
+      return s is string && s.matches('[A-Za-z0-9 _\\-]{0,16}');
+    }
+    function validListingId(id) {
+      return id is string && id.matches('[a-zA-Z0-9]{1,64}');
+    }
+    function profilePath(uid) {
+      return /databases/$(database)/documents/groupFinder/v2/players/$(uid);
+    }
+    function listingPath(id) {
+      return /databases/$(database)/documents/groupFinder/v2/listings/$(id);
+    }
+    function capacityAvailable(timeField, idField, id, spacing) {
+      let path = profilePath(request.auth.uid);
+      let after = getAfter(path).data;
+      return (!exists(path) || !(timeField in get(path).data)
+          || get(path).data[timeField] < request.time - duration.value(spacing, 's'))
+          && after[timeField] == request.time && after[idField] == id;
+    }
+    match /players/{uid} {
+      function validProfile(fields) {
+        let d = request.resource.data;
+        return fields.hasOnly(['displayName','onlineStatus','groupSize','lastSeen',
+                  'primaryLanguage','secondaryLanguage','regionPreference',
+                  'lastListingId','lastListingAt','lastRequestId','lastRequestAt'])
+            && (!fields.hasAny(['displayName']) || safeAlias(d.displayName))
+            && (!fields.hasAny(['onlineStatus']) || d.onlineStatus == 'online')
+            && (!fields.hasAny(['groupSize']) || (d.groupSize is int && d.groupSize >= 1 && d.groupSize <= 4))
+            && (!fields.hasAny(['primaryLanguage']) || shortValue(d.primaryLanguage))
+            && (!fields.hasAny(['secondaryLanguage']) || d.secondaryLanguage == null || shortValue(d.secondaryLanguage))
+            && (!fields.hasAny(['regionPreference']) || shortValue(d.regionPreference))
+            && (!fields.hasAny(['lastSeen']) || d.lastSeen == request.time)
+            && (!fields.hasAny(['lastListingAt','lastListingId'])
+                || (d.keys().hasAll(['lastListingAt','lastListingId']) && d.lastListingAt == request.time && validListingId(d.lastListingId)))
+            && (!fields.hasAny(['lastRequestAt','lastRequestId'])
+                || (d.keys().hasAll(['lastRequestAt','lastRequestId']) && d.lastRequestAt == request.time && d.lastRequestId is string && d.lastRequestId.size() <= 200));
+      }
+      allow get: if owns(uid);
+      allow create: if owns(uid) && validProfile(request.resource.data.keys());
+      allow update: if owns(uid) && validProfile(request.resource.data.diff(resource.data).affectedKeys());
+    }
+    match /listings/{listingId} {
+      function validFields(d) {
+        return safeAlias(d.hostDisplayName)
+            && d.activityType in ['Boss / Encounter','Farming / Repeats','Quest / Progression',
+                                  'Exploration','Help / Teaching','General Grouping']
+            && d.goalType in ['Kill / Clear','Farm / Grind','Complete Quest','Explore / Discover',
+                              'Learn / Teach','Just Hanging Out','Other']
+            && d.languageRequirement in ['none','preferred','required']
+            && d.regionRequirement in ['none','preferred','required']
+            && shortValue(d.languageValue) && shortValue(d.regionValue)
+            && d.slotsTotal is int && d.slotsTotal >= 2 && d.slotsTotal <= 4
+            && d.slotsFilled is int && d.slotsFilled >= 1 && d.slotsFilled <= d.slotsTotal;
+      }
+      allow get: if request.auth != null;
+      allow list: if request.auth != null && boundedQuery();
+      allow create: if validListingId(listingId)
+          && owns(request.resource.data.hostPlayer) && owns(request.resource.data.createdByUid)
+          && request.resource.data.keys().hasOnly(['hostPlayer','hostDisplayName','createdByUid',
+                'activityType','goalType','slotsTotal','slotsFilled','status','languageRequirement',
+                'languageValue','regionRequirement','regionValue','createdAt','expiresAt'])
+          && validFields(request.resource.data) && request.resource.data.status == 'open'
+          && request.resource.data.slotsFilled == 1 && request.resource.data.createdAt == request.time
+          && request.resource.data.expiresAt is timestamp && request.resource.data.expiresAt > request.time
+          && request.resource.data.expiresAt <= request.time + duration.value(5, 'h')
+          && capacityAvailable('lastListingAt', 'lastListingId', listingId, 60);
+      allow update: if owns(resource.data.hostPlayer) && owns(resource.data.createdByUid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['activityType','goalType',
+                 'status','slotsFilled','languageRequirement','languageValue','regionRequirement',
+                 'regionValue','hostDisplayName'])
+          && request.resource.data.status in ['open','pending','full','in_progress','stale','closed']
+          && validFields(request.resource.data);
+    }
+    match /listingRequests/{id} {
+      function participant(d) {
+        return owns(d.playerId) || owns(get(listingPath(d.listingId)).data.hostPlayer);
+      }
+      allow get: if request.auth != null && participant(resource.data);
+      allow list: if request.auth != null && boundedQuery() && participant(resource.data);
+      allow create: if owns(request.resource.data.playerId) && owns(request.resource.data.requesterUid)
+          && validListingId(request.resource.data.listingId)
+          && id == request.resource.data.listingId + '_' + request.auth.uid
+          && get(listingPath(request.resource.data.listingId)).data.status == 'open'
+          && !owns(get(listingPath(request.resource.data.listingId)).data.hostPlayer)
+          && request.resource.data.keys().hasOnly(['playerId','playerDisplayName','requesterUid',
+                                                  'listingId','status','requestedAt','respondedAt'])
+          && request.resource.data.status == 'pending' && request.resource.data.respondedAt == null
+          && request.resource.data.requestedAt == request.time && safeAlias(request.resource.data.playerDisplayName)
+          && capacityAvailable('lastRequestAt', 'lastRequestId', id, 30);
+      allow update: if request.auth != null
+          && ((owns(resource.data.requesterUid) && owns(resource.data.playerId)
+               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerDisplayName'])
+               && safeAlias(request.resource.data.playerDisplayName))
+             || (owns(get(listingPath(resource.data.listingId)).data.hostPlayer)
+               && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','respondedAt'])
+               && request.resource.data.status in ['accepted','declined','invited','joined']
+               && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['respondedAt'])
+                   || request.resource.data.respondedAt == request.time)));
+      allow delete: if owns(resource.data.requesterUid) && owns(resource.data.playerId);
+    }
+  }
+}

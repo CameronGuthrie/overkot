@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "groupFinder": {
+      "v2": {
+        "presence": {
+          "$playerId": {
+            ".write": "auth != null && auth.uid === $playerId && newData.exists()",
+            "online": {
+              ".read": "auth != null",
+              ".validate": "newData.isBoolean()"
+            },
+            "displayName": {
+              ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9.,_-]{4,32}$/)"
+            },
+            "groupSize": {
+              ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 4 && newData.val() % 1 == 0"
+            },
+            "lastHeartbeat": {
+              ".validate": "newData.isNumber() && newData.val() == now"
+            },
+            "lastSeen": {
+              ".validate": "newData.isNumber() && newData.val() == now"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

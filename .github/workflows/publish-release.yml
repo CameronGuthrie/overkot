@@ -1,0 +1,130 @@
+name: Publish retained GitHub release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+      source_run_id:
+        type: string
+        required: true
+      require_linux:
+        type: boolean
+        default: false
+      require_portable:
+        type: boolean
+        default: false
+      require_arch:
+        type: boolean
+        default: false
+      scope:
+        type: string
+        default: all
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Existing version tag, e.g. v0.0.12-beta.1'
+        type: string
+        required: true
+      source_run_id:
+        description: 'Build & Release App run containing the original retained release artifacts'
+        type: string
+        required: true
+      scope:
+        description: 'Platforms in the retained release (must match its versioned notes)'
+        type: choice
+        options: [all, linux]
+        default: all
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: github-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.repository_id == '1467149183' && github.repository == 'CameronGuthrie/overkot' && github.ref_protected &&
+      github.repository_owner_id == '76098008' &&
+      github.actor_id == '76098008' &&
+      github.triggering_actor == github.repository_owner
+    environment: production-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - run: npm ci --omit=dev --ignore-scripts
+
+      - name: Check publication recovery behavior
+        run: node --test test/publishRelease.test.js test/releasePipeline.test.js
+
+      - name: Validate source artifact
+        id: source
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.version }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          REQUIRE_LINUX: ${{ inputs.require_linux }}
+          REQUIRE_PORTABLE: ${{ inputs.require_portable }}
+          REQUIRE_ARCH: ${{ inputs.require_arch }}
+          RELEASE_SCOPE: ${{ inputs.scope }}
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$') { throw 'Invalid release tag.' }
+          if ($env:SOURCE_RUN_ID -notmatch '^\d+$') { throw 'Invalid source run ID.' }
+          $run = gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/$env:SOURCE_RUN_ID" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($run.path -ne '.github/workflows/build-app.yml') { throw 'Source must be the app build workflow.' }
+          $commit = git rev-parse "$($env:RELEASE_TAG)^{commit}"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($run.head_sha -ne $commit) { throw 'Build artifact commit does not match the release tag.' }
+          $artifacts = gh api --paginate "repos/$env:GITHUB_REPOSITORY/actions/runs/$env:SOURCE_RUN_ID/artifacts" --jq '.artifacts[].name'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if ($env:RELEASE_SCOPE -notin @('all', 'linux')) { throw 'Invalid release scope.' }
+          $suffix = if ($env:RELEASE_SCOPE -eq 'linux') { '-linux' } else { '' }
+          $combined = "overkot-release$suffix-$commit"
+          $linux = "overkot-linux-deb-$commit"
+          $portable = "overkot-linux-$commit"
+          if ($artifacts -contains $combined) {
+            "artifact=$combined" >> $env:GITHUB_OUTPUT
+            'require_linux=true' >> $env:GITHUB_OUTPUT
+            "require_portable=$(($env:REQUIRE_PORTABLE -eq 'true' -or $artifacts -contains $portable).ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+            "require_arch=$(($env:REQUIRE_ARCH -eq 'true').ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          } elseif ($env:RELEASE_SCOPE -eq 'linux' -or $env:REQUIRE_LINUX -eq 'true' -or $env:REQUIRE_PORTABLE -eq 'true' -or $env:REQUIRE_ARCH -eq 'true' -or $artifacts -contains $linux -or $artifacts -contains $portable) {
+            throw 'This build requires the complete Windows/Linux artifact and scan metadata; it cannot be recovered as Windows-only.'
+          } else {
+            # Historical runs predate Linux publication and retain only Windows.
+            "artifact=overkot-windows-$commit" >> $env:GITHUB_OUTPUT
+            'require_linux=false' >> $env:GITHUB_OUTPUT
+            'require_portable=false' >> $env:GITHUB_OUTPUT
+            'require_arch=false' >> $env:GITHUB_OUTPUT
+          }
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ steps.source.outputs.artifact }}
+          path: dist
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.source_run_id }}
+
+      - name: Publish exact retained files with retries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.version }}
+          RELEASE_REQUIRE_LINUX: ${{ steps.source.outputs.require_linux }}
+          RELEASE_REQUIRE_PORTABLE: ${{ steps.source.outputs.require_portable }}
+          RELEASE_REQUIRE_ARCH: ${{ steps.source.outputs.require_arch }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: node scripts/publish-release.js

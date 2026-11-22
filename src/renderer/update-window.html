@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';">
+  <title>Overkot updates</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="update-window.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body>
+  <div id="titlebar" class="drag-region">
+    <span class="title-text" id="update-title">Overkot updates</span>
+    <div class="titlebar-spacer"></div>
+    <button id="close-btn" class="titlebar-btn no-drag" title="Close" aria-label="Close"><span class="icon-close" aria-hidden="true"></span></button>
+  </div>
+  <main>
+    <section class="update-hero" aria-labelledby="update-heading">
+      <div class="update-logo"><img id="update-app-icon" src="../../assets/overkot.png" alt="Overkot" width="76" height="76"></div>
+      <div class="update-identity"><p id="update-eyebrow" class="update-eyebrow">APP UPDATE</p><h1 id="update-heading">Overkot</h1><p id="update-version-path" hidden></p></div>
+    </section>
+    <p id="update-status" role="status" aria-live="polite"></p>
+    <section id="update-progress-card" aria-label="Update progress">
+      <div class="update-progress-heading"><strong id="update-progress-label">Checking for updates</strong><span id="update-percent" aria-hidden="true"></span></div>
+      <progress id="update-progress" max="100" aria-label="Update progress"></progress>
+      <p id="update-transfer" class="update-transfer"></p>
+    </section>
+    <section id="update-notes-section" class="update-release" hidden><h2 id="update-notes-heading">What’s new</h2><ul id="update-notes"></ul></section>
+    <p id="update-policy">Downloads and installation start only when you choose.</p>
+  </main>
+  <footer>
+    <button id="update-later" type="button" class="update-secondary">Later</button>
+    <button id="update-check" type="button">Check for updates</button>
+    <button id="update-download" type="button" class="update-primary" hidden>Download update</button>
+    <button id="update-install" type="button" class="update-primary" hidden>Restart and install</button>
+    <button id="update-installer" type="button" class="update-primary" hidden>Download installer</button>
+  </footer>
+  <script src="shared-constants.js"></script>
+  <script src="update-window.js"></script>
+</body>
+</html>

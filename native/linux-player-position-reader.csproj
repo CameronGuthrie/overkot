@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>
+    <PublishAot>true</PublishAot>
+    <StaticOpenSslLinking>true</StaticOpenSslLinking>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>LINUX</DefineConstants>
+    <AssemblyName>overkot-position-reader-core</AssemblyName>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <StripSymbols>true</StripSymbols>
+    <IlcTreatWarningsAsErrors>true</IlcTreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="player-position-reader.cs" />
+    <Compile Include="linux-player-position-reader.cs" />
+    <Compile Include="world-drop-shiny.cs" />
+  </ItemGroup>
+</Project>

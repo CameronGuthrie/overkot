@@ -1,0 +1,22 @@
+{
+  "description": "Exact room identity verified from installed H.AnimRetarget/B.AnimRetarget cache records; image numbers are from the exported Glades rooms.json and are not identifiers used by the app.",
+  "room": "GoAxDeadendGarrenRood",
+  "level_path": "/SF/Levels/Procs/GladesofAndurin/GoAxDeadendGarrenRood.level",
+  "export_image": "24.webp",
+  "script_trigger": "ArenaScriptTrigger",
+  "script": "/SF/Scripts/Levels/UnderCityArena.lua",
+  "function": "Mission",
+  "ai_spec": "/SF/Types/Game/AiSpecs/GladesArenaAiSpec",
+  "body_sha256": "6fb3e86e5f217929e30531977e94de42577f200f477e05f8eaec49956d51f1f5",
+  "excluded_quest_room": {
+    "room": "GoAxGarrenRoodBossArena",
+    "export_image": "32.webp",
+    "scripts": ["/SF/Scripts/Bosses/GarrenFight.lua", "/SF/Scripts/Quests/StagQuest.lua"],
+    "header_sha256": "21dc62a49294c3fb70af8a6ef3a8bb6030679cea0983a855e63ba95e1e2f7d52"
+  },
+  "test_vectors": {
+    "description": "Synthetic complete two-room fingerprints using the real gladesProcLevel.json component order, portal counts, caps and attachment metadata; these are not live dungeon captures.",
+    "arena": "DeI",
+    "without_arena": "DWI"
+  }
+}

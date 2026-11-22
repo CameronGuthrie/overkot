@@ -1,0 +1,547 @@
+{
+  "schema": 1,
+  "level_path": "/SF/Levels/Procs/GladesofAndurin/GladesProcLevel",
+  "set": "GladesofAndurin",
+  "coordinate_space": "layout-local",
+  "tree_only": false,
+  "index_bits": 5,
+  "serialization": {
+    "format": "tree-caps-attachments-v1",
+    "attachment_type_bits": 3,
+    "attachment_counts": [
+      2,
+      2,
+      0,
+      2,
+      0
+    ],
+    "cinematic_count": 0,
+    "backdrop_count": 1
+  },
+  "spawns": [
+    {
+      "room": "GoAxStreamingTileA",
+      "kind": "spawn",
+      "portals": [
+        {
+          "position": [
+            0,
+            3.5,
+            -26
+          ],
+          "normal": [
+            0,
+            0,
+            -1
+          ]
+        }
+      ]
+    }
+  ],
+  "components": [
+    {
+      "room": "GoAxIntGladeThicket",
+      "kind": "interior",
+      "portal_count": 3
+    },
+    {
+      "room": "GoAxConRavine",
+      "kind": "interior",
+      "portal_count": 3
+    },
+    {
+      "room": "GoAxIntGrove",
+      "kind": "interior",
+      "portal_count": 4
+    },
+    {
+      "room": "GoAxIntCorruptedGlade",
+      "kind": "interior",
+      "portal_count": 3
+    },
+    {
+      "room": "GoAxIntCorruptedWaterHole",
+      "kind": "interior",
+      "portal_count": 4
+    },
+    {
+      "room": "GoAxConA",
+      "kind": "interior",
+      "portal_count": 3
+    },
+    {
+      "room": "GoAxConB",
+      "kind": "interior",
+      "portals": [
+        {
+          "position": [
+            110,
+            -16.099998474121094,
+            -67
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "position": [
+            10,
+            -11.15000057220459,
+            -95
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxConCorruptedDeepWater",
+      "kind": "interior",
+      "portal_count": 3
+    },
+    {
+      "room": "GoAxConCorruptedCrossRoad",
+      "kind": "interior",
+      "portal_count": 4
+    },
+    {
+      "room": "GoAxConJauntRuinsTiered",
+      "kind": "interior",
+      "portals": [
+        {
+          "position": [
+            27.5,
+            10.5,
+            62
+          ],
+          "normal": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "position": [
+            59,
+            38,
+            6
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "position": [
+            -2.000049591064453,
+            30.99995231628418,
+            -0.00008392333984375
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxStreamingExitA",
+      "kind": "exit",
+      "portals": [
+        {
+          "position": [
+            16.5,
+            4.25,
+            7.75
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxConJaunt",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "GoAxConJauntRuins",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "GoAxConJauntZigZag",
+      "kind": "connector",
+      "portals": [
+        {
+          "position": [
+            25.5,
+            3.5,
+            -101
+          ],
+          "normal": [
+            0,
+            0,
+            -1
+          ]
+        },
+        {
+          "position": [
+            53.00004577636719,
+            30.999996185302734,
+            -45.99995040893555
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "position": [
+            -10.000049591064453,
+            30.99995231628418,
+            -0.00008392333984375
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxConCorruptedCaveA",
+      "kind": "connector",
+      "portals": [
+        {
+          "position": [
+            34.00000762939453,
+            3.499985694885254,
+            59.49998474121094
+          ],
+          "normal": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "position": [
+            0,
+            7,
+            -4
+          ],
+          "normal": [
+            0,
+            0,
+            -1
+          ]
+        },
+        {
+          "position": [
+            74.5,
+            8.999985694885254,
+            15.999991416931152
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxConCorruptedTransitionCave",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "GoAxExitBossOpening",
+      "kind": "connector",
+      "portals": [
+        {
+          "position": [
+            53.000022888183594,
+            10.24999713897705,
+            4.000009059906006
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "position": [
+            -6.000049591064453,
+            30.99995231628418,
+            4.999916076660156
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxExitBossCave",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "GoAxSpawnGlade",
+      "kind": "connector",
+      "portal_count": 4
+    },
+    {
+      "room": "GoAxSpawnCorruptedRuins",
+      "kind": "connector",
+      "portals": [
+        {
+          "position": [
+            -15.049999237060547,
+            21.30000877380371,
+            83.5
+          ],
+          "normal": [
+            0,
+            0,
+            1
+          ]
+        },
+        {
+          "position": [
+            60.5,
+            4,
+            48.849998474121094
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        },
+        {
+          "position": [
+            -76,
+            38.75,
+            38.75
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        },
+        {
+          "position": [
+            11.75000286102295,
+            9.99999713897705,
+            -9.749955177307129
+          ],
+          "normal": [
+            0,
+            0,
+            -1
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxConCorruptedTransitionOpenToCave",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "GoAxConJauntPond",
+      "kind": "connector",
+      "portals": [
+        {
+          "position": [
+            -0.000049591064453125,
+            30.99995231628418,
+            -0.00008392333984375
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        },
+        {
+          "position": [
+            43.50004577636719,
+            30.999996185302734,
+            0.000049591064453125
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxConSpiritsHall",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "GoAxDeadendA",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "GoAxDeadendSpirits",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "GoAxDeadendSpring",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "GoAxDeadendCorruptedDen",
+      "kind": "dead_end",
+      "portals": [
+        {
+          "position": [
+            -42,
+            31.25,
+            14.25
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxDeadendGarrenRood",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "GoAxDeadendCorruptedStags",
+      "kind": "dead_end",
+      "portals": [
+        {
+          "position": [
+            -37,
+            7,
+            0
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxDeadEndBramble",
+      "kind": "dead_end",
+      "portals": [
+        {
+          "position": [
+            0,
+            31,
+            5
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxSpecialCheckpointA",
+      "kind": "special",
+      "portals": [
+        {
+          "position": [
+            5.999950408935547,
+            30.99995231628418,
+            -0.00008392333984375
+          ],
+          "normal": [
+            -1,
+            0,
+            0
+          ]
+        },
+        {
+          "position": [
+            31.000045776367188,
+            30.999996185302734,
+            0.000049591064453125
+          ],
+          "normal": [
+            1,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "room": "GoAxSpecialCheckpointB",
+      "kind": "special",
+      "portal_count": 2
+    }
+  ],
+  "caps": [
+    {
+      "room": "GoAxCaveCapA"
+    },
+    {
+      "room": "GoAxSafeCapA"
+    },
+    {
+      "room": "GoAxCapB"
+    },
+    {
+      "room": "GoAxSafeCapDoorway"
+    },
+    {
+      "room": "GoAxSafeCapOpening"
+    },
+    {
+      "room": "GoAxCapOpeningSpiritTrees"
+    },
+    {
+      "room": "GoAxCapOpeningCorruptedFlow"
+    },
+    {
+      "room": "GoAxCaveCapCorruptedPolluters"
+    },
+    {
+      "room": "GoAxCaveCapShrine"
+    },
+    {
+      "room": "GoAxSafeCapSpawnDoorway"
+    }
+  ]
+}

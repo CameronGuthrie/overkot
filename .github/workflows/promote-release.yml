@@ -1,0 +1,103 @@
+name: Promote retained release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Existing reviewed release tag, e.g. v0.0.13'
+        type: string
+        required: true
+      source_run_id:
+        description: 'Successful Build & Release App run retaining the original scanned release'
+        type: string
+        required: true
+
+permissions:
+  actions: read
+  contents: write
+  id-token: write
+
+concurrency:
+  group: app-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_TAG: ${{ inputs.version }}
+  RELEASE_PUBLISH: 'true'
+  RELEASE_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+  RELEASE_REQUIRE_LINUX: 'true'
+  RELEASE_REQUIRE_PORTABLE: 'true'
+  RELEASE_REQUIRE_ARCH: 'true'
+  SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+
+jobs:
+  promote:
+    if: >-
+      github.repository_id == '1467149183' && github.repository == 'CameronGuthrie/overkot' && github.ref_protected &&
+      github.repository_owner_id == '76098008' &&
+      github.actor_id == '76098008' &&
+      github.triggering_actor == github.repository_owner
+    environment: production-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Validate the requested release tag before checkout
+        shell: bash
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$ ]]
+      # The workflow can be repaired on main while release code and bytes stay
+      # pinned to the original tag. GITHUB_SHA identifies main, not this checkout.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/tags/${{ inputs.version }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - run: npm ci --omit=dev --ignore-scripts
+      - name: Verify release tag, notes and required configuration
+        id: release
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN != '' && 'configured' || '' }}
+          CLOUDFRONT_DISTRIBUTION_ID_RELEASES: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_RELEASES != '' && 'configured' || '' }}
+        run: node scripts/validate-release.js --cdn
+      - name: Verify the successful source run and complete retained artifact
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const { validateSourceTag } = require('./scripts/validate-release');
+          const { releaseScope } = require('./scripts/release-artifacts');
+          const { retainedInventory, releaseArtifactName } = require('./scripts/retained-release');
+          validateSourceTag(process.env.RELEASE_TAG, undefined, { requireTag: true });
+          const sha = execFileSync('git', ['rev-parse', 'HEAD^{commit}'], { encoding: 'utf8' }).trim();
+          const scope = releaseScope(process.env.RELEASE_TAG, require('./changelog.json'));
+          const state = retainedInventory({ repository: process.env.GITHUB_REPOSITORY,
+            runId: process.env.GITHUB_RUN_ID, sha, sourceRunId: process.env.RELEASE_SOURCE_RUN_ID, scope });
+          fs.appendFileSync(process.env.GITHUB_OUTPUT,
+            `artifact=${releaseArtifactName(sha, scope)}\nsource_run_id=${state.source_run_id}\n`);
+          NODE
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ steps.source.outputs.artifact }}
+          path: dist
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.source.outputs.source_run_id }}
+      - name: Check publication recovery behavior
+        run: node --test test/publishRelease.test.js test/releasePipeline.test.js
+      - uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Publish verified immutable files and CDN pointers
+        env:
+          CLOUDFRONT_DISTRIBUTION_ID_RELEASES: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_RELEASES }}
+        run: node scripts/publish-cdn.js
+      - name: Publish the same retained files to GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/publish-release.js

@@ -1,0 +1,190 @@
+{
+  "name": "overkot",
+  "version": "0.0.20",
+  "description": "Overkot",
+  "homepage": "https://github.com/CameronGuthrie/overkot",
+  "main": "src/main.js",
+  "scripts": {
+    "assets:icons": "node scripts/build-app-icons.js",
+    "check:installer-branding": "node scripts/check-installer-branding.js",
+    "i18n:check": "node langs/scripts/check.cjs && node scripts/check-interface-messages.js",
+    "data:calendar": "node scripts/build-calendar-data.js",
+    "data:affiliation": "node scripts/build-affiliation-rules.js",
+    "data:wolf": "node scripts/build-wolf-progression.js",
+    "data:collection": "node scripts/build-collection-data.js",
+    "data:collection:availability": "node scripts/build-collection-availability.js",
+    "market:build": "node scripts/build-market-ui.js",
+    "prestart": "node scripts/build-market-ui.js",
+    "predev": "node scripts/build-market-ui.js",
+    "start": "electron .",
+    "dev": "electron . --log",
+    "pack": "node scripts/build.js --dir",
+    "dist": "node scripts/build.js",
+    "build": "node scripts/build.js",
+    "build:win": "node scripts/build.js --win",
+    "build:linux": "node scripts/build.js --linux",
+    "build:linux:portable": "node scripts/build.js --linux --portable",
+    "build:deb": "node scripts/build.js --linux --deb",
+    "build:arch": "node scripts/build.js --linux --pacman",
+    "build:arch:portable": "node scripts/build.js --linux --portable",
+    "build:mac": "node scripts/build.js --mac",
+    "build:inspect": "node scripts/build.js --inspect-config",
+    "build:bundle": "node scripts/build.js",
+    "build:bundle:no-obfuscate": "node scripts/build.js",
+    "build:no-obfuscate": "node scripts/build.js",
+    "build:portable": "node scripts/build.js --portable",
+    "build:portable:no-obfuscate": "node scripts/build.js --portable",
+    "build:portable:fast": "node scripts/build.js --portable --fast",
+    "build:beta:portable": "node scripts/build.js --win --portable --beta",
+    "build:beta:pack": "node scripts/build.js --win --dir --beta",
+    "build:prepare": "node scripts/build.js --prepare-only",
+    "build:scanner": "node scripts/build-scanner.js",
+    "build:position-reader": "node scripts/build-position-reader.js --output-dir .build/bin",
+    "build:scanner:linux": "node scripts/build-linux-scanner.js",
+    "build:position-reader:linux": "node scripts/build-linux-position-reader.js",
+    "build:overlay:linux": "node scripts/build-linux-overlay.js",
+    "test": "node --test",
+    "data:build": "node scripts/build-data.js"
+  },
+  "build": {
+    "appId": "com.overkot.app",
+    "productName": "Overkot",
+    "artifactName": "overkot-setup-${version}.${ext}",
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/overkot.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm",
+        "pacman"
+      ],
+      "artifactName": "overkot-${version}-linux-${arch}.${ext}",
+      "icon": "assets/overkot.png",
+      "category": "Game",
+      "maintainer": "Overkot"
+    },
+    "appImage": {
+      "executableArgs": [
+        "--"
+      ]
+    },
+    "deb": {
+      "depends": [
+        "libgtk-3-0 | libgtk-3-0t64",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libx11-6",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0 | libatspi2.0-0t64",
+        "libuuid1",
+        "libsecret-1-0",
+        "libasound2 | libasound2t64",
+        "libgbm1",
+        "libcap2-bin",
+        "libcups2 | libcups2t64"
+      ]
+    },
+    "rpm": {
+      "depends": [
+        "gtk3",
+        "libnotify",
+        "nss",
+        "libXScrnSaver",
+        "libX11",
+        "(libXtst or libXtst6)",
+        "xdg-utils",
+        "at-spi2-core",
+        "(libuuid or libuuid1)",
+        "libsecret",
+        "alsa-lib",
+        "mesa-libgbm",
+        "cups-libs"
+      ]
+    },
+    "pacman": {
+      "artifactName": "overkot-${version}-linux-${arch}.pkg.tar.xz",
+      "compression": "xz",
+      "depends": [
+        "alsa-lib",
+        "gtk3",
+        "libnotify",
+        "nss",
+        "libxss",
+        "libx11",
+        "libxtst",
+        "libsecret",
+        "mesa",
+        "xdg-utils",
+        "at-spi2-core",
+        "util-linux-libs",
+        "libcups",
+        "libcap"
+      ]
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "artifactName": "overkot-${version}-mac-${arch}.${ext}",
+      "icon": "assets/overkot.png",
+      "category": "public.app-category.games"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false,
+      "include": "scripts/installer.nsh",
+      "installerIcon": "assets/overkot.ico",
+      "uninstallerIcon": "assets/overkot.ico",
+      "installerHeader": "assets/installer-header.bmp",
+      "installerSidebar": "assets/installer-sidebar.bmp",
+      "uninstallerSidebar": "assets/installer-sidebar.bmp",
+      "allowElevation": false,
+      "packElevateHelper": false
+    },
+    "publish": null,
+    "files": [
+      "src/**/*",
+      "langs/*.json",
+      "langs/flags/*.png",
+      "assets/**/*",
+      "!assets/bin/**",
+      "!assets/fonts/**",
+      "!assets/new-icons/**",
+      "!assets/tempers/**",
+      "changelog.json",
+      "LICENSE",
+      "!firebase/**",
+      "!node_modules/**"
+    ]
+  },
+  "keywords": [
+    "avakot",
+    "overlay",
+    "soulframe",
+    "electron"
+  ],
+  "author": "",
+  "license": "AGPL-3.0-only",
+  "dependencies": {
+    "axios": "^1.7.0",
+    "electron-updater": "^6.3.0",
+    "firebase": "^11.10.0",
+    "semver": "^7.6.0"
+  },
+  "devDependencies": {
+    "electron": "^40.10.6",
+    "electron-builder": "^26.8.1",
+    "esbuild": "^0.25.12"
+  }
+}

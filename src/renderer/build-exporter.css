@@ -1,0 +1,5 @@
+.build-exporter-content { padding: 12px; color: var(--text-primary); }
+.build-exporter-button { -webkit-app-region: no-drag; display: block; width: 100%; padding: 9px 10px; border-radius: 4px; border: 1px solid var(--theme-border); background: var(--theme-accent-soft); color: var(--theme-accent); font: 600 12px var(--font-ui, system-ui), sans-serif; cursor: pointer; }
+.build-exporter-button:hover:not(:disabled) { border-color: var(--theme-accent); }
+.build-exporter-button:disabled { opacity: .45; cursor: default; }
+.build-exporter-button[data-error=true] { color: var(--theme-secondary); border-color: var(--theme-secondary); }

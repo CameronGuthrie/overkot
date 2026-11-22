@@ -1,0 +1,4 @@
+.account-wallet-card{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:13px 10px;margin:5px 0;border:1px solid rgba(255,255,255,.1);border-radius:7px;background:rgba(255,255,255,.025)}
+.account-wallet-label{font-size:12px;opacity:.8}
+.account-wallet-value{font-size:21px;font-variant-numeric:tabular-nums;color:var(--bar-color,#c5aa72)}
+.account-wallet-allowance .account-wallet-value{font-size:17px;color:inherit}

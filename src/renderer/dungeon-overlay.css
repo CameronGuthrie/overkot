@@ -1,0 +1,102 @@
+html:has(.dungeon-overlay-body),
+.dungeon-overlay-body {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  background: transparent !important;
+}
+
+.dungeon-overlay-body #dungeon-overlay,
+.dungeon-overlay-body .dungeon-map {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+
+.dungeon-overlay-body .dungeon-map-viewport {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  aspect-ratio: auto;
+  border-radius: 0;
+  background: transparent !important;
+}
+
+.dungeon-overlay-body .dungeon-map-heading,
+.dungeon-overlay-body .dungeon-map-room-count,
+.dungeon-overlay-body .dungeon-map-footer {
+  display: none;
+}
+
+.dungeon-overlay-body .dungeon-map-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid rgba(210, 228, 222, .35);
+  border-radius: 9px;
+  background: rgba(10, 18, 21, .88);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .3);
+}
+
+.dungeon-overlay-body .dungeon-map-controls button {
+  flex-basis: 32px;
+  height: 32px;
+  font-size: 18px;
+}
+
+.dungeon-overlay-body .dungeon-map-controls [data-action="close"] {
+  margin-left: 4px;
+  color: #eaf4f0;
+  font-size: 23px;
+}
+
+.dungeon-overlay-body[data-dock-edge="top"] .dungeon-map-controls {
+  top: 64px;
+}
+
+.dungeon-overlay-body[data-dock-edge="right"] .dungeon-map-controls {
+  right: 64px;
+}
+
+.dungeon-overlay-body .dungeon-map-empty:not([hidden]) {
+  inset: auto;
+  left: 50%;
+  top: 50%;
+  width: min(360px, calc(100% - 48px));
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(210, 228, 222, .3);
+  border-radius: 12px;
+  background: rgba(10, 18, 21, .9);
+}
+
+.dungeon-overlay-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 2;
+  max-width: calc(100% - 40px);
+  margin: 0;
+  padding: 7px 12px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(210, 228, 222, .22);
+  border-radius: 6px;
+  background: rgba(10, 18, 21, .78);
+  color: #d2e4de;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+}
+
+.dungeon-overlay-body[data-dock-edge="bottom"] .dungeon-overlay-hint {
+  bottom: 64px;
+}

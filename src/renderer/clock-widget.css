@@ -1,0 +1,9 @@
+.clock-content { padding: 0 12px 10px; color: var(--text-primary); min-width: 0; }
+.clock-orbit { display: block; width: 100%; max-width: 360px; margin: 0 auto; overflow: visible; }
+.clock-track { fill: none; stroke: var(--theme-border); stroke-width: 1; }
+.clock-horizon { stroke: var(--theme-accent); stroke-width: 1; opacity: .45; }
+.clock-sun { color: #f5c97a; filter: drop-shadow(0 0 5px #f5c97a70); }
+.clock-moon { color: #c8f5e4; filter: drop-shadow(0 0 5px #72ff9a70); }
+.clock-companion { color: #6ec2ff; }
+.clock-countdown { font: 600 22px var(--font-ui, system-ui), sans-serif; fill: var(--text-primary); font-variant-numeric: tabular-nums; }
+.clock-label { font: 11px var(--font-ui, system-ui), sans-serif; fill: var(--text-secondary); letter-spacing: .06em; }

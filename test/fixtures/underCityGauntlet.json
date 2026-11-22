@@ -1,0 +1,260 @@
+{
+  "level_path": "/SF/Levels/Procs/UnderCityGauntlet",
+  "index_bits": 6,
+  "serialization": {
+    "attachment_counts": [
+      3,
+      2,
+      2,
+      2,
+      1
+    ],
+    "attachment_type_bits": 3,
+    "backdrop_count": 1,
+    "cinematic_count": 0,
+    "format": "tree-caps-attachments-v1"
+  },
+  "spawns": [
+    {
+      "room": "UnderCityEntranceHall",
+      "kind": "spawn",
+      "portal_count": 2
+    }
+  ],
+  "components": [
+    {
+      "room": "UnderCityArena",
+      "kind": "objective",
+      "portal_count": 2
+    },
+    {
+      "room": "UnderCityIntNeighbourhood",
+      "kind": "objective",
+      "portal_count": 6
+    },
+    {
+      "room": "UnderCityConGreenhouse",
+      "kind": "interior",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCityConFair",
+      "kind": "interior",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCityObjCrypt",
+      "kind": "interior",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCityIntCliffTown",
+      "kind": "interior",
+      "portal_count": 11
+    },
+    {
+      "room": "UnderCityConFennBridge",
+      "kind": "interior",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCityIntCliffCave",
+      "kind": "interior",
+      "portal_count": 5
+    },
+    {
+      "room": "UnderCityExitStreamingTileA",
+      "kind": "exit",
+      "portal_count": 2
+    },
+    {
+      "room": "UnderCitySpawnC",
+      "kind": "connector",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCitySpawnD",
+      "kind": "connector",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCitySpawnFortified",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConHallwaysB",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityExitBossA",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityExitBossB",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConShortStairwell",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConBridgesA",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "UnderCityConStorage",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConHouseA",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "UnderCityConHallwayShort",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "UnderCityConCaveShort",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConRitual",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConHallwaysA",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConCaveAltar",
+      "kind": "connector",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCityConStairs",
+      "kind": "connector",
+      "portal_count": 2
+    },
+    {
+      "room": "UnderCityConFennFireGarden",
+      "kind": "connector",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCityConBrewery",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConDrain",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConCrossCanal",
+      "kind": "connector",
+      "portal_count": 4
+    },
+    {
+      "room": "UnderCityConCornerPassage",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConJunctionPassage",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityConStraightPassage",
+      "kind": "connector",
+      "portal_count": 3
+    },
+    {
+      "room": "UnderCityDeadEndHomeB",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndHomeC",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndHomeD",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndCaveB",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndCavedIn",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndCavedInB",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndCavedInC",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndCaveRecluse",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndRubble",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndRubbleB",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCityDeadEndRubbleC",
+      "kind": "dead_end",
+      "portal_count": 1
+    },
+    {
+      "room": "UnderCitySpecialCheckpointA",
+      "kind": "special",
+      "portal_count": 2
+    }
+  ],
+  "caps": [
+    "UnderCityCapDoor",
+    "UnderCityCapOpening",
+    "UnderCityFittingDoorSpawn",
+    "UnderCityMidrathExitCap",
+    "UnderCityMidrathProcExitCap",
+    "UnderCityMidrathNeighborCap",
+    "UnderCityCapStreaming"
+  ],
+  "test_vectors": {
+    "description": "Synthetic minimal complete fingerprints encoded against the extracted generator table; not live captures.",
+    "arena": "AAwBgA",
+    "without_arena": "AEYAAw"
+  }
+}

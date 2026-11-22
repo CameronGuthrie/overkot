@@ -1,0 +1,251 @@
+{
+  "versions": [
+    {
+      "version": "v0.0.20",
+      "changes": [
+        "Overkot's source and releases now live in the public overkot repository.",
+        "Group Finder listings, profiles and join requests belong to the signed-in player. Upgrade and recreate your listings to use the new service.",
+        "Group Finder follows game logins independently of inventory and clears the previous profile when you switch accounts or sign out.",
+        "Open maps refresh after newly authorized map assets finish downloading."
+      ]
+    },
+    {
+      "version": "v0.0.19",
+      "changes": [
+        "Restored item thumbnails and Temper icons in the Market widget’s Sell from inventory tab.",
+        "Overkot now keeps a pending account sign-in active when the account service is busy and retries automatically."
+      ]
+    },
+    {
+      "version": "v0.0.18",
+      "changes": [
+        "Added Thai, Ukrainian and Traditional Chinese, bringing the language selector to 15 languages. Simplified Chinese and Traditional Chinese have separate game text and interface settings.",
+        "Expanded translations across settings, widgets and guided tours. Community corrections can now be made in the overkot-localisations repository."
+      ]
+    },
+    {
+      "version": "v0.0.17",
+      "changes": [
+        "Dungeon maps reveal rooms as you explore by default. Turn off “Reveal dungeon as you explore” in Settings → Widgets → Mini-Map to see the full layout as soon as it loads.",
+        "We’re preparing Overkot for a future open-source release."
+      ]
+    },
+    {
+      "version": "v0.0.16",
+      "platforms": ["linux"],
+      "changes": [
+        "Linux fixes - Added native Wine/Proton player position and facing tracking for the live map, including Arch Linux on Wayland/XWayland.",
+        "Dungeon maps on Linux now receive live player and room-frame data so exploration outlines can reveal as you walk.",
+        "Fixed Arena Finder missing the Glades wave arena (GoAxDeadendGarrenRood, exported tile 24). The separate Garren Rood boss/quest arena is excluded.",
+        "Arena Finder now waits for current dungeon evidence instead of reporting No arena found when layout detection is unavailable.",
+        "Debian and Arch packages configure the narrow position reader's process-read capability. AppImage tracking uses normal user permissions and reports blocked access clearly.",
+        "Linux-only release: updated DEB, Pacman and AppImage packages; Windows downloads remain on v0.0.15."
+      ]
+    },
+    {
+      "version": "v0.0.15",
+      "changes": [
+        "Customizable Moonsteel alerts - Monitor-edge flashes and sound alerts, with colour, intensity, duration, pulse speed, monitor selection and volume controls.",
+        "Live player map markers on Windows - Track your position and facing on the overworld and in dungeons, with automatic following and recenter controls.",
+        "Dungeon exploration reveal - Automatically aligned room outlines reveal as you explore, with discovery remembered for the current dungeon run.",
+        "Nearby dropped weapon map markers with weapon names and distinct animated purple indicators for confirmed Moonsteel drops.",
+        "New Daily Brief pop-out - Daily allowances, ancestor encounters, Calendar, Avakot's live stock and faction vendor weapons with their daily Tempers. Optionally opens on login and daily reset.",
+        "Saved widget layouts - Save, switch, import and export named arrangements, and choose a layout to load at startup.",
+        "Precise widget sizing - Enter exact dimensions, resize in 1-pixel steps, fit panels to their content and reset individual widget sizes.",
+        "Overlay monitor selection - Choose which monitor displays the bar and attached widgets.",
+        "Settings and customisation overhaul - Live appearance previews, per-widget overrides, typography, spacing, corners, borders, progress bars and motion controls.",
+        "Shareable appearance presets with import, export, undo and redo.",
+        "Independent background, element and inner-surface opacity controls, including per-widget settings.",
+        "Visual polish with animated multicolour interface icons, smoother transitions and sharper app and installer icons.",
+        "Tutorial controls - Disable automatic tutorials globally or turn them back on while keeping manual replay available.",
+        "Updated Daily Affiliation and Ode Infamy tracking to use the game's rank-based daily limits.",
+        "Updated weapon mastery thresholds, Envoy Rank calculations and Build Exporter progression calculations.",
+        "Updated Wolf Training to reflect the current 150-energy maximum.",
+        "More reliable Arena Finder detection, with wave and tier progress cleared correctly between dungeon instances.",
+        "Fixed timer alert dismissal and added smoother countdowns with a shorter eight-second popup duration.",
+        "Improved dock dragging, widget sizing and window layering so dungeon maps stay below menus and alerts remain visible.",
+        "Fixed Market listing controls being clipped with short or filtered inventories.",
+        "Redesigned Windows update flow - Startup checks, release notes, download size and speed, and manual Download and Restart and install controls.",
+        "Improved Linux overlay visibility above fullscreen games."
+      ]
+    },
+    {
+      "version": "v0.0.14",
+      "changes": [
+        "New Title Tracker shows epithet challenge progress and completion, with search, completed/incomplete filters, multiple pinned goals and a frameless pinned-only view. Preferences are saved between sessions.",
+        "Redesigned Avakot Market uses the shared market interface for browsing, search, profiles, settings and navigation.",
+        "Market signs in through the avakot.dev account connected in Settings. Login and Sign up open Connections; existing connections need one Reconnect for Market approval.",
+        "Restored Sell from inventory in the Market sidebar and fixed incorrect sign-in prompts, duplicate notices, extra scrollbars, inconsistent styling and listing dialogs opening off-screen.",
+        "New Data – Inventory widget offers searchable, grouped inventory with readable item names, expandable details and manual refresh. Saved inventory remains available offline.",
+        "New Data – EE.log widget offers log search, severity filters, message details and newest-first or oldest-first ordering.",
+        "Added first-use app and widget tutorials, replay controls in Settings and a startup reminder showing the configured focus shortcut.",
+        "Temper Tracker now restores views, searches, filters, grouping, hidden controls and collapsed groups between sessions.",
+        "Fixed Wiki back, forward, refresh, open-in-browser and close controls becoming unresponsive after searches, including in portable builds.",
+        "Improved Settings window rendering and focus restoration; fixed inactive overlay windows intercepting game clicks.",
+        "Improved Linux dock alignment, saved widget restoration, attached panel placement, drag snapping and fullscreen visibility. Improved X11/XWayland selection and added display-backend details in Settings."
+      ]
+    },
+    {
+      "version": "v0.0.13",
+      "changes": [
+        "New screen-edge dock with widget icons, saved icon order, optional auto-hide and a shortcut to hide or restore the overlay.",
+        "Hold Shift while the overlay is focused to arrange widgets on a grid, align them and reattach them to the dock.",
+        "Dungeon layouts appear in Mini-Map and can expand into a transparent map over the game, with pan, zoom and fit controls.",
+        "New Wolf Training widget shows your wolf training progress and bond.",
+        "New World Watch widget combines Midrath clock and weather.",
+        "Improved Avakot Market browsing, filters and sign-in with avakot.dev.",
+        "Choose whether Zenith offerings appear in Calendar; clearer Temper Tracker views and unlock progress.",
+        "Widget outlines have their own opacity setting, with more space for content.",
+        "Improved click-through and focus handling: the game cursor no longer reveals a collapsed dock, and Escape returns input to Soulframe while preserving the dungeon map.",
+        "Fixed dock bounds after taskbar changes, widget dragging on focus loss, and Wiki history, refresh and focus handling.",
+        "Improved map loading and dungeon route handling.",
+        "Experimental Linux downloads for Debian/Mint, Arch-based desktops and portable AppImage, with native session scanning and manual updates."
+      ]
+    },
+    {
+      "version": "v0.0.12",
+      "changes": [
+        "Mini-Map now shows your dungeon layout while you're in a dungeon, with a see-through option.",
+        "New Wolf Training widget shows your wolf's training progress and bond.",
+        "New World Watch widget brings Midrath's clock and weather together.",
+        "Improved Market browsing, filters and sign-in with avakot.dev.",
+        "Show or hide Zenith's offerings in the Calendar.",
+        "Clearer Temper Tracker views and unlock progress.",
+        "Improved map loading and overlay controls.",
+        "Added experimental Debian and Linux Mint support, including account linking and improved widget controls."
+      ]
+    },
+    {
+      "version": "v0.0.11",
+      "changes": [
+        "Avakot Market for browsing, selling from inventory, and managing trades.",
+        "Redesigned Settings and searchable Widgets picker.",
+        "Improved Wiki Search and custom game file locations.",
+        "Choose your Windows installation folder."
+      ]
+    },
+    {
+      "version": "v0.0.10",
+      "changes": [
+        "Ancestor map markers with approximate search areas.",
+        "Calendar for ancestor encounters and Zenith's daily offers.",
+        "Live Midrath clock with day and night countdowns.",
+        "Export your equipped build to avakot.build.",
+        "Temper Tracker for tempers across all your weapons.",
+        "New Dark Mint, Midnight, Ember and High Contrast themes.",
+        "Automatic game data updates and manual refresh in Settings.",
+        "Group Finder supports parties of up to four players.",
+        "Choose automatic or manual app updates in Settings."
+      ]
+    },
+    {
+      "version": "v0.0.9",
+      "changes": [
+        "Arena widget tidied up",
+        "Improved Faction Standing and Ode Infamy tracking reliability.",
+        "Group Finder hardening and minor UI tweaks."
+      ]
+    },
+    {
+      "version": "v0.0.8",
+      "changes": [
+        "Fixed wiki search window failing to open.",
+        "Fixed widget windows behaviour at high-DPI scales.",
+        "Docked mode added for widgets, still needs polish."
+      ]
+    },
+    {
+      "version": "v0.0.7",
+      "changes": [
+        "Added Ode Infamy widget - tracks your Ode Syndicate standing in a compact, single-bar view.",
+        "Fixed wiki search widget rendering as a blank window on first open.",
+        "Fixed widget resize handle drifting off the rendered corner while dragging by the title bar.",
+        "Fixed Group Finder window opening with the bottom action buttons clipped on high-DPI displays (e.g. 4K at 250% scale)."
+      ]
+    },
+    {
+      "version": "v0.0.6",
+      "changes": [
+        "Added Arena Checker widget. Shows 'Not in Glades', 'No arena found', or 'Arena found!' and updates live as you join, leave, or migrate sessions.",
+        "Added Mirifuir Siege timer.",
+        "Added Captain Carmo duel timers.",
+        "Fixed widget windows growing horizontally while being dragged by the title bar."
+      ]
+    },
+    {
+      "version": "v0.0.5",
+      "changes": [
+        "Fixed minimap collapse - arrow toggle now properly shrinks the widget window and hides bottom controls.",
+        "Fixed widgets being draggable off-screen - drag movement is now clamped to display work area boundaries.",
+        "Fixed wiki window rendering as a white page - added compositor invalidation on load and error page fallback.",
+        "Added 'Show overlay only when Soulframe is focused' setting - overlay auto-hides when alt-tabbing to other apps.",
+        "Overlay focus-hide now activates during the 'connecting' phase, not just after fully connected.",
+        "Improved focus detection speed - replaced per-call PowerShell spawns with a persistent background monitor (~250ms response).",
+        "Fixed overlay requiring a click to resume hiding after re-appearing - windows now restore without stealing focus.",
+        "Fixed main window staying hidden after quitting the game - focus-hide state is now properly reset on game exit.",
+        "Settings window enlarged so all options are visible without clipping.",
+        "Reset Widget Positions and Reset Widget Sizes buttons now display side by side."
+      ]
+    },
+    {
+      "version": "v0.0.4",
+      "changes": [
+        "Fixed timer notification text not displaying - notifications now show the localized timer name instead of blank.",
+        "Fixed timer notifications not closing - X button and 60-second auto-dismiss now work reliably in transparent overlay windows.",
+        "Fixed window width continuously growing during drag - removed positive feedback loop in auto-fit width logic and added explicit drag-state suppression."
+      ]
+    },
+    {
+      "version": "v0.0.3",
+      "changes": [
+        "Seamless auto-updates - new versions are now installed automatically on launch or when the app closes, with no interruptions during use.",
+        "Improved update reliability for edge cases where updates could silently fail to install."
+      ]
+    },
+    {
+      "version": "v0.0.2",
+      "changes": [
+        "Added manual widget resizing - drag the bottom-right handle to resize any widget.",
+        "Minimap resize is ratio-locked to keep its square aspect ratio.",
+        "Widget sizes now persist between sessions.",
+        "Added 'Reset Widget Sizes' button in settings.",
+        "Improved main titlebar drag performance - window movement is now throttled to display refresh rate.",
+        "Commented out legacy multi-column drag-and-drop code (dead code cleanup).",
+        "Commented out legacy widget rendering functions superseded by standalone widget windows.",
+        "Removed orphaned CSS for old drag-and-drop layout system.",
+        "Added i18n translations for reset buttons across all 12 languages."
+      ]
+    },
+    {
+      "version": "v0.0.1",
+      "changes": [
+        "Initial release as Overkot.",
+        "Live game tracking with automatic detection of Soulframe process and session state (waiting, connecting, connected).",
+        "Timer tracking for boss encounters, crafting, and other timed activities.",
+        "Daily affiliation progress tracking toward the 16,000 cap.",
+        "Faction standing progress tracking across key factions.",
+        "Widget-based overlay system with per-widget enable/disable, collapse, and drag-to-reposition.",
+        "Widgets run as separate always-on-top windows for custom screen layouts.",
+        "Widget state persistence (visibility, collapse, window positions) across sessions.",
+        "Widget Picker window for managing active widgets.",
+        "Wiki Search widget for quick Soulframe wiki lookups.",
+        "Mini-map widget with zoom, pan, legend filters, and map markers.",
+        "Expanded world map window with full canvas, hover labels, coordinates, and legend.",
+        "\"Where am I?\" locate flow using in-game screenshots.",
+        "Group Finder with Home, Browse, My Listing, and Profile tabs.",
+        "Create, browse, and join group listings with request/accept/decline workflows.",
+        "Group Finder profile preferences for language and region.",
+        "Suggested groups based on compatibility signals.",
+        "Timer completion pop-up alerts (stacked and dismissible).",
+        "Minimize to system tray with optional launch-to-tray behaviour.",
+        "Cached data restores recent timers and progress on startup before live reconnect.",
+        "Optional auto-hide of widgets and popouts when Soulframe is not running.",
+        "12-language UI support.",
+        "Configurable colours and opacity for text, bars, and backgrounds.",
+        "Click-through overlay mode with configurable hotkey for temporary interaction.",
+        "Settings window for language, visuals, alert behaviour, tray, and hide preferences.",
+        "Changelog window for viewing release notes."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4459 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-11-18T15:10:02.756Z",
+  "sources": [
+    {
+      "url": "pipeline:ava_api_items.json",
+      "sha256": "19362618e44dadc227951f06dc5d70a58d3af7b2f582f87c6024cc09a9159e5f"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Weapons&action=raw",
+      "sha256": "3e86e256da3f3e0b13339f5fad1981977e5b3ce19e76835645566b97732cf188",
+      "table": "Weapons"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Armour&action=raw",
+      "sha256": "c8843a84b2648ba19bafa8088d875a144dd5c860bd9548bb93202cb75426d37d",
+      "table": "Armour"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Pacts&action=raw",
+      "sha256": "cc8087523499d8307445a3b0c21da7954dc17e65b11b4158886cb98c44bf93b2",
+      "table": "Pacts"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Cosmetics&action=raw",
+      "sha256": "cb6bbcf1338368d69f57e564106d28e8a5856d0c5bbf8bfb4909e1fe387a2793",
+      "table": "Cosmetics"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Totems&action=raw",
+      "sha256": "69f7d7e6a66db32e678debbc6ecceeb68dd24145fbfa1c27c1ed15da8760c2a9",
+      "table": "Totems"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Runes&action=raw",
+      "sha256": "867a23e84e3ff2bbbc288e9cdcd251225d7d7206df20b1d5b6c4b451e39f4b00",
+      "table": "Runes"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Joineries&action=raw",
+      "sha256": "adeb821c3e6bb069cb904073a048f26c5e3caa8f91f22c57dd96cb47bf56f70b",
+      "table": "Joineries"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/CraftingResources&action=raw",
+      "sha256": "51a767178f8a33c11059738718cc4c7b079e2a9f289ea470cfe4a2aa4fc687af",
+      "table": "CraftingResources"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Consumables&action=raw",
+      "sha256": "170548762fb7a28cf21987b702040f31d3ebec3a7da6de17c31f495b0bf42bd8",
+      "table": "Consumables"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/Prisms&action=raw",
+      "sha256": "2fd1280ba82728bdae80fe91aeadac028d52ba9d5ad149ca78a0171b6cd5567e",
+      "table": "Prisms"
+    },
+    {
+      "url": "https://wiki.avakot.org/index.php?title=Module:Data/CraftingTable&action=raw",
+      "sha256": "b2c09ab5974b5711e5423f98f353063441d6920e5cb3071ffafd85a7f6935ca0",
+      "table": "CraftingTable"
+    },
+    {
+      "url": "https://avakot.market/api/v1/catalogue/feed",
+      "sha256": "7110c4adaf576cdf3a9614b68aa91e955b1819dc07ef9b5fcebb8e4522e72be8"
+    }
+  ],
+  "items": [
+    {
+      "itemType": "/SF/Souls/Bromius/BromiusSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Default/ChampionSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Default/GaleneSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Default/JolsafarSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Default/PothiaSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Default/SaboteurSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Default/WardSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Fenn/FennSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Ode/OdeSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/OdeHunter/OdeHunterSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Stag/StagSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Souls/Wolf/WolfSoul",
+      "evidence": [
+        0,
+        3
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/ExtremeCourageDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/ExtremeGraceDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/ExtremeSpiritDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/MildCourageGraceDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/MildCourageSpiritDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/MildSpiritGraceDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/StarterCourageDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/StarterGraceDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/StarterSpiritDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/WyldOsceldaDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/WyldSirinDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/AttributeItems/WyldTethrenDistribution",
+      "evidence": [
+        10
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/BaseComplexionsPalette",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/GalenePalette",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/HairLocksDark",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/HairLocksLight",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/ParagonPalette",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/PothiaPalette",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/SkinDefault",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/VerminiaAncestorPalette",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/ColorPalettes/VerminiaDepressionGreysAncestorPalette",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/BasicFishingSpool",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Elixers/CloudSwellElixer",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/HealingPotion",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/PetConsumeables/WoldAdultUpgradePetFood",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/PetConsumeables/WolfMealPetFood",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/PetConsumeables/WolfRespecPetFood",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/PetConsumeables/WolfTreatPetFood",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Syndicates/ChampionVirtueElixir",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Syndicates/FeyVirtueElixir",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Syndicates/SilentRoseVirtueElixir",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Tackle/BugLureStarterCommon",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Tackle/CarpLureUncommon",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Tackle/CricketLureRare",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Tackle/FishLureUncommon",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Tackle/FrogLureUncommon",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Tackle/LobsterLureRare",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/Tackle/TurtleLureRare",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/VerminiaPotion",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/WevetSeed",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Consumables/WolfCubSummon",
+      "evidence": [
+        0,
+        9
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/FactionItems/ChampionSyndicateRepToken",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/FactionItems/FeySyndicateRepToken",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/FactionItems/SilentRoseSyndicateHubDoorKey",
+      "evidence": [
+        0,
+        8
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/FactionItems/SilentRoseSyndicateRepToken",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeDefenseC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeDefenseR",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeDefenseSRC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeDefenseSRG",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeDefenseSRS",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeDefenseUC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeMeleeC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeMeleeR",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeMeleeSRC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeMeleeSRG",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeMeleeSRS",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeMeleeUC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedR",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedSRC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedSRCTwo",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedSRG",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedSRGTwo",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedSRS",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedSRSTwo",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiUpgradeRangedUC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterR",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterSRC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterSRCTwo",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterSRG",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterSRGTwo",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterSRS",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterSRSTwo",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/Kintsugi/Weapons/KintsugiWeaponUpgradeCasterUC",
+      "evidence": [
+        0,
+        7,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Items/TransmogTokens/TransmogTokenTierA",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Keys/BombItem",
+      "evidence": [
+        0,
+        8
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Keys/CryptAKey",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Keys/MidrathBossChestKeyItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Keys/MidrathFortBackDoorKeyItem",
+      "evidence": [
+        0,
+        8
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Keys/MidrathFortCannonBallItem",
+      "evidence": [
+        0,
+        8
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Keys/MidrathFortZiplineItem",
+      "evidence": [
+        0,
+        8
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Keys/MirifuirFortDoorKeyItem",
+      "evidence": [
+        0,
+        8
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Keys/OrengallPupCageKey",
+      "evidence": [
+        0,
+        8
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Holiday/PumpkinSeedResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Holiday/VerminiaWinterBirdSeed",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/BrassIngotResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/Catalysts/CatalystAResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/Catalysts/CatalystBResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/Catalysts/CatalystCResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/InfusedIngotResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/IronIngotResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/SteelIngotT1ResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/SteelIngotT2ResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Ingots/SteelIngotT3ResourceItem",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/CorruptOnyxResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/Flowers/LullilyResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/Flowers/SangeliaResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/Flowers/SoulsBaneResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/Flowers/SynodsWitResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/IchorResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/Mushrooms/CrimsonLipResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/Mushrooms/WyrmWortResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/OdeGraphiteResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/OdenSynsylkResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/PetrifiedIchorResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Inorganics/SilistytResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Creature/BileSackResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Creature/CorruptedFrondResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Creature/Fish/Essence/FishEssenceResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Creature/Fish/Food/FishChumResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Creature/Fish/Food/MinnowSnackResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Creature/SquidPlantResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Creature/WeaversEyeResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Creature/WillOFrondResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/DewSporeResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Flowers/HymmRoseResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Flowers/MorasKissResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Flowers/MourningBellResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Flowers/QueensFollyResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Flowers/WeepinDrisResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/GossamerQuartzResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/KnotwoodPlanksResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/MoraniteResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Mushrooms/AgaricMushroomResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Mushrooms/FireFungusResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Mushrooms/JadenRingResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Mushrooms/NeathCapResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Mushrooms/ToeOfOdeResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/QuenchingAcidResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/RiverPearlResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/Sap/WevetWoodSapResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/SapphelineResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Organics/WhispPlanksResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/ScrapMetals/ScrapBrassResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/ScrapMetals/ScrapIronResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/ScrapMetals/ScrapSteelModerateResource",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/ScrapMetals/ScrapSteelResource",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Textiles/BrineflossResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Textiles/DendritWeaveResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Textiles/SproutFolkFondResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Textiles/WornLeatherResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/PickUps/Resources/Totem/SacredShimmerResource",
+      "evidence": [
+        0,
+        8,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Quests/AncestorProgression/OrlickProgression/QuestAssets/Resources/VerminaInkResource",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/AvarotMaskHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/BromiusHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/BromiusLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/BromiusTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/DendritWitchHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/DendritWitchLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/DendritWitchTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/DeoraHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/DeoraLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/DeoraTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/EnvoyArmorTypeAHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/EnvoyArmorTypeALegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/EnvoyArmorTypeATorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/EnvoyArmorTypeBHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/EnvoyArmorTypeBLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/EnvoyArmorTypeBTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FarmerHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FarmerLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FarmerTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FencerHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FencerLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FencerQuestItemHelmetBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FencerTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FennJotarHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FennJotarLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/FennJotarTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/GarrenHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/GarrenLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/GarrenTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/InquisitorMeleeHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/InquisitorMeleeLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/InquisitorMeleeTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/LockSuitArmorHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/LockSuitArmorLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/LockSuitArmorTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MendicantKingHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MendicantKingLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MendicantKingTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MendicantWazzardHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MendicantWazzardLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MendicantWazzardTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MockeryHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MockeryLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MockeryStoneHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/MockeryTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/OrengalHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/OrengalLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/OrengalTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/OrlickHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/OrlickLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/OrlickTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/SproutMaskHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterCourageHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterCourageLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterCourageTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterGraceHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterGraceLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterGraceTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterSpiritHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterSpiritLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/StarterSpiritTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/TalMaskHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/ThawtideHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/TuvalkaneHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/TuvalkaneLegsBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/TuvalkaneTorsoBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Armor/WovenMaskHelmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Consumeables/PetFood/WolfAdultUpgradeFoodBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Consumeables/PetFood/WolfMealBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Consumeables/PetFood/WolfRespecFoodBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Consumeables/PetFood/WolfSnackBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Elixers/ChampionElixirRecipe",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Elixers/CloudquellElixerRecipe",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Elixers/CloudswellElixerRecipe",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Elixers/FeyElixirRecipe",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Elixers/SilentRoseElixirRecipe",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Holiday/BirdFeederBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Ingots/InfusedIngotT4Blueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Ingots/SteelIngotT1Blueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Ingots/SteelIngotT2Blueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Ingots/SteelIngotT3Blueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/BromiusPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/ChampionPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/FennJotarPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/GarrenPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/LocksuitPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/OrengalPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/SaboteurPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/TempestPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Pacts/WardPactBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Quests/OrlickProgression/BrassIngotBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Quests/OrlickProgression/IronIngotBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/AlcasChildrenTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/AlcasChildrenTotemUpgradedBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/CardinalTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/CircadeTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/CogahCorruptedTalismanBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/CogahHumanTalismanBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/IchorousTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/KithOfKingsTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/KithOfKingsTotemUpgradedBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/OdeSoulBoonTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/OrengalIdolTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/OrengalSoulBoonTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/SilentRoseTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/SilentRoseTotemUpgradedBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Totems/WovenTotemBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/WeaponQuality/ChaosRerollBlueprint",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/BromiusCleaverMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Caster/Blueprints/OdeStaffCasterRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Caster/Blueprints/OdeZapStaffCasterMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/CleansedSpearMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/DendritAraGreatSwordMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/DendritBowRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/DendritStaffCasterRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/DendritSwordAndBoardMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/DendritSwordMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/DeoraSpearBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/FennCastingDeviceRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/FennJotarSwordBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/FeySwordMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/GaleneCastingDeviceMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/GaleneStaffCasterRangedMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/GarrenPolearmMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/GarrenSwordBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/GrandFatherBowRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/JosalfarBowMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/CorruptedScimitarMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/InquisitorMaceMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/LocksuitDaggerMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/MendicantSwordAndBoardMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/MendicantTwoHandedMaceMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/MockeryAxeMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/OrengallSecondarySwordMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/PirateFencingSwordMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/SecondaryBitasEdgeDualSickleMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/SeedRapierMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/SinecureDualAxesMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/SinecureHammerAndBoardMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/Blueprints/SinecureKnightTwoHandedMaceMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/ReforgeBlueprint/MendicantLanceMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/ReforgeBlueprint/OdeEliteSoldierSwordMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/ReforgeBlueprint/SinecureKnightTwoHandedAxeMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/Melee/ReforgeBlueprint/SinecureTwoHandedSpikedMaceMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/MendicantGreatSwordMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/MockeryBrazardMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/MockeryStultionMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/MockeryTurashMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/OdeCastingDeviceRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/OdeHunterBowBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/OdeSoldierSwordMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/ParagonGreatSwordMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/PothiaSwordMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/PothiaThrowingKnivesRangedMeleeWeaponReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SecondaryDaggerMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SecondaryDendritDaggerMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SecondaryFeyDaggerMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SecondaryJosalfarDaggerReforgeBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SecondaryOdeSawDaggerMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SecondaryStarterThrowingKnivesRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SecondaryThrowingKnivesRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SecondaryVineDaggerMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SinecureBowRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SinecureDualDaggersMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SphereDualSwordBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SpherePolearmBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SphereSwordAndBoardBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/SphereSwordBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/StarterBowRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/StarterSplitSwordsMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/StarterStaffCasterRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/StarterSwordMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/Recipes/Weapons/WazzardStaffCasterRangedMeleeWeaponBlueprint",
+      "evidence": [
+        0,
+        11
+      ]
+    },
+    {
+      "itemType": "/SF/Types/StoreItems/AvatarImages/AvatarImageSoulframeDefault",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Bow/BowBestoneProjectileRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Bow/BowKnockdownProjectileRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Bow/RainRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Bow/StarterRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Dagger/ShortBladeEmpoweredThrowRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Dagger/ShortBladeInvisRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Dagger/ShortBladeLeechStrikeRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Dagger/StarterRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Flyblade/FlybladeBestoneProjectileRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Flyblade/FlybladeKnockdownProjectileRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Flyblade/FlybladeSeekingRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Flyblade/StarterRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/GreatSword/GreatSwordArcaneBullwarkRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/GreatSword/GreatSwordLeapAttackRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/GreatSword/GreatSwordRangeRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/GreatSword/StarterRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/LongBlade/LongbladeEmpoweredThrowRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/LongBlade/LongbladeLeechStrikeRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/LongBlade/LongbladeProjectileRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/LongBlade/StarterRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Magiks/CasterHealingProjectileRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Magiks/CasterKnockdownProjectileRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Magiks/CasterLiftProjectileRune",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Magiks/ExplosiveBuildUpRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Magiks/StarterRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Polearm/PolearmArcaneBulwarkRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Polearm/PolearmLeapAttackRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Polearm/PolearmMultiThrowRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Polearm/StarterRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Shield/SBLaserRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Shield/ShieldArcaneBulwarkRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Shield/ShieldEmpoweredThrowRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Runes/Weapon/Shield/StarterRune",
+      "evidence": [
+        6,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/BromiusBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/CircadeBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/DendritWitchBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/DeoraBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/FarmerBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/FencerBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/FennJotarBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/ForgetFireAltBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/ForgetFireBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/GaleneBody",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/GarrenBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/InquisitorMeleeBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/JosalfarBody",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/LockSuitArmorBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/MendicantKingBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/MockeryBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/MockeryStoneBody",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/OrengalBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/OrlickBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/PothiaBody",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/StarterCourageBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/StarterGraceBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/StarterSpiritBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/TuvalkaneBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Body/WazzardBody",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/BaldHair",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/BuzzCutHair",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/DefaultMaleHair",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleLongHairA",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleLongHairB",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleLongHairC",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleLongHairD",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleLongHairE",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleShortHairA",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleShortHairC",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleShortHairD",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleShortHairE",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/FemaleShortHairF",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/ForgetFireHair2A",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/ForgetFireHair3A",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleLongHairA",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleLongHairB",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleLongHairC",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleLongHairD",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleLongHairE",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleLongHairF",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleShortHairA",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleShortHairB",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleShortHairD",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleShortHairE",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleShortHairF",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MaleShortHairG",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MotherHairA",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MotherHairB",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MotherHairC",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MotherHairD",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Hair/MotherHairE",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/AvarotMaskHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/BromiusClosedHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/CircadeHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/DendritWitchHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/DeoraHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/FarmerHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/FencerHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/FencerQuestItemHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/FennJotarHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/ForgetFireAltHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/ForgetFireHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/ForgetFireNeckMask",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/GaleneHelmet",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/GarrenHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/InquisitorMeleeClosedHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/JosalfarHelmet",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/LockSuitArmorHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/MendicantKingHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/MockeryHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/MockeryStoneHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/OrengalClosedHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/OrlickHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/PothiaHelmet",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/SproutMaskHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/StarterCourageHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/StarterGraceHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/StarterSpiritHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/TalMaskHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/ThawtideHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/TuvalkaneHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/WazzardHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Helmets/WovenMaskHelmet",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/BromiusLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/CircadeLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/DendritWitchLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/DeoraLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/FarmerLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/FencerLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/FennJotarLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/ForgetFireAltLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/ForgetFireLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/GaleneLegs",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/GarrenLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/InquisitorMeleeLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/JosalfarLegs",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/LockSuitArmorLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/MendicantKingLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/MockeryLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/MockeryStoneLegs",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/OrengalLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/OrlickLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/PothiaLegs",
+      "evidence": [
+        0,
+        2
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/StarterCourageLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/StarterGraceLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/StarterSpiritLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/TuvalkanelLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Legs/WazzardLegs",
+      "evidence": [
+        0,
+        2,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Sparrow/FloppetBody",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Sparrow/GaleneSparrowBody",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Sparrow/JosalfarSparrowBody",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Sparrow/ParagonSparrowBody",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Sparrow/PothiaSparrowBody",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Sparrow/SparrowBody",
+      "evidence": [
+        0,
+        4
+      ],
+      "defaultOwned": true
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Sparrow/TwoFactorSparrowBody",
+      "evidence": [
+        0,
+        4
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/AncientSpriteTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/CardinalTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/ChampionHubTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/ChampionHubUpgradedTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/CircadeBlueTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/CircadeCompleteTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/CircadeGreenTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/CircadeRedTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/CogahCorruptedTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/CogahCreatureTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/CogahHumanTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/DendritKalimbaTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/FeyBroachTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/FeyHubTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/FeyHubUpgradedTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/FeyIncenseBurnerTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/IchorousTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/MandrakeTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/OdeSoulBoonTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/OrengalIdolTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/OrengalSoulBoonTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/PreludesHonorMoteTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/SilentRoseHubTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/SilentRoseHubUpgradedTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/ThreeMoonGodsTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/WolfPrintTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/WoodenFluteTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Skins/Totem/WovenTotem",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/AoeCollect",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/AoeRip",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/AOESmiteChanceCollect",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/AOEStunCast",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/ArcDmgIncreaseReveal",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/ArmourBuffCast",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/AttackSpeedCollect",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/BlindReveal",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/CloneCollect",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/ConfuseRip",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/CoopDuplicateRip",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/DamageRip",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/DragAiRip",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/HealAoeCollect",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/HealCast",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/HealRip",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/MagikArmourRuneCount",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/PhysicalArmourRuneCount",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/RuneDamageBuff",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/RuneDrainSpeed",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/SmiteChanceRuneCount",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/SmiteTimeReveal",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/SoulRipRangeBuff",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/StagAOEReveal",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/VirtueBuffCollect",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Upgrades/Totems/VolDmgIncreaseReveal",
+      "evidence": [
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/BitasEdge/SecondaryBitasEdgeDualSickleMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/BromiusCleaver/BromiusCleaverMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/CorruptedScimitar/CorruptedScimitarMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/DendritSword/DendritSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/DendritSwordAndBoard/DendritSwordAndBoardMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/FennJotarSword/FennJotarSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/FeySword/FeySwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/GarrenSword/GarrenSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/LockSuitDagger/LockSuitDaggerMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/MendicantSwordandBoard/MendicantSwordAndBoardMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/MockeryBrazard/MockeryBrazardMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/MockeryStultion/MockeryStultionMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/MockeryTurash/MockeryTurashMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/OdeEliteSoldierSword/OdeEliteSoldierSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/OdeSoldierSword/OdeSoldierSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/OrengalSecondarySword/OrengallSecondarySwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/PirateFencingSword/PirateFencingSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/PothiaLongSword/PothiaLongSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SecondaryDagger/SecondaryDaggerMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SecondaryDendritDagger/SecondaryDendritDaggerMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SecondaryFeyDagger/SecondaryFeyDaggerMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SecondaryJosalfarDagger/SecondaryJosalfarDaggerMeleeWeapon",
+      "evidence": [
+        0,
+        1
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SecondaryOdeSawDagger/SecondaryOdeSawDaggerMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SecondaryVineDagger/SecondaryVineDaggerMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SeedRapier/SeedRapierMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SinecureDagger/SinecureDualDaggersMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SinecureDualAxes/SinecureDualAxesMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SinecureHammerAndBoard/SinecureHammerAndBoardMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SphereDualSwords/SphereDualSwordsMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SphereSword/SphereSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/StarterSplitSwords/StarterSplitSwordsMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/StarterSword/StarterSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/OneHand/SwordandBoard/SphereSwordAndBoardMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/CleansedSpear/CleansedSpearMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/DendritAraGreatSword/DendritAraGreatSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/DeoraPolearm/DeoraPolearmMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/FoundersGreatSword/FoundersGreatSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/GarrenPolearm/GarrenPolearmMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/InquisitorMace/InquisitorMaceMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/MendicantGreatSword/MendicantGreatSwordMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/MendicantLance/MendicantLanceMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/MendicantMace/MendicantTwoHandedMaceMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/MockeryAxe/MockeryAxeMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/SinecureKnightAxe/SinecureKnightTwoHandedAxeMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/SinecureKnightMace/SinecureKnightTwoHandedMaceMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/SinecureSpikedMace/SinecureTwoHandedSpikedMaceMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Melee/TwoHand/SpherePolearm/SpherePolearmMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/DendritStaffCaster/DendritStaffCasterRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/FennCastingDevice/FennCastingDeviceRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/GaleneCastingDevice/GaleneCastingDeviceRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/GaleneStaffCaster/GaleneStaffCasterRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/OdeCastingDevice/OdeCastingDeviceRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/OdeStaffCaster/OdeStaffCasterRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/OdeZapStaffCaster/OdeZapStaffCasterRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/StarterStaffCaster/StarterStaffCasterRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/OneHand/WazzardStaff/WazzardStaffCasterRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/Thrown/PothiaThrowingKnives/PothiaThrowingKnivesRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/Thrown/SecondaryStarterThrowingKnives/SecondaryStarterThrowingKnivesRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/Thrown/SecondaryThrowingKnives/SecondaryThrowingKnivesRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/TwoHand/DendritBow/DendritBowRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/TwoHand/GrandFatherBow/GrandFatherBowRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/TwoHand/JosalfarBow/JosalfarBowRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/TwoHand/OdeBow/OdeBowRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/TwoHand/SinecureBow/SinecureBowRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    },
+    {
+      "itemType": "/SF/Weapons/Ranged/TwoHand/StarterBow/StarterBowRangedMeleeWeapon",
+      "evidence": [
+        0,
+        1,
+        12
+      ]
+    }
+  ]
+}

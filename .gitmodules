@@ -1,0 +1,4 @@
+[submodule "langs"]
+	path = langs
+	url = https://github.com/CameronGuthrie/overkot-localisations.git
+	branch = main

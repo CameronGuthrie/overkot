@@ -1,0 +1,424 @@
+/* Shared by the overlay and every local popout. Remote wiki pages keep their own styles. */
+[data-theme] body, [data-theme] button, [data-theme] input, [data-theme] select, [data-theme] textarea {
+  font-family: var(--font-ui, system-ui);
+}
+[data-theme] { color-scheme: dark; }
+[data-theme] :focus-visible { outline-color: var(--theme-accent); }
+[data-theme] input[type='checkbox'], [data-theme] input[type='range'] { accent-color: var(--theme-accent); }
+[data-theme] .timer-widget, [data-theme] .custom-select, [data-theme] .lang-dropdown-selected,
+[data-theme] .lang-dropdown-options, [data-theme] .wiki-search-bar { border-color: var(--theme-border); }
+[data-theme] .widget-header { border-bottom-color: var(--theme-border); }
+[data-theme] .widget-toggle-row:hover, [data-theme] .module-toggle-row:hover { background: var(--bg-widget-hover); }
+[data-theme] #titlebar { background: var(--bg-base) !important; }
+[data-theme] body:has(#map-container) { background: var(--widget-bg) !important; }
+[data-theme] .map-ctrl-btn, [data-theme] .minimap-ctrl-btn,
+[data-theme] .map-legend-panel, [data-theme] .minimap-legend-panel,
+[data-theme] .map-tooltip, [data-theme] .map-locate-hint, [data-theme] .minimap-locate-hint {
+  background: var(--theme-control); color: var(--text-primary); border-color: var(--theme-border);
+}
+[data-theme] .map-ctrl-btn:hover, [data-theme] .minimap-ctrl-btn:hover { background: var(--bg-widget-hover); }
+[data-theme] :is(.map-coord-readout, .map-loading) {
+  color: var(--text-secondary);
+  background: var(--theme-control);
+  border-color: var(--theme-border);
+}
+[data-theme] .map-legend-title { color: var(--text-primary); border-bottom-color: var(--theme-border); }
+[data-theme] .map-legend-label { color: var(--text-secondary); }
+[data-theme] .map-legend-eye svg { color: var(--text-muted) !important; }
+[data-theme] :is(.map-legend-row, .minimap-legend-row):hover { background: rgb(255 255 255 / calc(.06 * var(--surface-opacity, 1))); }
+[data-theme] .alert-card { background: var(--bg-panel); border-color: var(--theme-accent); }
+[data-theme] .alert-icon { background: var(--theme-accent-soft); color: var(--theme-accent); }
+[data-theme] .alert-name, [data-theme] .alert-close { color: var(--text-primary); }
+[data-theme] .alert-label { color: var(--theme-accent); }
+[data-theme] .alert-progress-fill { background: var(--theme-accent); }
+[data-theme] .alert-card .progress-bar-fill { background: var(--bar-color); }
+.theme-swatches { display: flex; gap: 4px; align-items: center; }
+.theme-swatches span { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(255,255,255,.12); }
+#theme-select { flex: 1; min-width: 90px; }
+
+[data-theme='high-contrast'] :focus-visible { outline: 3px solid var(--theme-accent); outline-offset: 2px; }
+[data-theme='high-contrast'] button, [data-theme='high-contrast'] select,
+[data-theme='high-contrast'] input, [data-theme='high-contrast'] textarea,
+[data-theme='high-contrast'] .timer-widget, [data-theme='high-contrast'] .divider {
+  border-color: var(--theme-border) !important;
+}
+[data-theme='high-contrast'] button:disabled, [data-theme='high-contrast'] input:disabled {
+  opacity: 1; color: var(--text-muted); cursor: not-allowed;
+}
+[data-theme='high-contrast'] .map-legend-label, [data-theme='high-contrast'] .map-legend-title,
+[data-theme='high-contrast'] .map-coord-readout, [data-theme='high-contrast'] .minimap-legend-title {
+  color: var(--text-primary); background-color: var(--bg-panel);
+}
+[data-theme='high-contrast'] .timer-bar-text {
+  /* Keep the countdown readable across both the bright fill and dark track. */
+  background: #000; color: #fff; width: max-content; max-width: 100%;
+  left: 50%; right: auto; transform: translateX(-50%); padding: 0 4px;
+}
+
+/* Component geometry is mapped explicitly. Dots, clock orbits and circular
+   status emblems retain the shapes that communicate their function. */
+[data-theme] body {
+  font-size: var(--font-size, 12px);
+  font-weight: var(--font-weight, 400);
+  line-height: var(--line-height, 1.4);
+  -webkit-font-smoothing: antialiased;
+}
+html[data-theme] :is(button, input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea,
+  .custom-select, .lang-dropdown-selected, .lang-dropdown-options, .widgets-search-field, .wiki-search-bar,
+  .map-ctrl-btn, .minimap-ctrl-btn, .map-locate-hint, .minimap-locate-hint, .widget-count, .settings-badge,
+  .tag, .count, .collection-extras-rank, .temper-icon, .market-temper-icon, .wolf-rest, .tutorial-chord) {
+  border-radius: var(--radius-control, 6px);
+}
+html[data-theme] :is(.timer-widget, .widget-card, .settings-section, .alert-card, .tutorial-card,
+  .collection-heading, .collection-row, .mastery-session-summary, .session-gains-metric, .equipment-row,
+  .daily-budget, .daily-vendor-group, .daily-vendor-item, .account-wallet-card, .temper-card, .title-row,
+  .wolf-card, .weather-next, .world-watch-section, .listing-card, .inventory-card, .inventory-group,
+  .browse-advanced, .inline-notice, .composer-item, .trade-slot, .trade-slot-editor, dialog) {
+  border-radius: var(--radius-panel, 10px);
+  border-width: var(--border-width, 1px);
+  border-color: var(--theme-border);
+}
+[data-theme] .timer-widget {
+  background-image: var(--panel-surface-treatment);
+}
+[data-theme] :is(.collection-heading, .daily-budget, .session-gains-metric) {
+  background-image: var(--surface-treatment);
+}
+[data-theme] .timer-widget {
+  box-shadow: var(--surface-shadow), var(--surface-glow);
+  border-color: var(--widget-outline-color) !important;
+  transition: border-color var(--motion-fast) var(--motion-ease), box-shadow var(--motion-base) var(--motion-ease);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight);
+  line-height: var(--line-height);
+}
+[data-theme] :is(.map-legend-panel, .minimap-legend-panel, .map-tooltip, .dock-cell-ghost,
+  #add-widgets-menu, .lang-dropdown-options, .market-toast, .dungeon-map-guide) {
+  border-radius: var(--radius-panel);
+  border-width: var(--border-width);
+  border-color: var(--theme-border);
+  box-shadow: var(--popup-shadow);
+}
+[data-theme] :is(.item-thumbnail, .item-image, .view-switch, .tutorial-emblem, .tutorial-icon-row,
+  .dungeon-map-viewport, .minimap-viewport, .map-search-result, .trade-search-result) {
+  border-radius: var(--radius-inner);
+}
+html[data-theme] :is(button, input:not([type='checkbox']):not([type='radio']):not([type='range']), select, textarea,
+  .custom-select, .lang-dropdown-selected, .wiki-search-bar, .widgets-search-field) {
+  border-width: var(--border-width, 1px);
+}
+[data-theme] :focus-visible {
+  /* Focus is functional, and remains visible when decorative borders are 0. */
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+[data-theme] :is(button, select, input, textarea):disabled { cursor: not-allowed; }
+[data-theme] :is(button, select, input, textarea):disabled:not([data-theme='high-contrast'] *) { opacity: .55; }
+[data-theme] ::selection { color: var(--bg-panel); background: var(--theme-accent); }
+[data-theme] * { scrollbar-width: thin; scrollbar-color: var(--theme-border) transparent; }
+[data-theme] ::-webkit-scrollbar { width: 6px; height: 6px; }
+[data-theme] ::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: var(--radius-control); }
+[data-theme] ::-webkit-scrollbar-track { background: transparent; }
+
+/* Stable, legible numeric rhythm; long labels yield space to countdowns. */
+[data-theme] .timer-entry { margin-bottom: var(--widget-spacing); }
+[data-theme] .timer-entry:last-child { margin-bottom: 0; }
+[data-theme] .timer-header {
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--widget-spacing);
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+}
+[data-theme] .timer-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: max(500, var(--font-weight)); }
+[data-theme] .timer-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-theme] :is(.timer-countdown, .timer-ready) {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: var(--type-small);
+  font-variant-numeric: var(--numeric-style);
+}
+[data-theme] .timer-countdown { min-width: 8ch; text-align: right; letter-spacing: .015em; }
+[data-theme] .timer-ready { color: var(--state-success); }
+[data-theme] .timer-entry[data-urgent='true'] .timer-countdown { color: var(--state-warning); }
+[data-theme] :is(.timer-bar, .title-progress) {
+  height: var(--bar-height);
+  border-radius: var(--radius-bar);
+  background: var(--bg-bar-track);
+  margin-top: 5px;
+  margin-bottom: var(--bar-label-space);
+  overflow: var(--bar-overflow);
+  border-width: 0;
+  isolation: isolate;
+}
+[data-theme] :is(.timer-bar-fill, .title-progress-fill, .equipment-progress-fill, .storage-capacity-fill,
+  .wolf-energy-fill, .weather-progress-fill, .progress-bar-fill) {
+  border-radius: var(--radius-bar);
+  transition: width var(--motion-base) var(--motion-ease);
+}
+[data-theme] :is(.timer-bar, .title-progress)::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: var(--milestone-opacity);
+  background: linear-gradient(90deg, transparent 24.7%, var(--bg-panel) 24.7% 25.3%, transparent 25.3% 49.7%, var(--bg-panel) 49.7% 50.3%, transparent 50.3% 74.7%, var(--bg-panel) 74.7% 75.3%, transparent 75.3%);
+}
+[data-theme] :is(.timer-bar-text, .title-progress-text, .title-progress-count) {
+  display: var(--bar-label-display);
+  align-items: center;
+  justify-content: center;
+  top: var(--bar-label-offset);
+  bottom: auto;
+  min-height: var(--bar-height);
+  font-size: var(--type-caption);
+  font-weight: 600;
+  font-variant-numeric: var(--numeric-style);
+  line-height: 1;
+  color: var(--bar-text-color);
+  text-shadow: 0 1px 2px rgb(0 0 0 / var(--text-elements-opacity, 1));
+  z-index: 1;
+}
+[data-theme] :is(.equipment-progress, .storage-capacity-bar, .wolf-energy-track, .weather-progress, .collection-progress, .progress-bar) {
+  border-radius: var(--radius-bar);
+  background: var(--bg-bar-track);
+}
+[data-theme] .collection-progress { height: max(4px, calc(var(--bar-height) * .45)); }
+[data-theme] .collection-progress::-webkit-progress-bar { background: var(--bg-bar-track); border-radius: var(--radius-bar); }
+[data-theme] .collection-progress::-webkit-progress-value { background: var(--bar-color); border-radius: var(--radius-bar); }
+[data-theme] .equipment-progress { height: max(4px, calc(var(--bar-height) * .4)); }
+[data-theme] .storage-capacity-bar { height: max(4px, calc(var(--bar-height) * .5)); }
+[data-theme] .wolf-energy-track { height: max(4px, calc(var(--bar-height) * .3)); }
+[data-theme] .weather-progress { height: max(2px, calc(var(--bar-height) * .2)); }
+[data-theme] .widget-host-body .clock-content { padding: 0 0 var(--widget-spacing); }
+[data-theme] :is(.player-widget, .daily-brief, .session-gains-content, .collection-extras-body, .mastery-sessions-body) {
+  font-size: var(--font-size);
+  line-height: var(--line-height);
+  font-weight: var(--font-weight);
+}
+[data-theme] :is(.collection-total, .daily-budget strong, .account-wallet-value, .session-gains-metric strong, .mastery-session-metric > strong) {
+  font-variant-numeric: var(--numeric-style);
+  letter-spacing: -.025em;
+}
+[data-theme] .collection-total { font-size: var(--type-display); }
+[data-theme] :is(.daily-budget strong, .account-wallet-value, .session-gains-metric strong, .mastery-session-metric > strong) { font-size: calc(var(--font-size) + 5px); }
+[data-theme] :is(.collection-name, .equipment-name, .daily-date, .player-section-heading, .temper-name) { font-size: var(--font-size); }
+[data-theme] :is(.collection-caption, .inventory-widget-status, .inventory-widget-footer, .daily-note, .equipment-detail, .collection-extras-detail) { font-size: var(--type-small); line-height: var(--line-height); }
+[data-theme] :is(.inventory-widget-body, .inventory-widget-toolbar) :is(button, input, select) { border-color: var(--theme-border); background-color: var(--theme-control); }
+[data-theme] :is(.inventory-widget-status[data-status='cached'], .collection-warning, .mastery-session-warning, .daily-error) { color: var(--state-warning); }
+[data-theme] :is(.inventory-widget-status[data-status='error'], .session-gains-row[data-direction='loss'] .session-gains-net, .collection-extras-row[data-direction='loss'] .collection-extras-value) { color: var(--state-danger); }
+[data-theme] :is(.equipment-owned, .collection-state.is-owned, .collection-extras-row[data-ready='true'] .collection-extras-value, .session-gains-row[data-direction='gain'] .session-gains-net) { color: var(--state-success); }
+[data-theme] .equipment-mastered { color: var(--theme-secondary); }
+[data-theme] .clock-sun { filter: drop-shadow(0 0 var(--effect-glow) currentColor); }
+[data-theme] .clock-moon { filter: drop-shadow(0 0 var(--effect-glow) currentColor); }
+
+/* Foreground colour variables already contain Elements opacity once. Apply
+   it at the leaf only for artwork which cannot use an RGBA theme colour.
+   Never put it on a card/body: doing so would also fade its background. */
+html[data-theme] :is(.widget-host-body, .daily-brief-window, .dungeon-overlay-body, .appearance-preview-surface, body:has(#map-container)) :is(img, canvas) {
+  opacity: var(--elements-opacity, 1);
+}
+html[data-theme] :is(.widget-host-body, .daily-brief-window, .dungeon-overlay-body, .appearance-preview-surface) :is(input[type='checkbox'], input[type='radio'], input[type='range']) {
+  accent-color: var(--focus-color);
+  opacity: var(--elements-opacity, 1);
+}
+html[data-theme] :is(.widget-host-body, .daily-brief-window, .dungeon-overlay-body, .appearance-preview-surface) :is(input, textarea)::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* Clock/weather SVGs mix semantic labels with deliberately coloured artwork.
+   Colour the artwork itself rather than multiplying opacity on their SVG
+   root, which would apply Elements twice to labels and themed strokes. */
+[data-theme] .clock-sun { color: rgb(245 201 122 / var(--elements-opacity, 1)); }
+[data-theme] .clock-moon { color: rgb(200 245 228 / var(--elements-opacity, 1)); }
+[data-theme] .clock-companion { color: rgb(110 194 255 / var(--elements-opacity, 1)); }
+[data-theme] .clock-track { stroke: rgb(from var(--theme-border) r g b / calc(alpha * var(--elements-opacity, 1))); }
+[data-theme] .clock-horizon { stroke: rgb(from var(--theme-accent) r g b / var(--elements-opacity, 1)); }
+[data-theme] .weather-sun { fill: rgb(235 199 119 / var(--elements-opacity, 1)); color: rgb(235 199 119 / var(--elements-opacity, 1)); }
+[data-theme] .weather-cloud { fill: rgb(from var(--text-secondary) r g b / var(--elements-opacity, 1)); }
+[data-theme] .weather-halo, [data-theme] .weather-leaf { fill: rgb(from var(--theme-accent) r g b / var(--elements-opacity, 1)); }
+[data-theme] .weather-wind { stroke: rgb(from var(--theme-accent) r g b / var(--elements-opacity, 1)); }
+[data-theme] .weather-rain { stroke: rgb(155 201 222 / var(--elements-opacity, 1)); }
+[data-theme] .weather-bolt { fill: rgb(232 205 132 / var(--elements-opacity, 1)); }
+[data-theme] .weather-rainbow path:nth-child(1) { stroke: rgb(219 165 148 / var(--elements-opacity, 1)); }
+[data-theme] .weather-rainbow path:nth-child(2) { stroke: rgb(231 202 129 / var(--elements-opacity, 1)); }
+[data-theme] .weather-rainbow path:nth-child(3) { stroke: rgb(143 187 172 / var(--elements-opacity, 1)); }
+[data-theme] .weather-ground { stroke: rgb(from var(--theme-border) r g b / calc(alpha * var(--elements-opacity, 1))); }
+[data-theme] .weather-step-dot {
+  background-color: rgb(from var(--theme-accent) r g b / calc(.11 * var(--elements-opacity, 1)));
+}
+[data-theme] .weather-step[data-kind='rain'] .weather-step-dot { border-color: rgb(155 201 222 / var(--elements-opacity, 1)); background-color: rgb(155 201 222 / calc(.1333 * var(--elements-opacity, 1))); }
+[data-theme] .weather-step[data-kind='thunder'] .weather-step-dot { border-color: rgb(232 205 132 / var(--elements-opacity, 1)); background-color: rgb(232 205 132 / calc(.1333 * var(--elements-opacity, 1))); }
+[data-theme] :is(.weather-step[data-kind='rainbow'], .weather-step[data-rainbow-chance='true']) .weather-step-dot { border-color: rgb(219 165 148 / var(--elements-opacity, 1)); background-color: rgb(219 165 148 / calc(.1333 * var(--elements-opacity, 1))); }
+[data-theme] .weather-step:not(:last-child)::after { background-color: rgb(from var(--theme-border) r g b / calc(alpha * var(--elements-opacity, 1))); }
+
+/* Authored hues remain meaningful while following the common text channel. */
+[data-theme] :is(.calendar-error, .equipment-notice, .mastery-session-warning) { color: var(--state-warning); }
+[data-theme] .data-feedback[data-error='true'] { color: var(--state-danger); }
+[data-theme] .data-number { color: rgb(242 205 129 / var(--text-elements-opacity, 1)); }
+[data-theme] .data-boolean { color: rgb(165 217 255 / var(--text-elements-opacity, 1)); }
+[data-theme] .data-level { color: rgb(165 199 223 / var(--text-elements-opacity, 1)); }
+[data-theme] [data-severity='error'] .data-level { color: var(--state-danger); }
+[data-theme] [data-severity='warning'] .data-level { color: var(--state-warning); }
+[data-theme] [data-severity='debug'] .data-level { color: rgb(180 164 221 / var(--text-elements-opacity, 1)); }
+[data-theme] .data-viewer mark { color: rgb(18 18 18 / var(--text-elements-opacity, 1)); }
+[data-theme] .collection-extras-row[data-virtue='COURAGE'] .collection-extras-detail { color: rgb(212 153 132 / var(--text-elements-opacity, 1)); }
+[data-theme] .collection-extras-row[data-virtue='GRACE'] .collection-extras-detail { color: rgb(143 184 200 / var(--text-elements-opacity, 1)); }
+[data-theme] .collection-extras-row[data-virtue='SPIRIT'] .collection-extras-detail { color: rgb(178 164 203 / var(--text-elements-opacity, 1)); }
+[data-theme] .mastery-session-bar[data-direction='loss'] { background: rgb(216 139 123 / var(--bar-elements-opacity, 1)); }
+[data-theme] .collection-pin[aria-pressed='true'] { color: var(--state-warning); }
+[data-theme] .gf-widget-badge { color: var(--state-warning); }
+[data-theme] :is(.gf-widget-dot, .arena-status-dot) { opacity: var(--elements-opacity, 1); }
+[data-theme] .minimap-locate-btn { color: rgb(0 229 255 / var(--text-elements-opacity, 1)); }
+html[data-theme] :is(.minimap-locate-hint kbd, .map-locate-hint kbd, .dungeon-map-controls button[aria-pressed='true'], .dungeon-overlay-body .dungeon-map-controls [data-action='close'], .dungeon-map-guide, .dungeon-overlay-hint) { color: var(--text-primary); }
+
+/* Wolf drawings use their own palette, so scale the leaf glyph/fill once and
+   keep the card palette available to the Surface background channel. */
+[data-theme] :is(.wolf-name, .wolf-bond strong, .wolf-rest, .wolf-details-toggle[aria-pressed='true']) {
+  color: rgb(from var(--wolf-gold) r g b / var(--text-elements-opacity, 1)) !important;
+}
+[data-theme] .wolf-ready { color: rgb(from var(--wolf-sage) r g b / var(--text-elements-opacity, 1)); }
+[data-theme] .wolf-companion-paw { opacity: calc(.85 * var(--elements-opacity, 1)); }
+[data-theme] .wolf-empty .wolf-companion-paw { opacity: calc(.65 * var(--elements-opacity, 1)); }
+[data-theme] .wolf-paw { opacity: calc(.55 * var(--elements-opacity, 1)); }
+[data-theme] :is(.wolf-paw-fill, .wolf-paw-trained, .wolf-paw-allocated) .wolf-paw { opacity: var(--elements-opacity, 1); }
+[data-theme] .wolf-energy-fill { opacity: var(--bar-elements-opacity, 1); }
+[data-theme] .wolf-status[data-state='live']::before { background: rgb(from var(--wolf-sage) r g b / var(--elements-opacity, 1)); }
+[data-theme] .wolf-status[data-state='cached']::before { background: rgb(from var(--wolf-gold) r g b / var(--elements-opacity, 1)); }
+
+/* Inner cards retain their own Surface setting when Background or Elements
+   changes; fixed decorative tints must not bypass the Surface slider. */
+[data-theme] :is(.collection-row, .account-wallet-card), [data-theme] .item-thumbnail:not(.is-loaded) {
+  background-color: rgb(255 255 255 / calc(.025 * var(--surface-opacity, 1)));
+}
+[data-theme] .mastery-session-summary { background-color: rgb(197 170 114 / calc(.05 * var(--surface-opacity, 1))); }
+[data-theme] .mastery-session-timeline { background-image: linear-gradient(to top, rgb(197 170 114 / calc(.06 * var(--surface-opacity, 1))), transparent); }
+[data-theme] .session-gains-warning { background-color: rgb(216 191 131 / calc(.08 * var(--surface-opacity, 1))); }
+[data-theme] .data-section h3 { background-color: rgb(from var(--bg-panel) r g b / var(--surface-opacity, 1)); }
+[data-theme] :is(.wolf-card, .wolf-retry) { background: rgb(from var(--wolf-ink) r g b / var(--surface-opacity, 1)); }
+[data-theme] .wolf-card-head { background-image: linear-gradient(115deg, rgb(from var(--wolf-sage) r g b / calc(.1 * var(--surface-opacity, 1))), transparent 75%); }
+[data-theme] .wolf-rest { background: rgb(from var(--wolf-gold) r g b / calc(.08 * var(--surface-opacity, 1))); }
+[data-theme] .gf-widget-badge { background: rgb(255 170 0 / calc(.25 * var(--surface-opacity, 1))); }
+[data-theme] .gf-widget-open-btn { background: rgb(135 206 250 / calc(.15 * var(--surface-opacity, 1))); }
+[data-theme] .gf-widget-open-btn:hover { background: rgb(135 206 250 / calc(.3 * var(--surface-opacity, 1))); }
+[data-theme] .minimap-viewport { background: rgb(15 15 26 / var(--surface-opacity, 1)); }
+[data-theme] .minimap-loading { background: rgb(15 15 30 / calc(.85 * var(--surface-opacity, 1))); }
+[data-theme] .minimap-locate-overlay { background: rgb(0 0 0 / calc(.55 * var(--surface-opacity, 1))); }
+[data-theme] .minimap-locate-hint kbd { background: rgb(255 255 255 / calc(.1 * var(--surface-opacity, 1))); }
+[data-theme] .collection-extras-rank.held { background: rgb(197 170 114 / calc(.1 * var(--surface-opacity, 1))); }
+html[data-theme] .dungeon-map-viewport { background: rgb(8 18 21 / calc(var(--dungeon-map-background-opacity, .45) * var(--surface-opacity, 1))); }
+html[data-theme] .dungeon-map[data-see-through='true'] .dungeon-map-viewport { background: transparent; }
+html[data-theme] :is(.dungeon-map-empty button, .dungeon-map-controls button) { background: rgb(15 25 28 / calc(.65 * var(--surface-opacity, 1))); }
+html[data-theme] .dungeon-map-guide { background: rgb(12 15 18 / calc(.92 * var(--surface-opacity, 1))); }
+html[data-theme] .dungeon-overlay-body :is(.dungeon-map-controls, .dungeon-map-empty:not([hidden])) { background: rgb(10 18 21 / calc(.9 * var(--surface-opacity, 1))); }
+html[data-theme] .dungeon-overlay-hint { background: rgb(10 18 21 / calc(.78 * var(--surface-opacity, 1))); }
+
+/* Dock glyphs scale inside the existing native 36px hit areas. Rail thickness,
+   drag targets and click-through geometry never depend on decorative scale. */
+[data-theme] .edge-dock #widget-launchers { gap: var(--dock-icon-gap); }
+[data-theme] .edge-dock :is(.dock-widget-icon, .dock-widget-icon svg, .dock-widget-icon::before) {
+  width: var(--dock-icon-size);
+  height: var(--dock-icon-size);
+}
+[data-theme] .edge-dock #dock-bar { border-radius: var(--radius-panel); box-shadow: var(--surface-shadow), var(--surface-glow); }
+[data-theme] .edge-dock[data-dock-edge='bottom'] #dock-bar { border-top-width: var(--border-width); }
+[data-theme] .edge-dock[data-dock-edge='top'] #dock-bar { border-bottom-width: var(--border-width); }
+[data-theme] .edge-dock[data-dock-edge='left'] #dock-bar { border-right-width: var(--border-width); }
+[data-theme] .edge-dock[data-dock-edge='right'] #dock-bar { border-left-width: var(--border-width); }
+[data-theme] .edge-dock .dock-widget-button.is-open::after { left: calc(50% - 6px); border-radius: var(--radius-control); }
+[data-theme] .edge-dock[data-dock-edge='left'] .dock-widget-button.is-open::after { left: auto; top: calc(50% - 6px); }
+[data-theme] .edge-dock[data-dock-edge='right'] .dock-widget-button.is-open::after { left: 1px; top: calc(50% - 6px); }
+[data-active-indicator='none'] .edge-dock .dock-widget-button.is-open::after { display: none; }
+[data-active-indicator='dot'] .edge-dock .dock-widget-button.is-open::after { width: 4px; height: 4px; left: calc(50% - 2px); border-radius: 50%; }
+[data-active-indicator='dot'] .edge-dock[data-dock-edge='left'] .dock-widget-button.is-open::after { left: auto; top: calc(50% - 2px); }
+[data-active-indicator='dot'] .edge-dock[data-dock-edge='right'] .dock-widget-button.is-open::after { left: 1px; top: calc(50% - 2px); }
+
+/* Opaque focus remains usable even with text and decorative borders at 0%. */
+html[data-theme] :focus-visible { outline-color: var(--focus-color, var(--theme-accent)) !important; }
+[data-theme] .player-wallet .inventory-widget-body { grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr)); }
+[data-theme] .player-wallet .account-wallet-card:has(.account-wallet-value[data-long='true']) { grid-column: 1 / -1; flex-direction: row; align-items: center; }
+[data-theme] .account-wallet-value { white-space: nowrap; overflow-wrap: normal; }
+/* A custom checkbox follows sharp geometry; its 1px outline is functional. */
+html[data-theme] .widget-card input[type='checkbox'] { border-radius: min(var(--radius-control, 4px), 4px); }
+
+/* The closest configured scope owns motion. @scope stops an Off global from
+   overriding an explicitly enabled widget, and vice versa. Chromium/Electron
+   supports scoped rules; the media rule also protects older preview browsers. */
+@scope ([data-motion-level]) to ([data-motion-level]) {
+  :scope[data-motion-level='off'], :scope[data-motion-level='off'] *,
+  :scope[data-motion-level='off'] *::before, :scope[data-motion-level='off'] *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  :scope[data-ambient-motion='false'] :is(.weather-scene *, .dock-status-dot) { animation: none !important; }
+  :scope[data-event-emphasis='false'] :is(.temper-updated, .wolf-stat-updated) { animation: none !important; }
+}
+[data-theme] .edge-dock .dock-widget-icon {
+  transition: transform var(--motion-fast) var(--motion-ease), opacity var(--motion-fast) ease;
+}
+[data-theme] .edge-dock .dock-button:hover .dock-widget-icon { transform: translateY(calc(var(--motion-distance) * -1)); }
+[data-theme] .edge-dock .dock-button:active .dock-widget-icon { transform: scale(.92); }
+[data-theme] .edge-dock .dock-button { transition: color var(--motion-fast), background-color var(--motion-fast), border-color var(--motion-fast); }
+[data-theme] :is(.widget-card, .settings-button, .player-tab, .daily-tab, .temper-card, .title-filter) {
+  transition: background-color var(--motion-fast) var(--motion-ease), border-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) ease;
+}
+/* Navigation feedback runs only when the selected panel changes. Panels and
+   controls retain their geometry, and inventory repainting cannot replay it. */
+[data-motion-level='subtle'] { --motion-entry-opacity: .8; }
+[data-motion-level='standard'] { --motion-entry-opacity: .45; }
+[data-motion-level='expressive'] { --motion-entry-opacity: .25; }
+[data-theme] :is(.player-panel, .daily-panel):not([hidden]) {
+  animation: appearance-panel-enter var(--motion-base) var(--motion-ease) both;
+}
+[data-theme] :is(.player-tab, .daily-tab) { position: relative; overflow: hidden; }
+[data-theme] :is(.player-tab, .daily-tab)[aria-selected='true']::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 0;
+  height: 2px;
+  background: var(--theme-accent);
+  pointer-events: none;
+  transform-origin: left;
+  animation: appearance-tab-select var(--motion-base) var(--motion-ease) both;
+}
+@keyframes appearance-panel-enter { from { opacity: var(--motion-entry-opacity, .45); } to { opacity: 1; } }
+@keyframes appearance-tab-select { from { transform: scaleX(.15); opacity: .4; } to { transform: scaleX(1); opacity: 1; } }
+[data-theme] :is(.timer-entry, .timer-widget, .widget-card, .inventory-widget-body, .collection-row, .equipment-row, .title-row, .dock-widget-button, .appearance-preview-surface) { position: relative; }
+.appearance-event {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 3;
+  animation: appearance-event-fade var(--event-duration, var(--motion-event)) ease-out both;
+  box-shadow: inset 0 0 0 1px var(--theme-accent);
+}
+.appearance-event::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 15%, var(--theme-accent-soft) 42%, var(--theme-accent) 50%, transparent 65%);
+  opacity: var(--event-strength, .22);
+  transform: translateX(-130%);
+  animation: appearance-event-sweep var(--event-duration, var(--motion-event)) var(--motion-ease) both;
+}
+.appearance-event--complete { box-shadow: inset 0 0 0 2px var(--state-success); }
+.appearance-event--complete::before { background: linear-gradient(105deg, transparent 25%, var(--theme-secondary) 50%, transparent 75%); opacity: var(--event-complete-strength, .35); }
+.appearance-event--urgent, .appearance-event--error { box-shadow: inset 0 0 0 1px var(--state-warning); }
+[data-motion-paused='true'] *, [data-motion-paused='true'] *::before, [data-motion-paused='true'] *::after,
+[data-theme] :is(.hidden, .collapsed, [hidden]) *, [data-theme] :is(.hidden, .collapsed, [hidden]) *::before, [data-theme] :is(.hidden, .collapsed, [hidden]) *::after {
+  animation-play-state: paused !important;
+}
+@keyframes appearance-event-fade { 0% { opacity: 0; } 18% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes appearance-event-sweep { to { transform: translateX(130%); } }
+@media (prefers-reduced-motion: reduce) {
+  @scope ([data-respect-reduced-motion='true']) to ([data-motion-level]) {
+    :scope *, :scope *::before, :scope *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+}

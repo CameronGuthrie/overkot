@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+
+# Local copies of game data delivered by the CDN
+/assets/map-tiles/
+/assets/map-icons/
+/assets/map-json/
+/assets/tempers/
+
+# Build output
+dist/
+dist-beta/
+build-out/
+.build/
+
+# electron-builder cache
+.icon-ico/
+.electron-builder-cache/
+
+# Obfuscated/bundled intermediates
+src-obfuscated/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Editor / IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+.build-log.txt
+npm-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+/services.community.json
+
+# Infrastructure and local authoring checkouts
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+.terraform/
+terraform.tfstate.d/
+.local/
+.firebase/
+.runtimeconfig.json
+*-firebase-adminsdk-*.json
+market-source/
+
+# Old Rust code (not needed for Electron build)
+old_rust_shit/
+
+output/

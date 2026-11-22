@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: overkot-map-tiles:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <title>Dungeon Overlay</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="dungeon-map.css">
+  <link rel="stylesheet" href="dungeon-overlay.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body class="dungeon-overlay-body">
+  <main id="dungeon-overlay" aria-label="Dungeon overlay map"></main>
+  <p id="dungeon-overlay-hint" class="dungeon-overlay-hint" role="status" aria-live="polite"></p>
+  <script src="shared-constants.js"></script>
+  <script src="../modules/dungeonExploration.js"></script>
+  <script src="../modules/playerMarkerMotion.js"></script>
+  <script src="../modules/mapAppearance.js"></script>
+  <script src="world-drop-markers.js"></script>
+  <script src="dungeon-map.js"></script>
+  <script src="dungeon-overlay.js"></script>
+</body>
+</html>

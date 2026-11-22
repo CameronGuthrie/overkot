@@ -1,0 +1,41 @@
+.temper-content { padding: 10px; min-width: 0; color: var(--text-primary); font: 12px var(--font-ui, system-ui), sans-serif; }
+.temper-content [hidden] { display: none !important; }
+.temper-content button, .temper-content input, .temper-content select { -webkit-app-region: no-drag; font: inherit; color: inherit; }
+.temper-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; }
+.temper-search, .temper-group-select, .temper-view-select { min-width: 0; width: 100%; padding: 6px; border-radius: 4px; border: 1px solid var(--theme-border); background: var(--theme-control); }
+.temper-view-select { grid-column: 1 / -1; }
+.temper-group-select { max-width: 90px; font-size: 11px !important; }
+.temper-filters { display: flex; gap: 5px; grid-column: 1 / -1; flex-wrap: wrap; }
+.temper-filter, .temper-back { border: 1px solid var(--theme-border); background: var(--theme-control); border-radius: 4px; padding: 4px 7px; cursor: pointer; font-size: 11px !important; }
+.temper-filter[aria-pressed=true] { background: var(--theme-accent-soft); border-color: var(--theme-accent); color: var(--theme-accent); }
+.temper-summary { font-size: 10px; color: var(--text-secondary); line-height: 1.5; margin: 6px 0; }
+.temper-scroll { max-height: 350px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: var(--theme-border) transparent; overscroll-behavior: contain; }
+.temper-group + .temper-group { margin-top: 8px; }
+.temper-group-head { display: block; width: 100%; text-align: left; padding: 5px 2px; background: none; border: 0; color: var(--text-secondary) !important; font-size: 11px !important; cursor: pointer; }
+.temper-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 5px; }
+.temper-scroll[data-view=blacksmith] .temper-grid { grid-template-columns: minmax(0, 1fr); }
+.temper-scroll[data-view=blacksmith] .temper-card[data-unlocked=true] { border-color: var(--theme-accent); }
+.temper-card { display: flex; gap: 7px; align-items: center; width: 100%; min-width: 0; padding: 7px; border: 1px solid var(--theme-border); border-radius: 5px; background: var(--theme-control); text-align: left; cursor: pointer; }
+.temper-card:hover { border-color: var(--theme-accent); }
+.temper-card[data-missing=true] { opacity: .55; }
+.temper-card-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.temper-name { overflow-wrap: anywhere; font-weight: 500; font-size: 11px; }
+.temper-source-count { color: var(--text-secondary); font-size: 10px; line-height: 1.4; }
+.temper-count { margin-left: auto; color: var(--theme-accent); white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 12px; }
+.temper-icon { display: grid; place-items: center; flex: 0 0 34px; width: 34px; height: 34px; border: 1px solid var(--temper-origin, var(--theme-border)); border-radius: 5px; background: var(--theme-accent-soft); color: var(--theme-accent); }
+.temper-icon img { object-fit: contain; }
+.temper-icon[data-origin=Cassid] { --temper-origin: #9cacd9; }
+.temper-icon[data-origin=Dendrit] { --temper-origin: #d49d6d; }
+.temper-icon[data-origin=Feykin] { --temper-origin: #91bf96; }
+.temper-icon[data-origin=Mendicant] { --temper-origin: #b89aca; }
+.temper-icon[data-origin="Ode'n"] { --temper-origin: #89b7cd; }
+.temper-back { margin: 2px 0 9px; }
+.temper-detail-title { display: flex; gap: 8px; align-items: center; }
+.temper-detail-title strong { min-width: 0; overflow-wrap: anywhere; }
+.temper-description, .temper-empty { color: var(--text-secondary); font-size: 11px; line-height: 1.5; margin: 10px 0; }
+.temper-unlock-status { color: var(--theme-accent); font-size: 11px; line-height: 1.5; margin: 10px 0; }
+.temper-detail-label { margin: 10px 0 5px; color: var(--theme-accent); font-size: 11px; }
+.temper-weapon { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid var(--theme-border); }
+.temper-updated { animation: temper-update 1.2s ease-out; }
+@keyframes temper-update { from { border-color: var(--theme-accent); background: var(--theme-accent-soft); } }
+/* Motion and system preferences are coordinated by theme.css and motion.js. */

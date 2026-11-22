@@ -1,0 +1,27 @@
+{
+  "releases": "https://releases.overkot.com/releases",
+  "marketApi": "https://api.avakot.market/v1",
+  "marketPublicApi": "https://avakot.market/api/v1",
+  "marketWebsite": "https://avakot.market",
+  "accountApi": "https://auth.avakot.dev",
+  "accountPortal": "https://account.avakot.dev",
+  "dataOrigin": "https://d2855gck1tg5bh.cloudfront.net",
+  "wikiWebsite": "https://wiki.avakot.org",
+  "buildWebsite": "https://avakot.build",
+  "vendorCatalog": "https://api.avakot.org/v1/vendors",
+  "groupFirebase": {
+    "apiKey": "AIzaSyCHn8gv2n3B9mWyNbaJICi-8X5lkoM0dZ0",
+    "authDomain": "soulframe-overlay-group-finder.firebaseapp.com",
+    "databaseURL": "https://soulframe-overlay-group-finder-default-rtdb.firebaseio.com",
+    "projectId": "soulframe-overlay-group-finder",
+    "storageBucket": "soulframe-overlay-group-finder.firebasestorage.app",
+    "messagingSenderId": "639762764675",
+    "appId": "1:639762764675:web:c52f3c201ae7eb8d6adcb6"
+  },
+  "usageFirebase": {
+    "projectId": "soulframe-overlay",
+    "appId": "1:193869631865:web:59188dac24f4e7c3985fa8",
+    "apiKey": "AIzaSyAliNk-s5LTlFokD_CIkYBKnSIwFlJEns8",
+    "authDomain": "soulframe-overlay.firebaseapp.com"
+  }
+}

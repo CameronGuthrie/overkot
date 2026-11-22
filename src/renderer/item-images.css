@@ -1,0 +1,6 @@
+.item-thumbnail{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:var(--item-image-size,40px);height:var(--item-image-size,40px);overflow:hidden;border-radius:5px;background:rgba(255,255,255,.025);color:var(--theme-accent,#b6c4a6)}
+.item-thumbnail-image{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.item-thumbnail-image[hidden]{display:none}
+.item-thumbnail-fallback{width:58%;height:58%;opacity:.38}
+.item-thumbnail.is-loaded .item-thumbnail-fallback{visibility:hidden}
+.item-thumbnail.is-loaded{background:transparent}

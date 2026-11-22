@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "source": {
+    "file": "overkot.png",
+    "sha256": "cd781b839866e8210ceb66c190ff3b48dc542ace96b9ddd33dbc80c43263e957",
+    "width": 1610,
+    "height": 1610
+  },
+  "outputs": {
+    "overkot.ico": {
+      "sha256": "fb1d8b009a4a645d2027b74af92ecc851a58e9c4b271414b3db031e6c1583544"
+    },
+    "icon.ico": {
+      "sha256": "fb1d8b009a4a645d2027b74af92ecc851a58e9c4b271414b3db031e6c1583544"
+    },
+    "SF_TIMERS_LOGO.ico": {
+      "sha256": "fb1d8b009a4a645d2027b74af92ecc851a58e9c4b271414b3db031e6c1583544"
+    },
+    "SF_TIMERS_LOGO.png": {
+      "sha256": "cd781b839866e8210ceb66c190ff3b48dc542ace96b9ddd33dbc80c43263e957"
+    },
+    "installer-header.bmp": {
+      "sha256": "3008f4a726109a1075c0bb5c166e8dc3f3b213fe9e77f676b4d39dd3abcc32d6"
+    },
+    "installer-sidebar.bmp": {
+      "sha256": "3fd4503534f3c473e6239acce18ca152f8a1f1366c27210d44c6998bdefb63f9"
+    }
+  }
+}

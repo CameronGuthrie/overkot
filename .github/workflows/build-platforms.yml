@@ -1,0 +1,93 @@
+name: Linux and macOS test packages (paused)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    # Native packaging is on hold. Remove this guard when platform work resumes.
+    if: >-
+      github.repository_id == '1467149183' && github.ref_protected &&
+      github.repository_owner_id == '76098008' &&
+      github.actor_id == '76098008' &&
+      github.triggering_actor == github.repository_owner && false
+    name: ${{ matrix.platform }} ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            arch: x64
+            runner: ubuntu-24.04
+          - platform: mac
+            arch: x64
+            runner: macos-15-intel
+          - platform: mac
+            arch: arm64
+            runner: macos-15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: true
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install Linux packaging tools
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential clang zlib1g-dev libssl-dev cmake libx11-dev rpm libarchive-tools libopenjp2-tools
+
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        if: matrix.platform == 'linux'
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - run: npm run i18n:check
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build Linux packages
+        if: matrix.platform == 'linux'
+        run: npm run build:linux -- --x64
+
+      # Ad-hoc signing needs no Apple account. These are test artifacts;
+      # public macOS distribution needs Developer ID signing and notarization.
+      - name: Build macOS test packages
+        if: matrix.platform == 'mac'
+        run: npm run build:mac -- --${{ matrix.arch }} --adhoc
+
+      # Upload only packages and their checksums, never updater metadata.
+      - name: Save packages for manual testing
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: overkot-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+          path: |
+            dist/overkot-*-linux-*.AppImage
+            dist/overkot-*-linux-*.AppImage.sha256
+            dist/overkot-*-linux-*.deb
+            dist/overkot-*-linux-*.deb.sha256
+            dist/overkot-*-linux-*.rpm
+            dist/overkot-*-linux-*.rpm.sha256
+            dist/overkot-*-linux-*.pkg.tar.xz
+            dist/overkot-*-linux-*.pkg.tar.xz.sha256
+            dist/overkot-*-mac-*.dmg
+            dist/overkot-*-mac-*.dmg.sha256
+            dist/overkot-*-mac-*.zip
+            dist/overkot-*-mac-*.zip.sha256

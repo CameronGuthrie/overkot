@@ -1,0 +1,7 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "usageLimits", "fieldPath": "expiresAt", "ttl": true, "indexes": [] },
+    { "collectionGroup": "usageReceipts", "fieldPath": "expiresAt", "ttl": true, "indexes": [] }
+  ]
+}

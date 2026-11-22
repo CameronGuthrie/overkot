@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: overkot-map-tiles:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com;">
+  <title>Overkot</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="theme.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body class="edge-dock" data-dock-edge="bottom">
+  <div id="dock-bar" role="toolbar" aria-label="Overlay dock">
+    <div class="dock-brand-group">
+      <button id="brand-btn" class="dock-button dock-brand" type="button" title="About Overkot / changelog" aria-label="About Overkot / changelog">
+        <img src="../../assets/overkot.png" alt="" draggable="false">
+      </button>
+      <button id="dock-status" class="dock-status" type="button" data-status="waiting" title="Waiting for Soulframe">
+        <span class="dock-status-dot" aria-hidden="true"></span>
+        <span id="dock-status-text">Waiting for Soulframe</span>
+      </button>
+    </div>
+    <span class="dock-divider" aria-hidden="true"></span>
+    <nav id="widget-launchers" aria-label="Widgets"></nav>
+    <button id="dock-empty" class="dock-empty" type="button" title="Choose widgets to add to your dock">Add your widgets</button>
+    <span id="redock-hint" hidden>Drop here to dock</span>
+    <div class="dock-spacer"></div>
+    <span class="dock-divider" aria-hidden="true"></span>
+    <div class="dock-tools">
+      <button id="add-widgets-btn" class="dock-button" type="button" title="Add / remove widgets" aria-label="Add / remove widgets"><span class="icon-widgets" aria-hidden="true"></span></button>
+      <button id="settings-btn" class="dock-button" type="button" title="Settings" aria-label="Settings"><span class="icon-settings" aria-hidden="true"></span></button>
+      <button id="tray-btn" class="dock-button" type="button" title="Minimize to tray" aria-label="Minimize to tray"><span class="icon-minimize" aria-hidden="true"></span></button>
+      <button id="close-btn" class="dock-button" type="button" title="Close Overkot" aria-label="Close Overkot"><span class="icon-close" aria-hidden="true"></span></button>
+    </div>
+  </div>
+  <span id="dock-status-announcement" class="dock-screen-reader" role="status" aria-live="polite"></span>
+  <script src="shared-constants.js"></script>
+  <script src="timer-utils.js"></script>
+  <script src="widget-icons.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

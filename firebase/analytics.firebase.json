@@ -1,0 +1,4 @@
+{
+  "functions": [{ "source": "analytics", "codebase": "usage", "ignore": ["node_modules", ".git", "*.log"] }],
+  "firestore": { "rules": "analytics.firestore.rules", "indexes": "analytics.firestore.indexes.json" }
+}

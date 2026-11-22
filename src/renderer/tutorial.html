@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';">
+  <title>Overkot tutorial</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="icons.css">
+  <script src="ui-icons.js" defer></script>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="tutorial.css">
+  <script src="../modules/appearance.js"></script>
+  <script src="motion.js"></script>
+  <script src="theme.js"></script>
+</head>
+<body class="tutorial-window">
+  <header id="titlebar" class="drag-region">
+    <img class="tutorial-brand" src="../../assets/overkot.png" alt="" draggable="false">
+    <span id="tutorial-title" class="title-text">Overkot tutorial</span>
+    <div class="titlebar-spacer"></div>
+    <button id="tutorial-close" class="titlebar-btn no-drag" type="button" title="Skip tutorial" aria-label="Skip tutorial"><span class="icon-close" aria-hidden="true"></span></button>
+  </header>
+  <main id="tutorial-card" aria-labelledby="tutorial-step-title">
+    <div class="tutorial-heading"><span class="tutorial-eyebrow" id="tutorial-eyebrow">QUICK TOUR</span><span id="tutorial-progress" aria-label="Tutorial progress">Loading…</span></div>
+    <div id="tutorial-segments" aria-hidden="true"></div>
+    <div id="tutorial-visual" class="tutorial-visual" aria-hidden="true"></div>
+    <div id="tutorial-copy">
+      <h1 id="tutorial-step-title" tabindex="-1">Welcome to Overkot</h1>
+      <p id="tutorial-body">Loading your tutorial…</p>
+      <p id="tutorial-tip" class="tutorial-tip"></p>
+      <button id="tutorial-action" class="tutorial-button tutorial-action" type="button" hidden></button>
+    </div>
+    <p id="tutorial-error" role="status" aria-live="polite" hidden></p>
+  </main>
+  <footer class="tutorial-navigation">
+    <div class="tutorial-navigation-row"><button id="tutorial-skip" class="tutorial-button tutorial-skip" type="button">Skip tour</button>
+      <div class="tutorial-navigation-end"><button id="tutorial-back" class="tutorial-button" type="button" disabled>Back</button><button id="tutorial-next" class="tutorial-button tutorial-primary" type="button" disabled>Next</button></div>
+    </div>
+    <button id="tutorial-disable-all" class="tutorial-button tutorial-disable-all" type="button">Turn off all tours</button>
+  </footer>
+  <script src="../modules/tutorials.js"></script>
+  <script src="widget-icons.js"></script>
+  <script src="tutorial.js"></script>
+</body>
+</html>
