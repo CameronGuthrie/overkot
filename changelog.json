@@ -1,6 +1,15 @@
 {
   "versions": [
     {
+      "version": "v0.0.21",
+      "changes": [
+        "Improved overlay shortcuts. Bind a single key or a key combination to interact with Overkot or show and hide it. On Windows, you can also bind mouse buttons, wheel clicks, scrolling, and wheel tilt. Existing shortcuts are preserved, and key combinations remain the default.",
+        "Choose where focus returns. On Windows, closing Settings or another Overkot window can return focus to Soulframe, the overlay, or the desktop. Soulframe is the default.",
+        "More reliable widget and menu interaction. Fixed an issue where the overlay could switch to click-through mode while you were using a widget, menu, or dropdown.",
+        "Improved live map tracking. Overkot now follows the active game log more reliably after relaunching or leaving a dungeon. Longer player searches resume where they left off, and Settings shows search progress when available."
+      ]
+    },
+    {
       "version": "v0.0.20",
       "changes": [
         "Overkot's source and releases now live in the public overkot repository.",

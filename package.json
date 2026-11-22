@@ -1,6 +1,6 @@
 {
   "name": "overkot",
-  "version": "0.0.20",
+  "version": "0.0.21",
   "description": "Overkot",
   "homepage": "https://github.com/CameronGuthrie/overkot",
   "main": "src/main.js",
