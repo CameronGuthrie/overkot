@@ -22,13 +22,13 @@ function zoneOf(state) {
 /** Connect read-only memory poses to the current log entry and map coordinates. */
 class PlayerTracking extends EventEmitter {
   constructor({ directory, reader = new PlayerMemoryReader(), getState, getAccountId, getVersion,
-    canShowAnonymousOverworld = () => false, isPlayerAreaCurrent = () => true,
+    canShowAnonymousOverworld = () => false, getAnonymousDungeonVisit = () => null, isPlayerAreaCurrent = () => true,
     getLayoutSnapshot, getScene, getNames = () => ({}), now = Date.now }) {
-    super(); Object.assign(this, { reader, getState, getVersion, canShowAnonymousOverworld, isPlayerAreaCurrent,
+    super(); Object.assign(this, { reader, getState, getVersion, canShowAnonymousOverworld, getAnonymousDungeonVisit, isPlayerAreaCurrent,
       getLayoutSnapshot, getScene, now });
     this.getAccountId = () => getAccountId(reader.processStartMs);
     this.pid = null; this.enabled = true; this.state = null; this.signature = null; this.epoch = 0;
-    this.account = null; this.session = null; this.processIdentity = null; this.context = null; this.pending = null; this.retryAt = 0;
+    this.account = null; this.visit = null; this.session = null; this.processIdentity = null; this.context = null; this.pending = null; this.retryAt = 0;
     this.poseWait = 'waiting-for-area';
     this.rootRefreshEntry = null;
     this.frameLayout = null; this.frameCloud = null; this.frameFit = null; this.minimumFrameTime = 0;
@@ -37,7 +37,7 @@ class PlayerTracking extends EventEmitter {
     this.worldDrops = createWorldDropsStore({ now, getNames });
     this.minimumDropTime = now();
     this.discovery = new DungeonDiscoveryStore({ directory, now,
-      getContext: () => this.context, getOwner: () => this.getOwner(), getPose: () => this.getLocation(),
+      getContext: () => this.context, getOwner: () => this._discoveryOwner(), getPose: () => this.getLocation(),
       getScene: () => this.getScene(this.state) });
     this.discovery.on('changed', data => {
       this.emit('discovery', data);
@@ -90,35 +90,44 @@ class PlayerTracking extends EventEmitter {
     return account && account === this.account && this.session && this.isPlayerAreaCurrent(this.reader.processStartMs)
       ? { account, process: this.session } : null;
   }
+  _discoveryOwner() {
+    if (!this.visit) return this.getOwner();
+    if (!this.enabled || !this.pid || !this.session || this.getAccountId()
+      || this.getAnonymousDungeonVisit(this.reader.processStartMs) !== this.visit
+      || stateKey(this.getState()) !== stateKey(this.state)) return null;
+    return { account: null, process: this.session, visit: this.visit };
+  }
   refresh(state = this.getState()) {
     const captured = state && typeof state === 'object' ? { ...state } : { active: false, status: 'unknown' };
     const account = this.getAccountId() || null, version = String(this.getVersion() ?? '');
     const zone = zoneOf(captured), startMs = this.reader.processStartMs;
+    const visit = !account && captured.active && captured.status === 'ready' ? this.getAnonymousDungeonVisit(startMs) : null;
     let poseWait = null;
     if (!zone || !this.isPlayerAreaCurrent(startMs)) poseWait = 'waiting-for-area';
-    else if (!account && !(captured.active === false && captured.status === 'outside' && zone === '/SF/Levels/MidrathRedux'
+    else if (!account && !visit && !(captured.active === false && captured.status === 'outside' && zone === '/SF/Levels/MidrathRedux'
       && this.canShowAnonymousOverworld(startMs))) poseWait = 'waiting-for-login';
-    const signature = JSON.stringify([stateKey(captured), account, this.session, version, poseWait]);
+    const signature = JSON.stringify([stateKey(captured), account, visit, this.session, version, poseWait]);
     if (signature !== this.signature) {
-      const captureScope = JSON.stringify([stateKey(captured), account, this.pid, this.processIdentity]);
+      const captureScope = JSON.stringify([stateKey(captured), account, visit, this.pid, this.processIdentity]);
       const preserveCapture = captureScope === this.captureScope;
       this.captureScope = captureScope;
       this.signature = signature; this.epoch++; this.context = null; this.pending = null; this.retryAt = 0;
       this.frameLayout = null; this.frameCloud = null; this.frameFit = null; this.minimumFrameTime = this.now();
-      this.state = captured; this.account = account; this.poseWait = poseWait; this._clear({ preserveCapture });
+      this.state = captured; this.account = account; this.visit = visit; this.poseWait = poseWait; this._clear({ preserveCapture });
     }
     this._status();
-    if (!this.enabled || !this.pid || !account || this.poseWait || !this.session || !captured.active || captured.status !== 'ready'
+    if (!this.enabled || !this.pid || this.poseWait || !this.session || !captured.active || captured.status !== 'ready'
       || !captured.instanceId || !captured.layoutCode || this.context || this.pending || this.now() < this.retryAt) return this.pending;
     const epoch = this.epoch;
     const task = Promise.resolve().then(() => this.getLayoutSnapshot(captured)).then(async layout => {
       if (epoch !== this.epoch || this.getAccountId() !== account || !this.isPlayerAreaCurrent(this.reader.processStartMs)
+        || (visit && this.getAnonymousDungeonVisit(this.reader.processStartMs) !== visit)
         || stateKey(this.getState()) !== stateKey(captured)) return;
       if (layout?.status !== 'ready' || stateKey(layout.state) !== stateKey(captured)
         || String(layout.version) !== String(this.getVersion() ?? '') || !['world', 'layout-local'].includes(layout.coordinateSpace)) {
         this.retryAt = this.now() + 5000; return;
       }
-      this.context = { account, process: this.session, instanceId: captured.instanceId, levelPath: captured.levelPath,
+      this.context = { account, ...(visit ? { visit } : {}), process: this.session, instanceId: captured.instanceId, levelPath: captured.levelPath,
         layoutCode: captured.layoutCode, revision: String(layout.version), coordinateSpace: layout.coordinateSpace };
       this.frameLayout = layout;
       await this.discovery.load({ instanceId: captured.instanceId, revision: String(layout.version) });
@@ -140,10 +149,11 @@ class PlayerTracking extends EventEmitter {
       || this.reader.getState().status !== 'tracking') return;
     // A cloud is private placement evidence, tied to both the current entry and
     // its capture time. Never let a legacy loading-slot root override it.
-    const hasFrames = this.account && Object.hasOwn(pose, 'dungeonFrames');
+    const canPlace = this.account || this.visit;
+    const hasFrames = canPlace && Object.hasOwn(pose, 'dungeonFrames');
     this.frameCloud = hasFrames ? { frames: pose.dungeonFrames, timestamp: pose.dungeonFramesTimestamp } : null;
     const dungeonRoot = hasFrames ? this._frameRoot(pose.sampledAt)
-      : this.account && selectRoot(pose.dungeonRoots || (pose.dungeonRoot ? [pose.dungeonRoot] : []), this.state);
+      : canPlace && selectRoot(pose.dungeonRoots || (pose.dungeonRoot ? [pose.dungeonRoot] : []), this.state);
     if (!dungeonRoot && this.state.active && this.state.status === 'ready') {
       const entry = JSON.stringify([this.session, this.state.instanceId]);
       if (entry !== this.rootRefreshEntry && this.reader.refreshRoots?.()) this.rootRefreshEntry = entry;

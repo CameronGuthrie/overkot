@@ -30,13 +30,14 @@ async function fixture(t, options = {}) {
   const tracking = new PlayerTracking({ directory, reader, now: () => now,
     getState: options.getState || (() => state), getAccountId: options.getAccountId || (() => account), getVersion: () => 'feed',
     canShowAnonymousOverworld: options.canShowAnonymousOverworld, isPlayerAreaCurrent: options.isPlayerAreaCurrent,
+    getAnonymousDungeonVisit: options.getAnonymousDungeonVisit,
     getLayoutSnapshot: options.getLayoutSnapshot || (async captured => ({ state: captured,
       status: 'ready', version: 'feed', coordinateSpace: 'world' })),
     getScene: async captured => ({ state: captured, version: 'feed', mode: 'placed', rooms: [] }) });
   const locations = []; tracking.on('location', value => locations.push(value));
   tracking.start(123); reader.update('tracking');
   t.after(async () => { tracking.stop(); await tracking.discovery.flush(); await fs.rm(directory, { recursive: true, force: true }); });
-  return { tracking, reader, locations,
+  return { tracking, reader, locations, directory,
     pose(overrides = {}) { reader.emit('pose', { source: 'memory', sampledAt: now, trackingSession: reader.status.trackingSession,
       position: { x: 100, y: 20, z: -10 }, heading: 90, ...overrides }); },
     get state() { return state; }, set state(value) { state = value; },
@@ -107,6 +108,68 @@ test('a current game log with overworld evidence and no login record places the 
   await fs.utimes(file, new Date(1000), new Date(1000)); watcher._poll(); f.pose();
   assert.equal(f.tracking.getStatus().status, 'waiting-for-area');
   assert.equal(f.tracking.getLocation().status, 'unavailable');
+});
+
+test('restart inside a name-only login reveals the current dungeon and discards the trail on logout', async t => {
+  const logDirectory = await fs.mkdtemp(path.join(os.tmpdir(), 'overkot-dungeon-replay-'));
+  t.after(() => fs.rm(logDirectory, { recursive: true, force: true }));
+  const file = path.join(logDirectory, 'EE.log');
+  const levelPath = '/SF/Levels/Procs/UnderCityCliffCave', layoutCode = 'KhGCACHMpRNZ3fAghiCAAQjA';
+  const enter = `Sys [Info]: Game successfully connected to: ${levelPath}/${layoutCode}.lp\n`;
+  await fs.writeFile(file, '12.345 Sys [Info]: Logged in First Envoy\n' + enter);
+  const watcher = new DungeonWatcher({ candidates: () => [file] });
+  watcher._poll();
+  const entry = watcher.getState();
+  assert.equal(entry.status, 'ready');
+  assert.equal(entry.layoutCode, layoutCode);
+  const rooms = [[0, 0, 0], [30, 1, 7], [-13, -2, 44]].map(([x, y, z]) => ({ transform: { x, y, z, rotation: 0 } }));
+  const frames = rooms.map(({ transform: room }) => ({ source: 'level-info',
+    matrix: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 100 + room.x, 990 + room.y, -200 + room.z, 1] }));
+  const f = await fixture(t, {
+    processStartMs: (await fs.stat(file)).mtimeMs - 1000,
+    getState: () => watcher.getState(), getAccountId: start => watcher.getPlayerAccountId(null, start),
+    isPlayerAreaCurrent: start => watcher.isPlayerAreaCurrent(start),
+    getAnonymousDungeonVisit: start => watcher.getAnonymousDungeonVisit(start),
+    getLayoutSnapshot: async state => ({ state, status: 'ready', version: 'feed', coordinateSpace: 'layout-local', rooms }),
+  });
+  const target = { instanceId: entry.instanceId, revision: 'feed' };
+  await f.tracking.refresh();
+  f.pose({ dungeonFrames: frames.slice(0, 2), dungeonFramesTimestamp: 10000 });
+  await f.tracking.flush();
+  assert.equal(f.tracking.getLocation().dungeon, undefined, 'A partial set of room frames cannot position a marker');
+  f.now = 10100;
+  f.pose({ dungeonFrames: frames, dungeonFramesTimestamp: 10100, position: { x: 107, y: 991, z: -188 } });
+  await f.tracking.flush();
+  const mapped = f.tracking.getLocation().dungeon;
+  assert.ok(mapped?.alignmentVerified, 'Fresh placement maps the existing entry without another log event');
+  assert.deepEqual(mapped.position, { x: 7, z: 12 });
+  assert.equal(mapped.instanceId, entry.instanceId);
+  const trail = await f.tracking.discovery.load(target);
+  assert.equal(trail.alignment.status, 'verified');
+  assert.equal(trail.alignment.source, 'level-info-fit');
+  assert.ok(trail.exploration.cells.length > 0, 'Progressive reveal receives the first mapped cell');
+  f.now = 10200;
+  f.pose({ dungeonFrames: frames, dungeonFramesTimestamp: 10200, position: { x: 139, y: 991, z: -188 } });
+  await f.tracking.flush();
+  assert.ok((await f.tracking.discovery.load(target)).exploration.cells.length > trail.exploration.cells.length);
+  assert.equal(f.tracking.getAccountId(), null);
+  assert.equal(f.tracking.getOwner()?.account ?? null, null);
+  assert.deepEqual(await fs.readdir(f.directory), [], 'The anonymous visit stays in memory');
+
+  await fs.appendFile(file, 'QUIT :Logged out of game\n');
+  watcher._poll(); await f.tracking.refresh();
+  assert.equal(f.tracking.getLocation().status, 'unavailable');
+  assert.equal((await f.tracking.discovery.load(target)).ok, false);
+  const account = 'b'.repeat(24);
+  await fs.appendFile(file, `Sys [Info]: Logged in Second (${account})\n` + enter);
+  watcher._poll(); await f.tracking.refresh();
+  const nextEntry = watcher.getState();
+  assert.notEqual(nextEntry.instanceId, entry.instanceId);
+  const next = await f.tracking.discovery.load({ instanceId: nextEntry.instanceId, revision: 'feed' });
+  assert.equal(next.ok, true);
+  assert.notEqual(next.scope, trail.scope);
+  assert.deepEqual(next.exploration.cells, []);
+  assert.equal((await f.tracking.discovery.save({ scope: trail.scope, exploration: trail.exploration })).ok, false);
 });
 
 test('support report distinguishes map placement without sharing locations or changing tracker state', async t => {
@@ -234,6 +297,24 @@ test('initial live dungeon samples gain their discovery scope once layout loadin
   resolveLayout({}); await task;
   assert.equal(f.locations.at(-1).dungeon.instanceId, 'initial-entry');
   assert.equal(typeof f.locations.at(-1).dungeon.scope, 'string');
+});
+
+test('a delayed layout cannot grant discovery after an anonymous login changes', async t => {
+  let visit = 'first-login', resolveLayout;
+  const f = await fixture(t, { getAnonymousDungeonVisit: () => visit,
+    getLayoutSnapshot: state => new Promise(resolve => {
+      resolveLayout = () => resolve({ state, status: 'ready', version: 'feed', coordinateSpace: 'world' });
+    }) });
+  f.account = null;
+  f.state = dungeon('entered');
+  const pending = f.tracking.refresh();
+  await tick(); f.pose();
+  visit = null;
+  resolveLayout(); await pending;
+  assert.equal(f.tracking.context, null);
+  assert.equal((await f.tracking.discovery.load({ instanceId: 'entered', revision: 'feed' })).ok, false);
+  assert.equal(f.locations.some(location => location.dungeon), false);
+  assert.deepEqual(await fs.readdir(f.directory), []);
 });
 
 test('overlapping layout loads cannot replace the newest entry or clear its pending request', async t => {

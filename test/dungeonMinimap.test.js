@@ -380,6 +380,38 @@ test('disabling progressive reveal fits the whole dungeon in both map views with
   }
 });
 
+test('placed Glades doorway caps draw on the full map and inside the player reveal without increasing the room count', async () => {
+  const caps = [
+    { room: 'GoAxCapOpeningCorruptedFlow', parent: 0, parentDoor: 0, transform: { x: 94, z: 4, rotation: Math.PI / 2 },
+      outline: [{ points: [[0, 2], [0, 4]] }] },
+    { room: 'GoAxCapOpeningSpiritTrees', parent: 0, parentDoor: 1, transform: { x: 116, z: 8, rotation: 0 },
+      outline: [{ points: [[3, 0], [5, 0]] }] },
+  ];
+  const map = await mount({ ...scene, bounds: { x: [0, 128], z: [0, 10] }, capOutlines: caps },
+    { discovery: emptyDiscovery, config: { dungeonMapProgressiveReveal: false } });
+  // The fitted canvas maps each layout unit to two pixels. The two strokes start
+  // at distinct transformed points away from the tree room at the origin.
+  const assertCapStrokes = strokes => {
+    for (const [x, y] of [[214, 127], [260, 119]]) {
+      assert.ok(strokes.some(point => point[0] === x && point[1] === y), `Missing cap outline at ${x}, ${y}`);
+    }
+  };
+  assertCapStrokes(map.drawing.outlineEnds);
+  assert.equal(map.drawing.clips, 0);
+  assert.equal(map.nodes.get('.dungeon-map-room-count').textContent, 'Rooms: 1');
+
+  map.events.config({ dungeonMapProgressiveReveal: true }); await map.flush();
+  const strokes = map.drawing.outlineEnds.length, calls = map.drawing.calls.length;
+  map.events.player(memoryPose(map.now, {}, { position: { x: 106, z: 6 } })); await map.flush();
+  assertCapStrokes(map.drawing.outlineEnds.slice(strokes));
+  assert.ok(map.drawing.arcs.some(([x, y, radius]) => x === 234 && y === 123 && radius === 90),
+    'The reveal circle at the player covers both cap outlines');
+  const redraw = map.drawing.calls.slice(calls);
+  assert.ok(redraw.includes('clip') && redraw.indexOf('clip') < redraw.indexOf('stroke'));
+  assert.equal(map.nodes.get('.dungeon-map-room-count').textContent, 'Rooms: 1');
+  map.widget.destroy();
+});
+
 test('full-map display keeps recording real exploration and toggling restores discovery and player following', async () => {
   const map = await mount(scene, { followPlayer: true, allowManualAlignment: false, discovery: emptyDiscovery,
     config: { dungeonMapProgressiveReveal: false } });

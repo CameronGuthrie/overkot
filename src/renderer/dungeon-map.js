@@ -175,7 +175,7 @@ window.DungeonMapWidget = {
       panX = x - (x - panX) * next / zoom; panY = y - (y - panY) * next / zoom; zoom = next; schedule();
     }
     function rebuildPaths() {
-      paths = (hasLayout() ? snapshot.rooms : []).map(room => {
+      paths = (hasLayout() ? [...snapshot.rooms, ...(snapshot.capOutlines || [])] : []).map(room => {
         const chains = room.outline.map(chain => ({ ...chain, points: chain.points.map(point => localPoint(point, room.transform)) }));
         const points = chains.flatMap(chain => chain.points);
         const bounds = points.reduce((box, [x, z]) => [Math.min(box[0], x), Math.min(box[1], z), Math.max(box[2], x), Math.max(box[3], z)], [Infinity, Infinity, -Infinity, -Infinity]);

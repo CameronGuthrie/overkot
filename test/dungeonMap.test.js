@@ -6,6 +6,7 @@ const path = require('node:path');
 const { decodeLayout, placeRooms, transformPoint, FALLEN_FORTRESS_TABLE } = require('../src/modules/dungeonLayout');
 const { DungeonWatcher, dungeonSet } = require('../src/modules/dungeonWatcher');
 const { DungeonMap, makeScene } = require('../src/modules/dungeonMap');
+const { pointInScene } = require('../src/modules/mapAlignment');
 
 const level = '/SF/Levels/Procs/FallenFortress/FallenFortressProcLevel';
 const code = 'SSMCETyBURHUPG29PZBAQAAAAIAIIgA';
@@ -66,6 +67,63 @@ test('room-local data never claims screenshot coordinates are world aligned', ()
   assert.equal(scene.coordinateSpace, 'layout-local');
   assert.equal(scene.rooms.length, decoded.rooms.length);
   assert.deepEqual(scene.missingRooms, []);
+});
+
+test('Glades tiles 1 and 2 appear at the selected door of the generated route', () => {
+  const glades = require('./fixtures/gladesProcLevel.json');
+  const tile1 = 'GoAxCapOpeningCorruptedFlow', tile2 = 'GoAxCapOpeningSpiritTrees';
+  // Door 0 from each exported cap. The compact test fixture retains only cap names.
+  const doors = new Map([
+    [tile1, { position: [-42, 31.149999618530273, 14.25], normal: [-1, 0, 0] }],
+    [tile2, { position: [-42, 31.25, 14.25], normal: [-1, 0, 0] }],
+  ]);
+  const table = { ...glades, caps: glades.caps.map(entry => doors.has(entry.room)
+    ? { ...entry, portals: [doors.get(entry.room)] } : entry) };
+  const floor = [{ closed: true, points: [[-40, 12], [-32, 12], [-32, 18], [-40, 18]] }];
+  // The first fingerprint is a captured visit. The second changes only the
+  // four-bit cap selection at the same opening, from Spirit Trees to Corrupted Flow.
+  for (const [fingerprint, expected] of [['SeXCNGh9IRWPOteCiCAIQgAI', tile2], ['SeXCNGh9IRWPOteDCCAIQgAI', tile1]]) {
+    const decoded = decodeLayout(fingerprint, table);
+    const scene = makeScene(decoded, table, { rooms: [...decoded.rooms.map(({ room }) => ({ room, outline: floor })),
+      { room: tile1, outline: floor }, { room: tile2, outline: floor }] });
+    assert.equal(scene.mode, 'placed');
+    assert.deepEqual(scene.rooms.map(r => r.room), decoded.rooms.map(r => r.room));
+    assert.deepEqual(scene.capOutlines.map(cap => [cap.room, cap.parent, cap.parentDoor]), [[expected, 4, 2]]);
+    const [cap] = scene.capOutlines;
+    assert.deepEqual(cap.outline, floor);
+    const parent = scene.rooms[4], door = decoded.rooms[4].entry.portals[2], ownDoor = doors.get(expected);
+    const placedDoor = transformPoint(ownDoor.position, cap.transform), target = transformPoint(door.position, parent.transform);
+    assert.ok(target.every((coordinate, i) => Math.abs(coordinate - placedDoor[i]) < 1e-7));
+    const heading = portal => Math.atan2(portal.normal[0], portal.normal[2]);
+    assert.ok(Math.abs(Math.cos(parent.transform.rotation + heading(door) - cap.transform.rotation - heading(ownDoor)) + 1) < 1e-9);
+  }
+});
+
+test('two instances of a walkable cap extend scene bounds and floor hit testing independently', () => {
+  const door = (x, facing) => ({ position: [x, 0, 0], normal: [facing, 0, 0] });
+  const entry = { portals: [door(-5, -1), door(5, 1)] };
+  const room = { slot: 0, room: 'Hall', parent: null, entry };
+  const placements = [0, 1].map(index => ({ room: 'Garden', slot: 0, door: index, index: 0 }));
+  const decoded = { rooms: [room], capPlacements: placements };
+  const table = { caps: [{ room: 'Garden', portals: [door(0, -1)] }] };
+  const rectangle = (left, right) => [{ closed: true, points: [[left, -2], [right, -2], [right, 2], [left, 2]] }];
+  const hall = { room: 'Hall', outline: rectangle(-5, 5) }, garden = { room: 'Garden', outline: rectangle(0, 12) };
+  const scene = makeScene(decoded, table, { rooms: [hall, garden] });
+  assert.deepEqual(scene.capOutlines.map(cap => cap.parentDoor), [0, 1]);
+  assert.ok(Math.abs(scene.bounds.x[0] + 17) < 1e-7 && Math.abs(scene.bounds.x[1] - 17) < 1e-7);
+  for (const x of [-15, 15]) assert.equal(pointInScene(scene, { x, z: 0 }), true);
+  assert.equal(pointInScene(scene, { x: 18, z: 0 }), false);
+
+  // Legacy name-only tables and decorative caps without a navmesh must keep the hall usable.
+  const legacy = makeScene(decoded, { caps: ['Garden'] }, { rooms: [hall, garden] });
+  const decorative = makeScene(decoded, table, { rooms: [hall] });
+  assert.deepEqual(decorative.missingRooms, []);
+  for (const incomplete of [legacy, decorative]) {
+    assert.equal(incomplete.mode, 'placed');
+    assert.deepEqual(incomplete.capOutlines, []);
+    assert.deepEqual(incomplete.bounds.x, [-5, 5]);
+    assert.equal(pointInScene(incomplete, { x: 0, z: 0 }), true);
+  }
 });
 
 test('watcher handles dungeon entry, fresh fingerprints, multiplayer streams and exits', () => {

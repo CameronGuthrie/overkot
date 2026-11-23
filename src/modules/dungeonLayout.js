@@ -173,23 +173,25 @@ function transformPoint(point, transform) {
   return [transform.x + x * c + z * s, transform.y + y, transform.z - x * s + z * c];
 }
 
+function attachAtPortal(parent, parentDoor, ownPortal) {
+  const parentPose = portalPose(parent.entry.portals?.[parentDoor]);
+  const ownPose = portalPose(ownPortal);
+  if (!parentPose || !ownPose) return null;
+  const target = transformPoint([parentPose.x, parentPose.y, parentPose.z], parent.transform);
+  const rotation = parent.transform.rotation + parentPose.heading + Math.PI - ownPose.heading;
+  const own = transformPoint([ownPose.x, ownPose.y, ownPose.z], { x: 0, y: 0, z: 0, rotation });
+  return { x: target[0] - own[0], y: target[1] - own[1], z: target[2] - own[2], rotation };
+}
+
 function placeRooms(decoded, table) {
   const placed = [];
   const origin = table.origin || [0, 0, 0];
   if (!Array.isArray(origin) || origin.length !== 3 || !origin.every(Number.isFinite)) return null;
   for (const room of decoded.rooms) {
-    let transform;
-    if (room.parent === null) transform = { x: origin[0], y: origin[1], z: origin[2], rotation: table.rotation || 0 };
-    else {
-      const parent = placed[room.parent];
-      const parentPose = portalPose(parent.entry.portals?.[room.parentDoor]);
-      const ownPose = portalPose(room.entry.portals?.[room.ownDoor]);
-      if (!parentPose || !ownPose) return null;
-      const target = transformPoint([parentPose.x, parentPose.y, parentPose.z], parent.transform);
-      const rotation = parent.transform.rotation + parentPose.heading + Math.PI - ownPose.heading;
-      const own = transformPoint([ownPose.x, ownPose.y, ownPose.z], { x: 0, y: 0, z: 0, rotation });
-      transform = { x: target[0] - own[0], y: target[1] - own[1], z: target[2] - own[2], rotation };
-    }
+    const transform = room.parent === null
+      ? { x: origin[0], y: origin[1], z: origin[2], rotation: table.rotation || 0 }
+      : attachAtPortal(placed[room.parent], room.parentDoor, room.entry.portals?.[room.ownDoor]);
+    if (!transform) return null;
     placed.push({ ...room, transform });
   }
   return placed;
@@ -212,4 +214,4 @@ const FALLEN_FORTRESS_TABLE = {
   caps: ['CapDoor', 'CapTunnel', 'CapSpawn', 'CapStreamingEntrance', 'CapStreamingExit'],
 };
 
-module.exports = { decodeLayout, supportsLayout, placeRooms, transformPoint, portalPose, FALLEN_FORTRESS_TABLE };
+module.exports = { decodeLayout, supportsLayout, placeRooms, attachAtPortal, transformPoint, portalPose, FALLEN_FORTRESS_TABLE };

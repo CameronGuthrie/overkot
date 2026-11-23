@@ -66,6 +66,13 @@ activate or replace the current dungeon. Stale asynchronous map responses are
 discarded after a new entry or exit. Hidden maps fit on activation, and later
 resizes preserve deliberate pan and zoom.
 
+If Overkot starts or updates while you are already in a dungeon, it can
+reconstruct the current visit from the game log and place the player as soon
+as fresh position and room data agree with that layout. When the log records
+a completed login with only a player name, explored areas stay in memory for
+that visit. Restarting Overkot in this case starts a new trail from your
+current position.
+
 ## Validation
 
 Run `node --test test/dungeonLayout.test.js test/dungeonMap.test.js test/dungeonService.test.js test/dungeonWatcherFresh.test.js test/minimap.test.js`

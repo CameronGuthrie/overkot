@@ -56,7 +56,7 @@ The legacy three-point alignment remains an explicit development option, disable
 in the normal overlay. Saved automatic alignment requires fresh native proof again
 after an overlay restart, before it can reveal additional areas.
 
-Discovery and verified alignment are stored locally under `dungeon-discovery` in
+For identified accounts, discovery and verified alignment are stored under `dungeon-discovery` in
 the application's data directory. They are isolated by account, running game
 process, log entry, generated layout and map-data revision. Restarting the overlay
 can resume the same active entry. Leaving and reentering, even with the same layout
@@ -99,7 +99,9 @@ placed on the map. The report omits player coordinates, account IDs, and paths.
 
 Once the active game log identifies Midrath, the overworld maps can show a
 verified position even while Overkot is waiting to identify the account.
-Dungeon discovery and pickups still require an identified account. If Settings
+In a dungeon, a completed name-only login allows temporary exploration of the
+current visit once live placement is verified. Saving discovery across restarts
+and tracking pickups require an identified account. If Settings
 says it is waiting for the current area, check the **Game log · EE.log** path
 under **Settings → Game files**.
 

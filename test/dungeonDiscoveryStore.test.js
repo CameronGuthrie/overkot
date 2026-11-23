@@ -81,6 +81,8 @@ test('scopes hide account/process identifiers and all identity dimensions have s
   assert.deepEqual(result.alignment, { status: 'verified', points: 3 });
   assert.deepEqual(result.exploration.cells, []);
   assert.equal(JSON.stringify(result).includes('private-account'), false);
+  assert.equal(contextKey(f.context), '9981ff20a47b261282fed20d51f1f6cd6d4288cbc3a5113ba8c0be5f28b38021',
+    'Existing identified discovery files keep their original lookup key');
   for (const field of ['account', 'process', 'instanceId', 'levelPath', 'layoutCode', 'revision', 'coordinateSpace']) {
     assert.notEqual(contextKey(f.context), contextKey({ ...f.context, [field]: `${f.context[field]}-different` }), field);
   }
@@ -409,6 +411,55 @@ test('automatic native placement verifies the exact dungeon without calibration 
   const mapped = f.store.mappedPose(pose);
   assert.ok(Math.abs(mapped.position.x - 20) < 1e-8); assert.ok(Math.abs(mapped.position.z - 30) < 1e-8);
   assert.ok(Math.abs(mapped.heading) < 1e-8); assert.equal(mapped.scope, initial.scope);
+});
+
+test('an unidentified visit verifies placement and shares discovery in memory without accessing disk', async () => {
+  const f = fixture({ context: { account: null, visit: 'temporary-visit', coordinateSpace: 'layout-local' } });
+  assert.equal((await f.store.load(input(f.context))).ok, false, 'the owner must confirm the visit');
+  f.owner = { ...f.owner, visit: f.context.visit };
+  const initial = await f.store.load(input(f.context));
+  assert.equal(initial.ok, true);
+  assert.deepEqual(initial.alignment, detecting);
+  const root = nativeRoot(f.context), pose = f.location(worldPoint(mapPoints[0]), { dungeonRoot: root });
+  assert.equal(f.store.mappedPose(pose), null);
+  assert.equal(await f.store.applyRoot(root, { ...pose, instanceId: 'retired' }), false);
+  assert.equal(await f.store.applyRoot(root, pose), true);
+  assert.equal(f.store.mappedPose(pose).scope, initial.scope);
+  assert.equal(await f.store.observePose(pose), true);
+  await f.store.flush();
+  assert.ok(f.events.at(-1).exploration.cells.length);
+  const saved = await f.store.save({ scope: initial.scope, exploration: exploration([96, 96]) });
+  assert.equal(saved.ok, true);
+  assert.deepEqual((await f.store.load(input(f.context))).exploration, saved.exploration);
+  assert.equal(JSON.stringify(saved).includes('temporary-visit'), false);
+  assert.equal((await f.store.reset(input(f.context))).reset, true);
+  assert.deepEqual(f.fs.calls, []);
+});
+
+test('retired anonymous discovery cannot be saved or reused by another entry, visit, or identified account', async () => {
+  const f = fixture({ context: { account: null, visit: 'one' } });
+  f.owner = { ...f.owner, visit: 'one' };
+  const original = { ...f.context }, first = await f.store.load(input(f.context));
+  assert.equal((await f.store.save({ scope: first.scope, exploration: exploration([32, 32]) })).ok, true);
+  const queued = f.store.save({ scope: first.scope, exploration: exploration([64, 64]) });
+  f.context = { ...original, instanceId: 'entry-2' };
+  assert.equal((await queued).ok, false);
+  assert.equal(f.store.peek(original), null);
+  assert.notEqual((await f.store.load(input(f.context))).scope, first.scope);
+  f.context = { ...original, visit: 'two' };
+  const inputForVisit = input(f.context);
+  assert.equal((await f.store.load(inputForVisit)).ok, false, 'an old owner cannot open a new visit');
+  f.owner = { ...f.owner, visit: 'two' };
+  const second = await f.store.load(inputForVisit);
+  assert.notEqual(second.scope, first.scope); assert.deepEqual(second.exploration.cells, []);
+  assert.deepEqual(f.fs.calls, []);
+  f.context = { ...original, account: 'identified' };
+  delete f.context.visit;
+  f.owner = { account: f.context.account, process: f.context.process };
+  assert.equal((await f.store.save({ scope: second.scope, exploration: exploration([96, 96]) })).ok, false);
+  const identified = await f.store.load(input(f.context));
+  assert.notEqual(identified.scope, second.scope); assert.deepEqual(identified.exploration.cells, []);
+  assert.equal(f.fs.calls.length, 1); assert.deepEqual(f.fs.calls[0], ['stat', f.disk()]);
 });
 
 test('repeated identical native proofs are idempotent without writing or broadcasting at pose frequency', async () => {

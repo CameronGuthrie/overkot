@@ -27,7 +27,7 @@ const LAYOUT = /(\/SF\/Levels\/Procs\/[^\s]+?)\/([A-Za-z0-9+\-]+)\.lp\b/;
 const GENERATED_LAYOUT = /(?:^|\b(?:Sys|Game)\s+\[Info\]:\s*)(\/SF\/Levels\/Procs\/[^\s]+?)\/([A-Za-z0-9+\-]+)\.lp\s*$/;
 const TRANSITION = /STATS (ENTER|EXIT)_LEVEL\s+(\/SF\/Levels\/\S+)/;
 const LOGOUT = /MainMenu\.lua: Main menu - LogOut\(\)|QUIT :Logged out of game/;
-const LOGIN_EVENT = /^(?:\s*\d+(?:\.\d+)?\s+)?(?:\w+\s+\[Info\]:\s*)?(?:Logging in as\s+|(Logged in)(?=\s|$)(?:\s+[^\r\n]{1,128}?\s+\(([a-f0-9]{24})\))?)/i;
+const LOGIN_EVENT = /^(?:\s*\d+(?:\.\d+)?\s+)?(?:\w+\s+\[Info\]:\s*)?(?:Logging in as\b|(Logged in)(?=\s|$)(?:\s+[^\r\n]{1,128}?\s+\(([a-f0-9]{24})\))?)/i;
 const levelPathOf = path => {
   const clean = String(path || '').replace(/[.,]$/, '');
   // Connected sessions and some ENTER events identify the generated .lp
@@ -69,6 +69,11 @@ class DungeonWatcher {
     // its check for an inventory account belonging to a different session.
     return this.isPlayerAreaCurrent(processStartMs) && !this._awaitingLogin && !this._accountId;
   }
+  getAnonymousDungeonVisit(processStartMs) {
+    if (!this._nameOnlyLogin || !this.isPlayerAreaCurrent(processStartMs)
+      || !this._state.active || this._state.status !== 'ready') return null;
+    return this._state.instanceId;
+  }
   getPlayerAccountId(inventoryAccountId, processStartMs) {
     if (this._replayTarget !== null) return null;
     // Keep identity in the main process. Logs without a login record can
@@ -93,6 +98,7 @@ class DungeonWatcher {
   _resetLog() {
     this._accountId = undefined;
     this._awaitingLogin = false;
+    this._nameOnlyLogin = false;
     this._lastLogActivityMs = 0;
     this._pos = 0; this._tail = ''; this._head = Buffer.alloc(0); this._fileIdentity = null;
     this._decoder = new StringDecoder('utf8'); this._replayTarget = null; this._batching = false; this._dirty = false;
@@ -151,9 +157,13 @@ class DungeonWatcher {
     if (login || LOGOUT.test(line)) {
       const completedLogin = !!login?.[1];
       const accountId = login?.[2]?.toLowerCase() || null;
-      const switchedAccount = this._accountId && this._accountId !== accountId;
+      // A new completed login can arrive without a preceding logout. Two
+      // name-only logins cannot prove continuity, even when the names match.
+      const switchedAccount = completedLogin && !this._awaitingLogin && (this._accountId !== undefined || this._state.active)
+        && (!accountId || this._accountId !== accountId);
       this._accountId = accountId;
       this._awaitingLogin = !completedLogin;
+      this._nameOnlyLogin = completedLogin && !accountId && /^[^()\r\n]{1,128}$/.test(line.slice(login[0].length).trim());
       if (!completedLogin || switchedAccount) {
         this._fingerprints.clear(); this._leave();
       }

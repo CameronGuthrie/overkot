@@ -1,6 +1,6 @@
 'use strict';
 
-const { decodeLayout, supportsLayout, placeRooms, transformPoint, FALLEN_FORTRESS_TABLE } = require('./dungeonLayout');
+const { decodeLayout, supportsLayout, placeRooms, attachAtPortal, transformPoint, FALLEN_FORTRESS_TABLE } = require('./dungeonLayout');
 
 const finiteCoordinate = value => Number.isFinite(value) && Math.abs(value) <= 1e7;
 const safeKey = value => typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/.test(value);
@@ -59,8 +59,22 @@ function makeScene(decoded, table, document) {
     assign(0);
     for (const room of rooms) room.transform = { x: depth[room.slot] * 160, y: 0, z: -leafRows[room.slot] * 140, rotation: 0 };
   }
+  const missingRooms = rooms.filter(room => room.missing).map(room => room.room);
+  const capOutlines = [];
+  if (placed) {
+    for (const { slot, door, index, room } of decoded.capPlacements) {
+      // Some doorway caps have their own walkable floor. Plain seals have no
+      // geometry entry. Each selected cap joins its parent through portal 0.
+      const geometry = geometries.get(room);
+      if (!geometry) continue;
+      const outline = outlineOf(geometry);
+      const transform = attachAtPortal(placed[slot], door, table.caps[index]?.portals?.[0]);
+      if (outline.length && transform) capOutlines.push({ room, parent: slot, parentDoor: door, transform, outline });
+      else missingRooms.push(room);
+    }
+  }
   let minX = Infinity, minZ = Infinity, maxX = -Infinity, maxZ = -Infinity;
-  for (const room of rooms) {
+  for (const room of [...rooms, ...capOutlines]) {
     const { transform } = room;
     const points = mode === 'placed' && room.outline.length ? room.outline.flatMap(chain => chain.points)
       : [[-50, -35], [50, 35]];
@@ -70,9 +84,9 @@ function makeScene(decoded, table, document) {
       minZ = Math.min(minZ, world[2]); maxZ = Math.max(maxZ, world[2]);
     }
   }
-  return { mode, rooms, bounds: { x: [minX, maxX], z: [minZ, maxZ] },
+  return { mode, rooms, capOutlines, bounds: { x: [minX, maxX], z: [minZ, maxZ] },
     coordinateSpace: table.coordinate_space === 'world' ? 'world' : 'layout-local',
-    missingRooms: rooms.filter(room => room.missing).map(room => room.room) };
+    missingRooms };
 }
 
 class DungeonMapService {

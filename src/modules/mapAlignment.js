@@ -89,7 +89,7 @@ function fitAlignment(samples) {
 
 function pointInScene(scene, value) {
   if (scene?.mode !== 'placed' || !Array.isArray(scene.rooms) || !point(value)) return false;
-  for (const room of scene.rooms) {
+  for (const room of [...scene.rooms, ...(scene.capOutlines || [])]) {
     const transform = room?.transform;
     const scale = transform?.scale ?? 1;
     if (!point(transform) || !Number.isFinite(transform.rotation) || !Number.isFinite(scale) || scale <= 0

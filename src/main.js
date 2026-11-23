@@ -454,6 +454,7 @@ const playerTracking = new PlayerTracking({
   getState: () => dungeonWatcher?.getState() || { status: 'unknown', active: false },
   getAccountId: processStartMs => dungeonWatcher?.getPlayerAccountId(activeInventoryPoller?.accountId, processStartMs) || null,
   canShowAnonymousOverworld: processStartMs => dungeonWatcher?.canUseAreaWithoutAccount(processStartMs) === true,
+  getAnonymousDungeonVisit: processStartMs => dungeonWatcher?.getAnonymousDungeonVisit(processStartMs) ?? null,
   isPlayerAreaCurrent: processStartMs => dungeonWatcher?.isPlayerAreaCurrent(processStartMs) === true,
   getVersion: () => dataManager.getInfo().version,
   getLayoutSnapshot: state => dungeonMap.getLayoutSnapshot(state),

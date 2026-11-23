@@ -1,6 +1,14 @@
 {
   "versions": [
     {
+      "version": "v0.0.24",
+      "changes": [
+        "Fixed missing tiles on the minimap and expanded dungeon map.",
+        "Improved player tracking when starting or updating Overkot mid-dungeon.",
+        "Reduced duplicate profile requests across some features."
+      ]
+    },
+    {
       "version": "v0.0.23",
       "changes": [
         "Improved player-location detection on Windows when running Soulframe and Overkot without administrator privileges.",

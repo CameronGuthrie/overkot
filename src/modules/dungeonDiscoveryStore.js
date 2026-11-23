@@ -11,12 +11,13 @@ const { validateRoot, alignmentFromRoot, validRootAlignment } = require('./dunge
 const hash = value => createHash('sha256').update(value).digest('hex');
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const text = value => typeof value === 'string' && value.trim().length > 0 && value.length <= 4096 && !/[\x00-\x1f\x7f]/.test(value);
-const validContext = value => plain(value) && ['account', 'process', 'instanceId', 'levelPath', 'layoutCode', 'revision'].every(key => text(value[key]))
+const validContext = value => plain(value) && (text(value.account) || value.account === null && text(value.visit))
+  && ['process', 'instanceId', 'levelPath', 'layoutCode', 'revision'].every(key => text(value[key]))
   && ['world', 'layout-local'].includes(value.coordinateSpace);
 const point = value => plain(value) && ['x', 'z'].every(key => typeof value[key] === 'number' && Number.isFinite(value[key]) && Math.abs(value[key]) <= 1e7);
 const copyPoint = value => ({ x: value.x, z: value.z });
 const fail = message => ({ ok: false, message });
-const contextKey = context => hash(JSON.stringify([context.account, context.process, context.instanceId,
+const contextKey = context => hash(JSON.stringify([context.account === null ? [null, context.visit] : context.account, context.process, context.instanceId,
   context.levelPath, context.layoutCode, context.revision, context.coordinateSpace]));
 const rootState = record => ({ ...record.context, active: true, status: 'ready' });
 const sameRootAlignment = (a, b) => validRootAlignment(a) && validRootAlignment(b)
@@ -43,15 +44,19 @@ class DungeonDiscoveryStore extends EventEmitter {
     this.records = new Map(); this.scopes = new Map(); this.pending = new Map(); this.writes = new Map(); this.operations = new Set();
     this.observed = new Set();
   }
-  _owner(record) {
+  _owner({ context }) {
     const owner = this.getOwner();
-    return plain(owner) && owner.account === record.context.account && owner.process === record.context.process;
+    if (!plain(owner) || owner.account !== context.account || owner.process !== context.process) return false;
+    if (context.account !== null) return true;
+    const current = this.getContext();
+    return owner.visit === context.visit && validContext(current) && (context === current || contextKey(context) === contextKey(current));
   }
   _context(input) {
     const context = this.getContext();
     if (!validContext(context)) return null;
     if (!plain(input) || input.instanceId !== context.instanceId || input.revision !== context.revision || !this._owner({ context })) return null;
-    return { account: context.account, process: context.process, instanceId: context.instanceId,
+    return { account: context.account, ...(context.account === null ? { visit: context.visit } : {}),
+      process: context.process, instanceId: context.instanceId,
       levelPath: context.levelPath, layoutCode: context.layoutCode, revision: context.revision, coordinateSpace: context.coordinateSpace };
   }
   _current(record) {
@@ -111,13 +116,15 @@ class DungeonDiscoveryStore extends EventEmitter {
       if (!this.pending.has(key)) this.pending.set(key, (async () => {
         const record = { key, context, generation: 0, alignment: null, points: [], exploration: createExploration(), dirty: false, observationTimer: null, lastObservation: null,
           rootVerified: false, rootSampledAt: null, rootProofAlignment: null };
-        try {
-          await this.writes.get(key)?.catch(() => {});
-          const filename = path.join(this.directory, `${key}.json`), stat = await this.fs.stat(filename);
-          if (Number.isFinite(stat.size) && stat.size >= 0 && stat.size <= 4 * 1024 * 1024) {
-            this._restore(record, JSON.parse(await this.fs.readFile(filename, 'utf8')));
-          }
-        } catch { /* A new, missing or invalid file starts unexplored. */ }
+        if (context.account !== null) {
+          try {
+            await this.writes.get(key)?.catch(() => {});
+            const filename = path.join(this.directory, `${key}.json`), stat = await this.fs.stat(filename);
+            if (Number.isFinite(stat.size) && stat.size >= 0 && stat.size <= 4 * 1024 * 1024) {
+              this._restore(record, JSON.parse(await this.fs.readFile(filename, 'utf8')));
+            }
+          } catch { /* A new, missing or invalid file starts unexplored. */ }
+        }
         this._scope(record); this.records.set(key, record);
         // Retain a bounded number of issued scopes for closing maps' final saves.
         if (this.records.size > 24) {
@@ -134,7 +141,8 @@ class DungeonDiscoveryStore extends EventEmitter {
     return record && this._current(record) ? record : null;
   }
   peek(context = this.getContext()) {
-    return validContext(context) ? this.records.get(contextKey(context)) || null : null;
+    const record = validContext(context) && this.records.get(contextKey(context));
+    return record && (context.account !== null || this._owner(record)) ? record : null;
   }
   async load(input) {
     const record = await this._record(input);
@@ -147,6 +155,7 @@ class DungeonDiscoveryStore extends EventEmitter {
     task.then(cleanup, cleanup); return task;
   }
   _persist(record) {
+    if (record.context.account === null) return;
     const saved = JSON.stringify({ schema: 1, key: record.key, generation: record.generation, alignment: record.alignment,
       points: record.points, exploration: record.exploration.snapshot() });
     // A complete candidate is written before it becomes observable. Serialize

@@ -109,6 +109,57 @@ test('a completed login without an ID can locate the player without attributing 
   assert.equal(watcher.getState().levelPath, undefined);
 });
 
+test('cold replay resolves the current dungeon visit for a name-only login after reaching the end of the log', t => {
+  const { watcher, log } = logWatcher(t);
+  fs.writeFileSync(log, [
+    'Game [Info]: Logged in First', ...enter(visits[0]), ...exit(visits[0]),
+    'Game [Info]: Logged in Second Envoy', ...enter(visits[2]), 'unrelated activity\n'.repeat(20_000),
+  ].join('\n'));
+  const processStart = fs.statSync(log).mtimeMs - 1000;
+  const replay = new DungeonWatcher({ candidates: () => [log] });
+  t.after(() => replay.stop());
+  for (const reader of [watcher, replay]) {
+    reader._poll();
+    assert.equal(reader.getAnonymousDungeonVisit(processStart), null, 'intermediate visits stay hidden during replay');
+    reader._poll();
+    const visit = reader.getAnonymousDungeonVisit(processStart);
+    assert.match(visit, /^[a-f0-9]{32}$/);
+    assert.equal(reader.getState().layoutCode, visits[2][2]);
+    assert.equal(reader.getPlayerAccountId('a'.repeat(24), processStart), null);
+    assert.equal(reader.getAnonymousDungeonVisit(null), null);
+    assert.equal(reader.getAnonymousDungeonVisit(Date.now() + 60_000), null);
+    reader._poll();
+    assert.equal(reader.getAnonymousDungeonVisit(processStart), visit);
+  }
+  assert.equal(replay.getAnonymousDungeonVisit(processStart), watcher.getAnonymousDungeonVisit(processStart));
+});
+
+test('anonymous dungeon visits require a completed name-only login and new entry evidence after switching', t => {
+  const { watcher, log, append } = logWatcher(t);
+  const start = fs.statSync(log).mtimeMs - 1000;
+  const visit = () => watcher.getAnonymousDungeonVisit(start);
+  const enterSameDungeon = () => enter(visits[0]).forEach(append);
+  enterSameDungeon(); assert.equal(visit(), null, 'no login record');
+  append('Game [Info]: Logged in First');
+  assert.equal(visit(), null, 'a dungeon entry from before the login cannot identify the new visit');
+  for (const incomplete of ['Logging in as First', 'Logged in', 'Logged in First (invalid)']) {
+    append('Game [Info]: ' + incomplete); enterSameDungeon(); assert.equal(visit(), null);
+  }
+  append('Game [Info]: Logged in First'); assert.equal(visit(), null);
+  enterSameDungeon(); const firstVisit = visit(); assert.ok(firstVisit);
+  append('Game [Info]: Logged in First');
+  assert.equal(visit(), null, 'a direct login invalidates the current entry even with the same name');
+  enterSameDungeon(); const secondVisit = visit(); assert.ok(secondVisit); assert.notEqual(secondVisit, firstVisit);
+  append(`Game [Info]: Logged in Known (${'a'.repeat(24)})`);
+  assert.equal(visit(), null); assert.equal(watcher.getState().active, false);
+  enterSameDungeon(); assert.equal(visit(), null, 'account-owned visits stay separate');
+  append('Game [Info]: Logged in Third'); assert.equal(visit(), null);
+  enterSameDungeon(); assert.ok(visit());
+  exit(visits[0]).forEach(append); assert.equal(visit(), null);
+  enterSameDungeon(); assert.ok(visit());
+  append('QUIT :Logged out of game'); enterSameDungeon(); assert.equal(visit(), null);
+});
+
 test('log-only ownership requires a verified process start and current-file activity; rotation discards growth evidence', t => {
   const { watcher, log } = logWatcher(t);
   const first = 'a'.repeat(24), second = 'b'.repeat(24);
