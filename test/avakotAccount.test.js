@@ -92,6 +92,43 @@ test('fresh account-matched game login reports only resolved identity, then offl
   assert.deepEqual(f.calls.filter(c => c.route === 'presence').at(-1).body, { online: false });
 });
 
+test('a shared display name refreshes 15 minutes after the original network lookup', async t => {
+  const f = fixture(t); await f.login();
+  f.advance(14 * 60_000);
+  let reads = 0, fetchedAt = f.service.now() - 14 * 60_000;
+  f.setSession(f.session({ api: {
+    fetchProfile: async () => {
+      reads++;
+      if (reads === 1) return profile();
+      fetchedAt = f.service.now();
+      return profile(accountId, 'UpdatedEnvoy');
+    },
+    getProfileFetchedAt: id => { assert.equal(id, accountId); return fetchedAt; },
+  } }));
+  await tick();
+  assert.equal(f.service.snapshot().game.displayName, 'RealEnvoy');
+  f.advance(59_999); f.service.update(); await tick();
+  assert.equal(reads, 1);
+  f.advance(1); f.service.update(); await tick();
+  assert.equal(f.service.snapshot().game.displayName, 'UpdatedEnvoy');
+});
+
+test('a shared profile without a name gets a shorter freshness limit on retry', async t => {
+  const f = fixture(t), calls = [];
+  await f.login();
+  f.setSession(f.session({ api: { fetchProfile: async (...args) => {
+    calls.push(args);
+    return profile(accountId, calls.length === 1 ? '' : 'UpdatedEnvoy');
+  } } }));
+  await tick();
+  assert.equal(f.service.snapshot().game.online, false);
+  f.advance(59_999); f.service.update(); await tick();
+  assert.deepEqual(calls, [[accountId]]);
+  f.advance(1); f.service.update(); await tick();
+  assert.deepEqual(calls[1], [accountId, { maxAgeMs: 60_000 }]);
+  assert.equal(f.service.snapshot().game.displayName, 'UpdatedEnvoy');
+});
+
 test('old profile lookup cannot publish after a game account switch', async t => {
   let resolve;
   const f = fixture(t); await f.login();

@@ -2,6 +2,7 @@
 
 const { EventEmitter } = require('node:events');
 const { dateAt, dateNumber } = require('./calendarData');
+const { profilePlayer } = require('./playerIdentity');
 const DAY_MS = 86400000;
 const PROFILE_REFRESH_MS = 15 * 60000, PROFILE_RETRY_MS = 60000;
 const utcDate = value => new Date(value).toISOString().slice(0, 10);
@@ -11,8 +12,7 @@ const timestamp = value => Number.isFinite(value) && value > 0 && value <= 86400
 
 /** Profile time is cumulative seconds, separate from daily inventory allowances. */
 function profilePlayedSeconds(profile, accountId) {
-  if (!/^[a-f0-9]{24}$/i.test(accountId || '') || !Array.isArray(profile?.Results)
-    || !profile.Results.some(row => String(row?.AccountId?.$oid || row?.AccountId || '').toLowerCase() === accountId.toLowerCase())) return null;
+  if (!profilePlayer(profile, accountId)) return null;
   const seconds = profile.Stats?.TimePlayedSec;
   return typeof seconds === 'number' && Number.isFinite(seconds) && seconds >= 0 && seconds <= Number.MAX_SAFE_INTEGER ? seconds : null;
 }
@@ -80,19 +80,27 @@ class DailyBrief extends EventEmitter {
       this.playtime = { seconds: null, status: session ? 'unavailable' : 'connect', updatedAt: null };
     }
     if (!session || !/^[a-f0-9]{24}$/i.test(account || '') || typeof session.api?.fetchProfile !== 'function'
-      || this.playtimePending || !force && this.now() < this.nextProfileAt) return this.playtimePending;
+      || session.getLastSuccessfulPollAt?.() === 0 || this.playtimePending
+      || !force && this.now() < this.nextProfileAt) return this.playtimePending;
+    const retry = this.nextProfileAt > 0 && this.playtime.status !== 'live';
     this.nextProfileAt = this.now() + PROFILE_RETRY_MS;
     if (this.playtime.seconds === null) this.playtime.status = 'waiting';
     const current = () => this.playtimeSession === session && this.playtimeAccount === account
       && this.getSession() === session && session.accountId === account && !session.isNonceExpired();
-    const work = Promise.resolve().then(() => session.api.fetchProfile(account)).then(profile => {
+    const work = Promise.resolve().then(() => force || retry
+      ? session.api.fetchProfile(account, { maxAgeMs: PROFILE_RETRY_MS })
+      : session.api.fetchProfile(account)).then(profile => {
       if (!current()) return;
       const seconds = profilePlayedSeconds(profile, account);
       if (seconds === null) throw new Error('Profile time unavailable');
-      this.playtime = { seconds, status: 'live', updatedAt: this.now() };
-      this.nextProfileAt = this.now() + PROFILE_REFRESH_MS;
+      const updatedAt = session.api.getProfileFetchedAt?.(account) ?? this.now();
+      this.playtime = { seconds, status: 'live', updatedAt };
+      this.nextProfileAt = updatedAt + PROFILE_REFRESH_MS;
     }).catch(() => {
-      if (current()) this.playtime.status = this.playtime.seconds === null ? 'unavailable' : 'cached';
+      if (current()) {
+        this.nextProfileAt = this.now() + PROFILE_RETRY_MS;
+        this.playtime.status = this.playtime.seconds === null ? 'unavailable' : 'cached';
+      }
     }).finally(() => {
       if (this.playtimePending === work) this.playtimePending = null;
       if (current()) this.update({ autoOpen: false });

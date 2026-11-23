@@ -167,9 +167,47 @@ test('profile requests deduplicate, refresh on a bounded cadence and expose no p
   assert.equal(value.playtime.seconds, 7500.25); assert.equal(value.playtime.status, 'cached');
   f.service.update(); await turn(); assert.equal(requests.length, 2, 'Failures cannot trigger per-tick requests');
   fail = false; seconds = 8000; await f.service.refresh({ force: true });
-  assert.equal(requests.length, 3); assert.equal(f.service.getSnapshot().playtime.seconds, 8000);
+  assert.equal(requests.length, 3); assert.deepEqual(requests[2], [f.session.accountId, { maxAgeMs: 60_000 }]);
+  assert.equal(f.service.getSnapshot().playtime.seconds, 8000);
   f.set({ now: day + DAY, savedAt: day });
   assert.equal(f.service.getSnapshot().playtime.seconds, 8000, 'Cumulative playtime is not a daily-reset allowance');
+});
+
+test('shared playtime keeps its network timestamp and refreshes when that result expires', async () => {
+  const f = serviceFixture(), account = 'a'.repeat(24);
+  const started = f.service.now(), firstFetch = started - 14 * 60_000;
+  let reads = 0, fetchedAt = firstFetch;
+  f.session.accountId = account;
+  f.session.api = {
+    fetchProfile: async () => {
+      if (++reads > 1) fetchedAt = f.service.now();
+      return publicProfile(account, reads * 100);
+    },
+    getProfileFetchedAt: id => { assert.equal(id, account); return fetchedAt; },
+  };
+  const first = await f.service.refresh();
+  assert.deepEqual(first.playtime, { seconds: 100, status: 'live', updatedAt: firstFetch });
+  f.set({ now: started + 59_999 }); await f.service.refresh();
+  assert.equal(reads, 1);
+  f.set({ now: started + 60_000 });
+  const next = await f.service.refresh();
+  assert.deepEqual(next.playtime, { seconds: 200, status: 'live', updatedAt: started + 60_000 });
+});
+
+test('a shared profile without playtime gets a shorter freshness limit on retry', async () => {
+  const f = serviceFixture(), account = 'a'.repeat(24), calls = [];
+  const started = f.service.now();
+  f.session.accountId = account;
+  f.session.api = { fetchProfile: async (...args) => {
+    calls.push(args);
+    return publicProfile(account, calls.length === 1 ? undefined : 123);
+  } };
+  assert.equal((await f.service.refresh()).playtime.status, 'unavailable');
+  f.set({ now: started + 59_999 }); await f.service.refresh();
+  assert.deepEqual(calls, [[account]]);
+  f.set({ now: started + 60_000 });
+  assert.equal((await f.service.refresh()).playtime.seconds, 123);
+  assert.deepEqual(calls[1], [account, { maxAgeMs: 60_000 }]);
 });
 
 test('late profile results from a replaced account or disconnected session never fill another brief', async () => {

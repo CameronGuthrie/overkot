@@ -134,7 +134,11 @@ app.once('ready', () => {
 });
 
 const originalLoad = Module._load;
-class InertWatcher { start() {} stop() {} consumeLoginSignal() { return false; } consumeLogoutSignal() { return false; } extractAccountId() { return ''; } extractDisplayName() { return ''; } }
+class InertWatcher {
+  start() {} stop() {} consumeLoginSignal() { return false; } consumeLogoutSignal() { return false; }
+  loginCheckpoint() { return null; } currentLogin() { return null; }
+  extractAccountId() { return ''; } extractDisplayName() { return ''; }
+}
 Module._load = function(request, parent, isMain) {
   if (request.endsWith('/modules/avakotAccount')) {
     const actual = originalLoad.call(this, request, parent, isMain);

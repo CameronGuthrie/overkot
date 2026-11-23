@@ -4,13 +4,12 @@ const { EventEmitter } = require('node:events');
 const { randomBytes } = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
-const { profileDisplayName } = require('./playerIdentity');
+const { profileDisplayName, hasLiveInventory, LIVE_SESSION_MS } = require('./playerIdentity');
 
 const { services } = require('./serviceConfig');
 const API = services.accountApi;
 const PORTAL = services.accountPortal;
 const HEARTBEAT_MS = 45_000;
-const LIVE_SESSION_MS = 90_000;
 const ACCOUNT_REFRESH_MS = 5 * 60_000;
 const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
 const offline = () => ({ online: false, accountId: '', displayName: '' });
@@ -58,7 +57,7 @@ class AvakotAccountService extends EventEmitter {
     this.portalBase = trustedOrigin(portalBase, PORTAL);
     this.token = null; this.account = null; this.game = offline(); this.sessionPersistent = false; this.marketSignIn = false;
     this.busy = false; this.authorizing = false; this.error = ''; this.generation = 0;
-    this.session = null; this.name = ''; this.nameAt = 0; this.namePending = null;
+    this.session = null; this.name = ''; this.nameAt = 0; this.namePending = null; this.retryName = false;
     this.pollTimer = null; this.heartbeat = null; this.authorization = null;
     this.syncing = null; this.resync = false; this.sent = ''; this.sentAt = 0;
     this.accountCheckedAt = 0;
@@ -222,25 +221,34 @@ class AvakotAccountService extends EventEmitter {
   }
   liveSession() {
     const session = this.getSession();
-    if (!session || !/^[a-f0-9]{24}$/i.test(session.accountId || '') || !session._running
-      || session.isNonceExpired() || session.isInventoryCached() || !session.getRawInventory()
-      || !session.getLastSuccessfulPollAt() || this.now() - session.getLastSuccessfulPollAt() > LIVE_SESSION_MS) return null;
-    return session;
+    return hasLiveInventory(session, this.now()) ? session : null;
   }
   update() {
     if (this.disposed) return;
     const session = this.liveSession();
-    if (session !== this.session) { this.session = session; this.name = ''; this.nameAt = 0; this.namePending = null; }
+    if (session !== this.session) {
+      this.session = session; this.name = ''; this.nameAt = 0; this.namePending = null; this.retryName = false;
+    }
     const next = session && this.name ? { online: true, accountId: session.accountId, displayName: this.name } : offline();
     const changed = JSON.stringify(next) !== JSON.stringify(this.game);
     this.game = next;
     if (changed) { this.publish(); void this.sync(); }
     if (session && this.token && !this.namePending && this.now() >= this.nameAt) {
       this.nameAt = this.now() + 60_000;
-      const work = Promise.resolve().then(() => session.api.fetchProfile(session.accountId)).then(profile => {
+      const retry = this.retryName;
+      const work = Promise.resolve().then(() => retry
+        ? session.api.fetchProfile(session.accountId, { maxAgeMs: 60_000 })
+        : session.api.fetchProfile(session.accountId)).then(profile => {
         if (this.disposed || this.session !== session || this.liveSession() !== session) return;
         const name = profileDisplayName(profile, session.accountId);
-        if (name) { this.name = name; this.nameAt = this.now() + 15 * 60_000; }
+        this.retryName = !name;
+        if (name) {
+          this.name = name;
+          const fetchedAt = session.api.getProfileFetchedAt?.(session.accountId) ?? this.now();
+          this.nameAt = fetchedAt + 15 * 60_000;
+        } else {
+          this.nameAt = this.now() + 60_000;
+        }
       }).catch(() => {}).finally(() => {
         if (this.namePending === work) { this.namePending = null; this.update(); }
       });

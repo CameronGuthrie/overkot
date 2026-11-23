@@ -23,8 +23,12 @@ account ownership. No game nonce, inventory, or password is sent to Avakot.
 Online requires the current running inventory poller, successful live inventory
 within 90 seconds, and a public profile name matching that exact account ID.
 Cached inventory, the login screen, a running process alone, and signing in to
-Avakot do not indicate an online game session. Profile lookups retry after a
-minute if unavailable and refresh every 15 minutes while connected.
+Avakot do not indicate an online game session. Avakot and Daily Brief share
+one background profile lookup every 15 minutes per connected account. Missing
+names retry after a minute, subject to the shared profile cooldown.
+The public profile lookup also requires the current game log to confirm the
+same account ID. A logout, login in progress, or login without an ID suspends
+those lookups until Overkot can confirm the account again.
 
 While online, Overkot renews status every 45 seconds. Logout, expired game
 credentials, or game exit immediately queue an offline report. App shutdown

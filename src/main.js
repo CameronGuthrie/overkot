@@ -45,7 +45,6 @@ const { normalizeDisplayId, displayOptions } = require('./modules/overlayDisplay
 const { InventoryPoller, loadCachedTimers } = require('./modules/inventoryPoller');
 const { DataSnapshots } = require('./modules/dataSnapshots');
 const { collectInventoryNames } = require('./renderer/inventory-format');
-const { ApiClient } = require('./modules/apiClient');
 const { Updater, CURRENT_VERSION } = require('./modules/updater');
 const { mergeChangelog } = require('./modules/releaseNotes');
 const { ConfigStore, isWindowCloseFocus } = require('./modules/config');
@@ -99,7 +98,7 @@ const { SCHEME: GAME_DATA_SCHEME } = require('./modules/gameDataImages');
 const { APP_DIR } = require('./modules/appPaths');
 const groupFinder = require('./modules/groupFinderService');
 const firebaseConfig = require('./modules/firebaseConfig');
-const { GroupFinderIdentity } = require('./modules/playerIdentity');
+const { GroupFinderIdentity, createProfileSessionCheck } = require('./modules/playerIdentity');
 const { UsageAnalytics } = require('./modules/usageAnalytics');
 const { sendUsage } = require('./modules/usageTransport');
 const { getTimerDurations, setTimerDurations } = require('./modules/timerDurations');
@@ -3404,7 +3403,6 @@ async function startBackgroundLoop() {
   detector = new ProcessDetector(DEBUG);
   const logWatcher = new LogWatcher(DEBUG);
   const scanner = new MemoryScanner(DEBUG);
-  const api = new ApiClient();
   const groupIdentity = new GroupFinderIdentity({ service: groupFinder, log: message => log('GF', message) });
   app.once('will-quit', () => groupIdentity.stopWatching());
 
@@ -3468,6 +3466,9 @@ async function startBackgroundLoop() {
     log('LOOP', 'Status -> waiting (looking for Soulframe.x64.exe)');
     setStatus('waiting');
     const pid = await detector.waitForProcess();
+    const processObservedAt = Date.now();
+    const canReadProfile = createProfileSessionCheck({ logWatcher, processObservedAt,
+      getSession: () => activeInventoryPoller, isGameRunning: () => detector.isProcessRunning(pid) });
     log('LOOP', `Found Soulframe.x64.exe (PID: ${pid})`);
 
     // Give the game time to initialize
@@ -3502,6 +3503,7 @@ async function startBackgroundLoop() {
       }
 
       if (logWatcher.consumeLoginSignal()) {
+        accountId = '';
         log('LOOP', 'Login signal detected in EE.log -- rescanning...');
       }
 
@@ -3556,12 +3558,10 @@ async function startBackgroundLoop() {
     calendarAccountId = accountId;
     calendarInventoryCached = false;
     timerState.rawInventory = null;
-    let poller = new InventoryPoller(accountId, nonce, DEBUG);
+    let poller = new InventoryPoller(accountId, nonce, DEBUG, canReadProfile);
     activeInventoryPoller = poller;
     void playerTracking.refresh();
     poller.start();
-
-    // Resolve the account-matched public profile before publishing an invite name.
 
     // Monitor loop
     let needsFullRestart = false;
@@ -3644,6 +3644,7 @@ async function startBackgroundLoop() {
 
         // Re-scan for credentials (memory-first, EE.log fallback)
         log('LOOP', 'Rescanning for new credentials...');
+        accountId = '';
         nonce = '';
         let rescanAttempts = 0;
         while (true) {
@@ -3667,7 +3668,7 @@ async function startBackgroundLoop() {
           await sleep(credentialScanRetryDelay());
         }
 
-        if (!nonce) break; // game closed, full restart
+        if (!accountId || !nonce) break;
 
         log('LOOP', `Account ID for session: ${accountId}`);
         log('LOOP', 'New game session found. Resuming polling...');
@@ -3675,7 +3676,7 @@ async function startBackgroundLoop() {
         calendarAccountId = accountId;
         calendarInventoryCached = false;
         timerState.rawInventory = null;
-        poller = new InventoryPoller(accountId, nonce, DEBUG);
+        poller = new InventoryPoller(accountId, nonce, DEBUG, canReadProfile);
         activeInventoryPoller = poller;
         void playerTracking.refresh();
         poller.start();

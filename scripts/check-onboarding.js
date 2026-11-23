@@ -111,6 +111,7 @@ Module._load = function(request, parent, isMain) {
   };
   if (request.endsWith('/modules/logWatcher')) return { LogWatcher: class {
     start() {} stop() {} extractDisplayName() { return ''; }
+    loginCheckpoint() { return null; } currentLogin() { return null; }
     consumeLoginSignal() { return false; } consumeLogoutSignal() { return false; } extractAccountId() { return ''; }
   } };
   if (request.endsWith('/modules/dungeonWatcher')) return { DungeonWatcher: class {

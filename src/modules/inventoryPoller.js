@@ -15,12 +15,13 @@ class InventoryPoller {
    * @param {string} accountId
    * @param {string} nonce
    * @param {boolean} debug
+   * @param {(session: InventoryPoller, accountId: string) => boolean} canReadProfile
    */
-  constructor(accountId, nonce, debug = false) {
+  constructor(accountId, nonce, debug = false, canReadProfile = () => false) {
     this.accountId = accountId;
     this.nonce = nonce;
     this.debug = debug;
-    this.api = new ApiClient();
+    this.api = new ApiClient({ canReadProfile: id => canReadProfile(this, id) });
     /** @type {Array<{tag: string, expiryTime: number}>} */
     this._timers = [];
     /** @type {{earned: number|null, remaining: number, cap: number|null}|null} */

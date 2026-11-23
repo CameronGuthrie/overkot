@@ -1,18 +1,50 @@
 const NAME_PATTERN = /^[A-Za-z0-9.,_-]{4,32}$/;
 const ACCOUNT_PATTERN = /^[a-f0-9]{24}$/i;
+const LIVE_SESSION_MS = 90_000;
+
+function inventoryMatchesAccount(inventory, accountId) {
+  if (typeof accountId !== 'string' || !ACCOUNT_PATTERN.test(accountId)
+    || !inventory || typeof inventory !== 'object' || Array.isArray(inventory)) return false;
+  if (!Object.hasOwn(inventory, 'AccountId')) return true;
+  const owner = inventory.AccountId?.$oid ?? inventory.AccountId;
+  return typeof owner === 'string' && owner.toLowerCase() === accountId.toLowerCase();
+}
+
+function hasLiveInventory(session, now = Date.now()) {
+  if (!session?._running || !ACCOUNT_PATTERN.test(session.accountId || '') || session.isNonceExpired()
+    || session.isInventoryCached() || !session.getRawInventory()) return false;
+  const lastPoll = session.getLastSuccessfulPollAt();
+  return lastPoll > 0 && now >= lastPoll && now - lastPoll <= LIVE_SESSION_MS;
+}
+
+function createProfileSessionCheck({ logWatcher, processObservedAt, getSession, isGameRunning }) {
+  const checkpoint = logWatcher.loginCheckpoint();
+  return (session, requestedId) => {
+    if (session !== getSession() || !hasLiveInventory(session) || !isGameRunning()
+      || session.accountId.toLowerCase() !== requestedId) return false;
+    const inventory = session.getRawInventory();
+    if (!inventoryMatchesAccount(inventory, requestedId)) return false;
+    // Without an explicit live owner, only a login observed since attachment can confirm the session.
+    const since = Object.hasOwn(inventory, 'AccountId') ? null : checkpoint;
+    return logWatcher.currentLogin(processObservedAt, since)?.accountId === requestedId;
+  };
+}
 
 function validName(value) {
   return typeof value === 'string' && NAME_PATTERN.test(value) ? value : null;
 }
 
 // Only accept the requested player's entry, never Results[0] blindly.
-function profileDisplayName(profile, accountId) {
+function profilePlayer(profile, accountId) {
   if (!ACCOUNT_PATTERN.test(accountId || '') || !Array.isArray(profile?.Results)) return null;
-  const player = profile.Results.find(entry => {
+  return profile.Results.find(entry => {
     const id = entry?.AccountId?.$oid || entry?.AccountId;
     return typeof id === 'string' && id.toLowerCase() === accountId.toLowerCase();
-  });
-  return validName(player?.DisplayName);
+  }) || null;
+}
+
+function profileDisplayName(profile, accountId) {
+  return validName(profilePlayer(profile, accountId)?.DisplayName);
 }
 
 // Serializes service lifecycle changes and discards lookups from old logins.
@@ -115,4 +147,5 @@ class GroupFinderIdentity {
   }
 }
 
-module.exports = { validName, profileDisplayName, GroupFinderIdentity };
+module.exports = { validName, profilePlayer, profileDisplayName, inventoryMatchesAccount, hasLiveInventory,
+  createProfileSessionCheck, LIVE_SESSION_MS, GroupFinderIdentity };

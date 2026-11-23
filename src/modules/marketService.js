@@ -6,7 +6,7 @@ const path = require('node:path');
 const { buildMarketInventory } = require('./marketInventory');
 const { resolveCatalogueDisplay } = require('./marketDisplay');
 const { getPlatformSupport } = require('./platformSupport');
-const { profileDisplayName } = require('./playerIdentity');
+const { inventoryMatchesAccount, profileDisplayName } = require('./playerIdentity');
 const { MarketBrowserSignin } = require('./marketBrowserSignin');
 const { marketImageUrl: safeImage } = require('./gameDataImages');
 
@@ -706,11 +706,20 @@ class MarketService extends EventEmitter {
   async freshInventory(generation) {
     const session = this.getSession();
     if (!session || session.isNonceExpired()) throw fail('GAME_REQUIRED', 'Connect to Soulframe before listing inventory items.');
-    const [result, profile] = await Promise.all([session.api.fetchInventory(session.accountId, session.nonce), session.api.fetchProfile(session.accountId)]);
-    this.checkGeneration(generation);
-    if (session !== this.getSession() || session.isNonceExpired() || result?.nonceExpired) throw fail('GAME_SESSION_CHANGED', 'Your game session changed. Wait for the next inventory update.');
+    const accountId = session.accountId;
+    const result = await session.api.fetchInventory(accountId, session.nonce);
+    const checkSession = () => {
+      this.checkGeneration(generation);
+      if (session !== this.getSession() || session.accountId !== accountId || session.isNonceExpired() || result?.nonceExpired
+        || (result?.data && !inventoryMatchesAccount(result.data, accountId))) {
+        throw fail('GAME_SESSION_CHANGED', 'Your game session changed. Wait for the next inventory update.');
+      }
+    };
+    checkSession();
     if (!result?.data) throw fail('INVENTORY_UNAVAILABLE', 'Could not refresh your inventory. Nothing was listed.');
-    const playerName = profileDisplayName(profile, session.accountId);
+    const profile = await session.api.fetchProfile(accountId, { force: true });
+    checkSession();
+    const playerName = profileDisplayName(profile, accountId);
     if (!playerName) throw fail('IDENTITY_UNAVAILABLE', 'Could not verify the current game character. Please try again.');
     this.playerName = playerName; this.playerSession = session;
     if (playerName.toLowerCase() !== this.user.displayHandle.toLowerCase()) throw fail('ACCOUNT_MISMATCH', `Soulframe is signed in as ${playerName}. Sign in to the matching market account before selling.`);

@@ -52,6 +52,8 @@ Category labels and temper names use the market's category labels and language d
 
 Publishing reads inventory again and checks the game session, the public character profile, and current market commitments. The game account ID, session nonce, and raw inventory never go to the market API or the renderer. Price edits retain existing barter items and their attributes. Resuming an offer or increasing its quantity checks available inventory again. Expired listings must be recreated because the market's resume operation does not extend their expiry.
 
+For the live character check, Market first verifies that the fresh inventory belongs to the active session, including its owner ID when supplied. It requests the profile only when the current game log confirms that account. Market joins any lookup already in progress for the same account. A successful check also refreshes the profile used by Daily Brief and Avakot presence. A rate-limited check stops the listing attempt. You can try again after the shared cooldown.
+
 Listings are not automatically published, repriced, closed, or completed when inventory changes. Trading still takes place in Soulframe. Browse and account data refresh on opening the window; game inventory updates arrive through the existing poller. After a network failure during publishing, check your profile's listings before retrying because the server may have saved the request.
 
 ## Authentication and development

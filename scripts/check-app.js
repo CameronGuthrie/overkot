@@ -51,7 +51,10 @@ const metrics = { foregroundStarts: 0, foregroundStops: 0, gameFound: false };
 const originalLoad = Module._load;
 Module._load = function(request, parent, isMain) {
   if (request.endsWith('/modules/memoryScanner')) return { MemoryScanner: class { async scanForAccountAndNonce() { return new Promise(() => {}); } }, scannerAvailableSync: () => false };
-  if (request.endsWith('/modules/logWatcher')) return { LogWatcher: class { start() {} consumeLoginSignal() { return false; } extractAccountId() { return ''; } } };
+  if (request.endsWith('/modules/logWatcher')) return { LogWatcher: class {
+    start() {} consumeLoginSignal() { return false; } extractAccountId() { return ''; }
+    loginCheckpoint() { return null; } currentLogin() { return null; }
+  } };
   if (request.endsWith('/modules/groupFinderService')) return new Proxy({}, { get: (_target, key) => key === 'getState' ? () => ({ listings: [], requests: [] }) : () => Promise.resolve(false) });
   if (request.endsWith('/modules/processDetector')) {
     const actual = originalLoad.call(this, request, parent, isMain);

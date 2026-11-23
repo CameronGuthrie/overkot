@@ -285,8 +285,11 @@ test('logout wins an in-flight sign-in without restoring an old token', async ()
 
 test('creates open-to-offers from a fresh matching inventory without exposing or sending game credentials', async () => {
   const f = fixture(); await f.login();
+  const profiles = [];
+  f.session.api.fetchProfile = async (...args) => { profiles.push(args); return profile(f.name); };
   const result = await f.service.createListing({ rowKey: f.row().key, quantity: 2, acceptedItems: [], termsNote: 'Ignored legacy input' });
   assert.equal(result.ok, true); assert.equal(f.fetches, 1); assert.equal(f.writes.length, 1);
+  assert.deepEqual(profiles, [[accountId, { force: true }]]);
   assert.deepEqual(f.writes[0], { itemId: 'resource-id', type: 'OFFER', quantity: 2, platform: 'PC', locale: 'en', terms: {} });
   assert.equal(f.row().availableQuantity, 8); assert.equal(f.row().listedQuantity, 2);
   assert.equal(JSON.stringify(f.requests).includes('game-nonce'), false);
@@ -301,6 +304,45 @@ test('fresh stock, character mismatch, and account switches prevent publishing',
     const result = await f.service.createListing({ rowKey: key, quantity: 2 });
     assert.equal(result.ok, false, condition); assert.equal(f.writes.length, 0, condition);
   }
+});
+
+test('replacing the game session during the inventory read skips the profile lookup', async t => {
+  const f = fixture(); await f.login();
+  const lookup = t.mock.method(f.session.api, 'fetchProfile');
+  f.inventoryWait = deferred();
+  const pending = f.service.createListing({ rowKey: f.row().key, quantity: 1 });
+  assert.equal(f.fetches, 1);
+  f.session = { ...f.session, accountId: 'b'.repeat(24) };
+  f.inventoryWait.resolve();
+  assert.equal((await pending).error, 'GAME_SESSION_CHANGED');
+  assert.equal(lookup.mock.callCount(), 0);
+  assert.equal(f.writes.length, 0);
+});
+
+test('a mismatched or malformed inventory owner blocks profile lookup and publishing', async t => {
+  const f = fixture(); await f.login();
+  const lookup = t.mock.method(f.session.api, 'fetchProfile');
+  for (const owner of ['b'.repeat(24), { $oid: 'b'.repeat(24) }, null, {}]) {
+    f.live.AccountId = owner;
+    const result = await f.service.createListing({ rowKey: f.row().key, quantity: 1 });
+    assert.equal(result.error, 'GAME_SESSION_CHANGED');
+  }
+  assert.equal(lookup.mock.callCount(), 0);
+  assert.equal(f.writes.length, 0);
+  f.live.AccountId = { $oid: accountId.toUpperCase() };
+  assert.equal((await f.service.createListing({ rowKey: f.row().key, quantity: 1 })).ok, true);
+  assert.equal(lookup.mock.callCount(), 1);
+});
+
+test('a game session replaced during the profile lookup cannot publish a listing', async () => {
+  const f = fixture(); await f.login();
+  f.session.api.fetchProfile = async () => {
+    f.session = { ...f.session, accountId: 'b'.repeat(24) };
+    return profile(f.name);
+  };
+  const result = await f.service.createListing({ rowKey: f.row().key, quantity: 1 });
+  assert.equal(result.error, 'GAME_SESSION_CHANGED');
+  assert.equal(f.writes.length, 0);
 });
 
 test('cached inventory cannot be offered by the UI; missing live inventory blocks create', async () => {

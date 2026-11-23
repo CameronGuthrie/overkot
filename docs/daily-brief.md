@@ -28,8 +28,18 @@ The Today overview shows exact remaining affiliation and trade allowances,
 alongside **total played time** from the requested account's public profile
 `Stats.TimePlayedSec`. Playtime is cumulative, displayed as hours and minutes;
 it is not reset at midnight or inferred from the current session. Profile
-requests are shared while pending and refresh at most every 15 minutes after
-success, with a one-minute retry after failure. Refresh checks immediately.
+lookups share a 15-minute cache with Avakot presence for the same game account.
+The desktop app waits for a recent live inventory poll and a completed login
+with the same account ID in the current game log. Playtime can remain
+unavailable when the log records only a name or while switching accounts.
+If live inventory omits its owner ID, Overkot waits for an account-ID login
+record written after it began watching this game process.
+Refresh and the UTC rollover reuse a lookup from the past minute. All three
+features, including Market, share a lookup already in progress. An ordinary
+failure allows a retry after one minute. An HTTP 429 pauses profile requests
+for every account in the running app for at least 15 minutes. Consecutive limits
+increase the pause to 30 and then 60 minutes. A longer server `Retry-After`
+always takes precedence.
 Unavailable values remain blank, and an earlier result is labelled if a
 refresh fails. No daily maximum or earned percentage is guessed.
 
