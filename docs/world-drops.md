@@ -14,8 +14,10 @@ reader. Unsupported native pickup layouts leave the player tracker running and
 do not manufacture weapon markers.
 
 Markers are temporary observations, not saved points of interest or inventory
-items. Each complete observation replaces the previous set, so picking up or
-despawning a weapon removes its marker on the next successful observation.
+items. Each player's map follows the pickups reported by their own game client.
+In a party, a weapon stays marked while that client continues to report it,
+including after a player picks it up. The next complete observation that omits
+the weapon removes its marker.
 Unchanged player updates cannot prolong a weapon observation older than two
 seconds. Leaving an area, changing accounts, losing tracking or changing game
 process sessions clears the set. At most 64 pickups within 80 world units of the

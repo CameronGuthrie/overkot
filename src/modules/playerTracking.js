@@ -167,7 +167,7 @@ class PlayerTracking extends EventEmitter {
   }
   _receiveDrops(snapshot) {
     this.refresh();
-    if (!this.enabled || !this.pid || !this.account || this.poseWait || !this._fresh(this.pose)
+    if (!this.enabled || !this.pid || this.poseWait || !this._fresh(this.pose)
       || this.reader.getState().status !== 'tracking' || snapshot?.trackingSession !== this.session
       || !Number.isSafeInteger(snapshot.sampledAt) || snapshot.sampledAt < this.minimumDropTime) return;
     if (this.worldDrops.receive(snapshot)) this._publish(this.pose);

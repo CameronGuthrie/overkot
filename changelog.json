@@ -1,6 +1,13 @@
 {
   "versions": [
     {
+      "version": "v0.0.25",
+      "changes": [
+        "Fixed missing weapon-drop markers on the minimap and expanded map. Nearby weapons now appear in Midrath and dungeons.",
+        "In multiplayer, picking up a weapon leaves its marker visible to teammates for as long as their game still shows it on the ground."
+      ]
+    },
+    {
       "version": "v0.0.24",
       "changes": [
         "Fixed missing tiles on the minimap and expanded dungeon map.",
