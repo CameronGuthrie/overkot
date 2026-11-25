@@ -100,10 +100,10 @@ placed on the map. The report omits player coordinates, account IDs, and paths.
 Once the active game log identifies Midrath, the overworld maps can show a
 verified position even while Overkot is waiting to identify the account.
 In a dungeon, a completed name-only login allows temporary exploration of the
-current visit once live placement is verified. Saving discovery across restarts
-and tracking pickups require an identified account. If Settings
-says it is waiting for the current area, check the **Game log · EE.log** path
-under **Settings → Game files**.
+current visit once live placement is verified. Both maps can show nearby weapon
+drops in these sessions. Saving discovery across restarts requires an identified
+account. If Settings says it is waiting for the current area, check the
+**Game log · EE.log** path under **Settings → Game files**.
 
 The map shows the first verified position before collecting nearby room and
 item data. A completed search that finds no unique avatar retries after

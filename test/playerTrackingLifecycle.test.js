@@ -14,6 +14,8 @@ const dungeon = instanceId => ({ active: true, status: 'ready', instanceId, layo
   levelPath: '/SF/Levels/Procs/UnderCityGauntlet', key: 'underCityMidrath' });
 const capture = overrides => ({ status: 'found', zone: '/SF/Levels/MidrathRedux', isOverworld: true,
   position: { x: 5, y: 2, z: 9 }, heading: 35, ...overrides });
+const gwylen = (position = { x: 101, y: 20, z: -10 }) => ({ id: 'gwylen-1',
+  itemType: '/SF/Weapons/Ranged/OneHand/StarterStaffCaster/StarterStaffCasterRangedMeleeWeapon', position });
 
 async function fixture(t, options = {}) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'overkot-tracking-life-'));
@@ -40,6 +42,8 @@ async function fixture(t, options = {}) {
   return { tracking, reader, locations, directory,
     pose(overrides = {}) { reader.emit('pose', { source: 'memory', sampledAt: now, trackingSession: reader.status.trackingSession,
       position: { x: 100, y: 20, z: -10 }, heading: 90, ...overrides }); },
+    drops(items) { reader.emit('world-drops', { type: 'world-drops', source: 'memory', status: 'available',
+      sampledAt: now, trackingSession: reader.status.trackingSession, items }); },
     get state() { return state; }, set state(value) { state = value; },
     set account(value) { account = value; }, set now(value) { now = value; } };
 }
@@ -101,7 +105,11 @@ test('a current game log with overworld evidence and no login record places the 
   assert.equal(f.tracking.getStatus().status, 'tracking');
   assert.equal(f.tracking.getLocation().isOverworld, true); assert.equal(f.tracking.getOwner(), null);
   await fs.appendFile(file, 'QUIT :Logged out of game\nSTATS ENTER_LEVEL /SF/Levels/MidrathRedux\n'); watcher._poll();
-  f.pose(); assert.equal(f.tracking.getLocation().status, 'unavailable');
+  f.pose(); f.drops([gwylen()]); assert.equal(f.tracking.getLocation().status, 'unavailable');
+  await fs.appendFile(file, 'Sys [Info]: Logged in First Envoy\nSTATS ENTER_LEVEL /SF/Levels/MidrathRedux\n'); watcher._poll();
+  f.pose(); f.drops([gwylen()]);
+  assert.equal(f.locations.at(-1).worldDrops.items[0]?.name, 'Gwylen');
+  assert.equal(f.tracking.getOwner(), null);
   await fs.unlink(file); watcher._poll(); f.pose();
   assert.equal(f.tracking.getStatus().status, 'waiting-for-area');
   await fs.writeFile(file, 'STATS ENTER_LEVEL /SF/Levels/MidrathRedux\n');
@@ -144,6 +152,11 @@ test('restart inside a name-only login reveals the current dungeon and discards 
   assert.ok(mapped?.alignmentVerified, 'Fresh placement maps the existing entry without another log event');
   assert.deepEqual(mapped.position, { x: 7, z: 12 });
   assert.equal(mapped.instanceId, entry.instanceId);
+  f.drops([gwylen({ x: 109, y: 991, z: -187 })]);
+  const weapon = f.locations.at(-1).worldDrops.items[0];
+  assert.equal(weapon?.name, 'Gwylen');
+  assert.equal(weapon.dungeon.scope, mapped.scope);
+  assert.deepEqual(weapon.dungeon.position, { x: 9, z: 13 });
   const trail = await f.tracking.discovery.load(target);
   assert.equal(trail.alignment.status, 'verified');
   assert.equal(trail.alignment.source, 'level-info-fit');
@@ -170,6 +183,8 @@ test('restart inside a name-only login reveals the current dungeon and discards 
   assert.notEqual(next.scope, trail.scope);
   assert.deepEqual(next.exploration.cells, []);
   assert.equal((await f.tracking.discovery.save({ scope: trail.scope, exploration: trail.exploration })).ok, false);
+  f.pose();
+  assert.deepEqual(f.tracking.getLocation().worldDrops.items, []);
 });
 
 test('support report distinguishes map placement without sharing locations or changing tracker state', async t => {
@@ -207,16 +222,33 @@ test('a current Midrath entry can show a live marker before login identity is kn
   assert.equal(f.tracking.getDiagnostics().loginRecognized, false);
   assert.equal(f.tracking.getOwner(), null); assert.equal(f.tracking.frameCloud, null);
   assert.equal(marker.dungeon, undefined);
-  f.reader.emit('world-drops', { type: 'world-drops', source: 'memory', status: 'available', sampledAt: 10000,
-    trackingSession: 'process-one', items: [] });
-  assert.equal(f.tracking.getLocation().worldDrops.status, 'unavailable');
+  f.drops([gwylen()]);
+  assert.equal(f.tracking.getLocation().worldDrops.items[0]?.name, 'Gwylen');
 
   allow = false; // An explicit logout or conflicting identity can arrive without a new level.
   assert.equal(f.tracking.getLocation().status, 'unavailable'); f.pose();
   assert.equal(f.tracking.getStatus().status, 'waiting-for-login');
   allow = true; assert.equal(f.tracking.getLocation().status, 'unavailable');
   f.pose(); assert.equal(f.tracking.getLocation().status, 'found');
+  assert.deepEqual(f.tracking.getLocation().worldDrops.items, []);
   f.tracking.setEnabled(false); f.pose(); assert.equal(f.tracking.getLocation().status, 'unavailable');
+});
+
+test('each party member keeps a shared weapon marker while their game still reports it', async t => {
+  const first = await fixture(t), second = await fixture(t);
+  second.reader.update('tracking', 'process-two');
+  for (const member of [first, second]) {
+    member.pose(); member.drops([gwylen()]);
+    assert.equal(member.tracking.getLocation().worldDrops.items[0].name, 'Gwylen');
+  }
+  first.now = 10100; first.drops([]);
+  assert.deepEqual(first.tracking.getLocation().worldDrops.items, []);
+
+  // A party member can still see the pickup after it disappears on the first client.
+  second.now = 12100; second.pose(); second.drops([gwylen()]);
+  assert.deepEqual(second.locations.at(-1).worldDrops.items.map(item => item.id), ['gwylen-1']);
+  second.now = 12200; second.drops([]);
+  assert.deepEqual(second.locations.at(-1).worldDrops.items, []);
 });
 
 test('an unowned live pose cannot identify an area, cross processes or unlock dungeon discovery', async t => {
